@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { useChat } from 'ai/react';
+import { useChat, Message, UseChatHelpers } from 'ai/react';
 import { DocumentView } from '@/components/document-view';
 import { BulkOperationView } from '@/components/bulk-operation-view';
 import PDFViewer from '@/components/pdf-viewer';
@@ -14,23 +14,37 @@ import { EnvelopeSuccess } from '@/components/envelope-success';
 export default function ChatPage() {
   const { messages, input, handleInputChange, handleSubmit, append, addToolResult } = useChat({
     maxSteps: 5,
-    onFinish: (message) => {
+    // @ts-ignore - experimental feature
+    experimental_toolCallStreaming: true,
+    onFinish: (message: Message) => {
       console.log('Chat finished with message:', message);
     },
-    onResponse: (response) => {
+    onResponse: (response: Response) => {
       console.log('Received response:', response);
     },
-    onToolCall: (toolCall) => {
+    onToolCall: ({ toolCall }: { toolCall: any }) => {
       console.log('Tool called:', toolCall);
+      if (toolCall.state === 'partial-call') {
+        // Show progressive loading
+        return <div className="p-4 text-gray-500">Loading...</div>;
+      }
     }
-  });
+  } as UseChatHelpers);
 
-  const handleEnvelopeClick = useCallback((envelopeId: string) => {
-    const message = `Tell me about envelope ${envelopeId}`;
-    handleInputChange({ target: { value: message } } as React.ChangeEvent<HTMLInputElement>);
-    const event = { preventDefault: () => {} } as React.FormEvent<HTMLFormElement>;
-    handleSubmit(event);
-  }, [handleSubmit, handleInputChange]);
+  const handleToolResult = async (toolCallId: string, result: any) => {
+    try {
+      await addToolResult({
+        toolCallId,
+        result: {
+          ...result,
+          completed: true
+        }
+      });
+    } catch (error) {
+      console.error('Failed to process tool result:', error);
+      // Show error UI
+    }
+  };
 
   const handleToolInvocation = useCallback((toolInvocation: any) => {
     const { toolName, toolCallId, state } = toolInvocation;
@@ -56,19 +70,19 @@ export default function ChatPage() {
         return (
           <TemplateSelector 
             value={result?.selectedTemplateId} 
-            onChange={(templateId) => {
-              // First add the tool result
-              addToolResult({
-                toolCallId,
-                result: {
-                  selectedTemplateId: templateId,
-                  completed: true
-                }
-              });
-              // Let the result be processed before continuing
-              setTimeout(() => {
-                handleSubmit({ preventDefault: () => {} } as React.FormEvent<HTMLFormElement>);
-              }, 100);
+            onChange={async (templateId) => {
+              try {
+                await handleToolResult(toolCallId, {
+                  selectedTemplateId: templateId
+                });
+                await append({
+                  role: 'user',
+                  content: `I've selected template ${templateId}. Please continue.`
+                });
+              } catch (error) {
+                console.error('Failed to handle template selection:', error);
+                // Show error UI
+              }
             }}
           />
         );
@@ -81,34 +95,36 @@ export default function ChatPage() {
           <RecipientForm 
             roles={result.roles}
             onSubmit={async (recipients) => {
-              console.log('Form submitted with recipients:', recipients);
-              // Add the tool result
-              addToolResult({
-                toolCallId,
-                result: {
+              try {
+                console.log('Form submitted with recipients:', recipients);
+                await handleToolResult(toolCallId, {
                   ...result,
-                  recipients,
-                  completed: true
-                }
-              });
-              // Append a user message with the recipient information
-              append({
-                role: 'user',
-                content: `I've added the recipients: ${recipients.map(r => `${r.roleName}: ${r.name} (${r.email})`).join(', ')}. Please continue.`
-              });
+                  recipients
+                });
+                await append({
+                  role: 'user',
+                  content: `I've added the recipients: ${recipients.map(r => 
+                    `${r.roleName}: ${r.name} (${r.email})`).join(', ')}. Please continue.`
+                });
+              } catch (error) {
+                console.error('Failed to handle recipient submission:', error);
+                // Show error UI
+              }
             }}
-            onBack={() => {
-              addToolResult({
-                toolCallId,
-                result: {
+            onBack={async () => {
+              try {
+                await handleToolResult(toolCallId, {
                   ...result,
                   goBack: true
-                }
-              });
-              append({
-                role: 'user',
-                content: 'go back'
-              });
+                });
+                await append({
+                  role: 'user',
+                  content: 'go back'
+                });
+              } catch (error) {
+                console.error('Failed to handle back action:', error);
+                // Show error UI
+              }
             }}
           />
         );
@@ -124,7 +140,7 @@ export default function ChatPage() {
       default:
         return null;
     }
-  }, [addToolResult, handleSubmit, handleInputChange, append]);
+  }, [addToolResult, append]);
 
   return (
     <div className="container mx-auto px-4 py-8">

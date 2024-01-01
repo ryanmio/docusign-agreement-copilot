@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { TemplateResponse } from '@/types/envelopes';
+import { useToolTransition } from '@/hooks/use-tool-transition';
 
 interface TemplateSelectorProps {
   value: string | undefined;
@@ -9,6 +10,7 @@ interface TemplateSelectorProps {
 }
 
 export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps) {
+  const { isTransitioning, transition } = useToolTransition();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
@@ -46,6 +48,17 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
     }
   };
 
+  const handleTemplateClick = async (templateId: string) => {
+    transition(async () => {
+      try {
+        await onChange(templateId);
+      } catch (error) {
+        console.error('Failed to select template:', error);
+        // Show error UI
+      }
+    });
+  };
+
   if (error) {
     return (
       <div className="space-y-4">
@@ -64,7 +77,7 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
   }
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${isTransitioning ? 'opacity-50 pointer-events-none' : ''}`}>
       <div className="flex gap-2">
         <input
           type="text"
@@ -95,7 +108,7 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
           {templates.map((template) => (
             <button
               key={template.templateId}
-              onClick={() => onChange(template.templateId)}
+              onClick={() => handleTemplateClick(template.templateId)}
               className={`p-4 border rounded-lg text-left transition-colors ${
                 value === template.templateId 
                   ? 'bg-primary text-primary-foreground' 
