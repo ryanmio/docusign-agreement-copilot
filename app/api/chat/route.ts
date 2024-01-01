@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   try {
     console.log('Chat route called');
     const { messages } = await req.json();
-    console.log('Received messages:', messages);
+    console.log('Received messages:', JSON.stringify(messages, null, 2));
 
     const result = streamText({
       model: openai('gpt-4o'),
@@ -29,20 +29,16 @@ export async function POST(req: Request) {
 
           For sending templates, follow this EXACT flow:
           1. When users want to send a template, use displayTemplateSelector to show available templates
-          2. After template selection, use previewTemplate to show preview and then say:
-             "I've pulled up the [Template Name]. This template requires the following signers: [List Roles].
-             Would you like to proceed with collecting recipient information? Just say 'yes' to continue."
-          3. When user confirms, use collectRecipients to gather recipient information. Ask for each role:
-             "Please provide the following information for the [Role Name]:
-             - Email address
-             - Full name"
-          4. After collecting ALL recipient information, use getTemplateTabs for each role to check available fields.
+          2. After template selection, use previewTemplate to show preview and then immediately use collectRecipients with the template roles and name. Say:
+             "I've pulled up the [Template Name]. Please fill in the recipient information in the form below."
+             IMPORTANT: After the form is submitted (when you receive a tool result with completed: true), proceed to step 3.
+          3. After receiving a tool result with completed: true and recipients array, proceed with getTemplateTabs for each role to check available fields.
              If any fillable fields are found, ask for each role:
              "For [Role Name], I found the following fields that can be prefilled:
              [List fields with their types]
              Would you like me to prefill any of these fields? Please specify which ones."
-             If no fillable fields are found for any role, proceed to step 5.
-          5. After ALL information is collected, show a summary and ask for confirmation:
+             If no fillable fields are found for any role, proceed to step 4.
+          4. After ALL information is collected, show a summary and ask for confirmation:
              "I'll send the [Template Name] to:
              - [Role 1]: [Name] ([Email])
              - [Role 2]: [Name] ([Email])
@@ -51,7 +47,7 @@ export async function POST(req: Request) {
              - [Field 1]: [Value]
              - [Field 2]: [Value]
              Is this correct? Please confirm by saying 'send' or go back by saying 'edit recipients'."
-          6. Only after explicit 'send' confirmation, use sendTemplate with:
+          5. Only after explicit 'send' confirmation, use sendTemplate with:
              - Subject: "Please sign: [Template Name]"
              - The collected recipient information with proper role assignment
              - The template ID
@@ -250,7 +246,8 @@ export async function POST(req: Request) {
                 description: template.description || '',
                 roles: template.roles.map(role => ({
                   roleId: role.roleName,
-                  roleName: role.roleName
+                  roleName: role.roleName,
+                  templateName: template.name
                 })),
                 showBackButton: showBackButton ?? false
               };
@@ -451,6 +448,25 @@ export async function POST(req: Request) {
               console.error('Error in getTemplateTabs tool:', error);
               throw error;
             }
+          }
+        }),
+        collectRecipients: tool({
+          description: 'Display a form to collect recipient information. The form will return { completed: true, recipients: [...] } when submitted.',
+          parameters: z.object({
+            roles: z.array(z.object({
+              roleName: z.string().describe('The name of the role')
+            })).describe('The roles that need recipients'),
+            templateName: z.string().describe('The name of the template being sent')
+          }),
+          execute: async ({ roles, templateName }) => {
+            console.log('Executing collectRecipients:', { roles, templateName });
+            return {
+              roles,
+              completed: false,
+              goBack: false,
+              recipients: [],
+              templateName
+            };
           }
         })
       }

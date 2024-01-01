@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useChat } from 'ai/react';
 import { DocumentView } from '@/components/document-view';
 import { BulkOperationView } from '@/components/bulk-operation-view';
@@ -12,16 +12,119 @@ import { RecipientForm } from '@/components/recipient-form';
 import { EnvelopeSuccess } from '@/components/envelope-success';
 
 export default function ChatPage() {
-  const { messages, input, handleInputChange, handleSubmit, addToolResult } = useChat();
+  const { messages, input, handleInputChange, handleSubmit, append, addToolResult } = useChat({
+    maxSteps: 5,
+    onFinish: (message) => {
+      console.log('Chat finished with message:', message);
+    },
+    onResponse: (response) => {
+      console.log('Received response:', response);
+    },
+    onToolCall: (toolCall) => {
+      console.log('Tool called:', toolCall);
+    }
+  });
 
-  const handleEnvelopeClick = (envelopeId: string) => {
-    // When an envelope is clicked, ask about it in the chat
+  const handleEnvelopeClick = useCallback((envelopeId: string) => {
     const message = `Tell me about envelope ${envelopeId}`;
+    handleInputChange({ target: { value: message } } as React.ChangeEvent<HTMLInputElement>);
     const event = { preventDefault: () => {} } as React.FormEvent<HTMLFormElement>;
     handleSubmit(event);
-    // Set the input value after submission
-    handleInputChange({ target: { value: message } } as React.ChangeEvent<HTMLInputElement>);
-  };
+  }, [handleSubmit, handleInputChange]);
+
+  const handleToolInvocation = useCallback((toolInvocation: any) => {
+    const { toolName, toolCallId, state } = toolInvocation;
+
+    // Handle loading states
+    if (state !== 'result') {
+      return (
+        <div className="p-4 text-gray-500">
+          Loading...
+        </div>
+      );
+    }
+
+    const { result } = toolInvocation;
+
+    // Handle completed tools
+    if (result?.completed) {
+      return null;
+    }
+
+    switch (toolName) {
+      case 'displayTemplateSelector':
+        return (
+          <TemplateSelector 
+            value={result?.selectedTemplateId} 
+            onChange={(templateId) => {
+              // First add the tool result
+              addToolResult({
+                toolCallId,
+                result: {
+                  selectedTemplateId: templateId,
+                  completed: true
+                }
+              });
+              // Let the result be processed before continuing
+              setTimeout(() => {
+                handleSubmit({ preventDefault: () => {} } as React.FormEvent<HTMLFormElement>);
+              }, 100);
+            }}
+          />
+        );
+
+      case 'previewTemplate':
+        return <TemplatePreview {...result} />;
+
+      case 'collectRecipients':
+        return (
+          <RecipientForm 
+            roles={result.roles}
+            onSubmit={async (recipients) => {
+              console.log('Form submitted with recipients:', recipients);
+              // Add the tool result
+              addToolResult({
+                toolCallId,
+                result: {
+                  ...result,
+                  recipients,
+                  completed: true
+                }
+              });
+              // Append a user message with the recipient information
+              append({
+                role: 'user',
+                content: `I've added the recipients: ${recipients.map(r => `${r.roleName}: ${r.name} (${r.email})`).join(', ')}. Please continue.`
+              });
+            }}
+            onBack={() => {
+              addToolResult({
+                toolCallId,
+                result: {
+                  ...result,
+                  goBack: true
+                }
+              });
+              append({
+                role: 'user',
+                content: 'go back'
+              });
+            }}
+          />
+        );
+
+      case 'displayDocumentDetails':
+        return <DocumentView {...result} />;
+
+      case 'sendTemplate':
+        return result?.success ? (
+          <EnvelopeSuccess envelopeId={result.envelopeId} />
+        ) : null;
+
+      default:
+        return null;
+    }
+  }, [addToolResult, handleSubmit, handleInputChange, append]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -36,112 +139,11 @@ export default function ChatPage() {
               {message.content}
             </div>
 
-            {message.toolInvocations?.map(toolInvocation => {
-              const { toolName, toolCallId, state } = toolInvocation;
-
-              if (state === 'result') {
-                if (toolName === 'displayDocumentDetails') {
-                  const { result } = toolInvocation;
-                  return (
-                    <div key={toolCallId}>
-                      <DocumentView {...result} />
-                    </div>
-                  );
-                }
-                
-                if (toolName === 'displayPdfViewer') {
-                  const { result } = toolInvocation;
-                  return (
-                    <div key={toolCallId} className="h-[750px] border border-gray-300 rounded-lg">
-                      <PDFViewer {...result} />
-                    </div>
-                  );
-                }
-
-                if (toolName === 'displayBulkOperation') {
-                  const { result } = toolInvocation;
-                  return (
-                    <div key={toolCallId}>
-                      <BulkOperationView {...result} />
-                    </div>
-                  );
-                }
-
-                if (toolName === 'displayTemplateSelector') {
-                  const { result } = toolInvocation;
-                  return (
-                    <div key={toolCallId}>
-                      <TemplateSelector value={result.selectedTemplateId} onChange={() => {}} />
-                    </div>
-                  );
-                }
-
-                if (toolName === 'previewTemplate') {
-                  const { result } = toolInvocation;
-                  return (
-                    <div key={toolCallId}>
-                      <TemplatePreview {...result} />
-                    </div>
-                  );
-                }
-
-                if (toolName === 'collectRecipients') {
-                  const { result } = toolInvocation;
-                  return (
-                    <div key={toolCallId}>
-                      <RecipientForm 
-                        roles={result.roles}
-                        onSubmit={(recipients) => {
-                          addToolResult({ toolCallId, result: { ...result, recipients, completed: true } });
-                        }}
-                        onBack={() => {
-                          addToolResult({ toolCallId, result: { ...result, goBack: true } });
-                        }}
-                      />
-                    </div>
-                  );
-                }
-
-                if (toolName === 'sendTemplate') {
-                  const { result } = toolInvocation;
-                  if (result.success) {
-                    return (
-                      <div key={toolCallId}>
-                        <EnvelopeSuccess envelopeId={result.envelopeId} />
-                      </div>
-                    );
-                  }
-                  return null;
-                }
-
-                if (toolName === 'displayEnvelopeList') {
-                  const { result } = toolInvocation;
-                  return (
-                    <div key={toolCallId}>
-                      <EnvelopeList 
-                        initialStatus={result.initialStatus}
-                        initialPage={result.initialPage}
-                        showStatusFilter={result.showStatusFilter}
-                        onEnvelopeClick={handleEnvelopeClick}
-                      />
-                    </div>
-                  );
-                }
-              }
-
-              // Show loading states
-              return (
-                <div key={toolCallId} className="p-4 text-gray-500">
-                  {toolName === 'displayTemplateSelector' || toolName === 'previewTemplate' ? (
-                    'Loading templates...'
-                  ) : toolName === 'collectRecipients' ? (
-                    'Loading recipient form...'
-                  ) : (
-                    'Loading...'
-                  )}
-                </div>
-              );
-            })}
+            {message.toolInvocations?.map(toolInvocation => (
+              <div key={toolInvocation.toolCallId}>
+                {handleToolInvocation(toolInvocation)}
+              </div>
+            ))}
           </div>
         ))}
 

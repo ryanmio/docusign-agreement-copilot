@@ -34,6 +34,7 @@ export function RecipientForm({ roles, onSubmit, onBack }: RecipientFormProps) {
   };
 
   const handleSubmit = async () => {
+    console.log('RecipientForm handleSubmit called');
     // Validate all recipients
     const newRecipients = recipients.map(recipient => ({
       ...recipient,
@@ -43,20 +44,28 @@ export function RecipientForm({ roles, onSubmit, onBack }: RecipientFormProps) {
       }
     }));
 
+    console.log('Validation results:', newRecipients);
     setRecipients(newRecipients);
 
     // Check if there are any errors
     if (newRecipients.some(r => r.error.email || r.error.name)) {
+      console.log('Validation failed, found errors');
       return;
     }
 
+    console.log('Starting submission...');
     setIsSubmitting(true);
     try {
-      await onSubmit(recipients.map(({ email, name, roleName }) => ({ 
+      const recipientData = recipients.map(({ email, name, roleName }) => ({ 
         email, 
         name, 
         roleName 
-      })));
+      }));
+      console.log('Submitting recipient data:', recipientData);
+      await onSubmit(recipientData);
+      console.log('Submission complete');
+    } catch (error) {
+      console.error('Error during submission:', error);
     } finally {
       setIsSubmitting(false);
     }
