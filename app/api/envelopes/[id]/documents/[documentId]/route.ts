@@ -7,9 +7,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: Request,
-  context: { params: { id: string; documentId: string } }
+  context: { params: Promise<{ id: string; documentId: string }> }
 ) {
   try {
+    const params = await context.params;
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -25,7 +26,7 @@ export async function GET(
     const { data: envelope, error: envelopeError } = await supabase
       .from('envelopes')
       .select('*')
-      .eq('id', context.params.id)
+      .eq('id', params.id)
       .eq('user_id', user.id)
       .single();
 
@@ -41,13 +42,13 @@ export async function GET(
     const document = await docusign.downloadDocument(
       user.id,
       envelope.docusign_envelope_id,
-      context.params.documentId
+      params.documentId
     );
 
     // Get document info to set proper content type
     const documents = await docusign.listDocuments(user.id, envelope.docusign_envelope_id);
     const documentInfo = documents.envelopeDocuments?.find(
-      (doc: { documentId: string }) => doc.documentId === context.params.documentId
+      (doc: { documentId: string }) => doc.documentId === params.documentId
     );
 
     if (!documentInfo) {
