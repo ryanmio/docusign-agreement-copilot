@@ -5,9 +5,16 @@ import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 
 export const dynamic = 'force-dynamic';
 
+type RouteParams = {
+  params: {
+    id: string;
+    documentId: string;
+  };
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; documentId: string } }
+  context: RouteParams
 ) {
   try {
     const cookieStore = cookies();
@@ -25,7 +32,7 @@ export async function GET(
     const { data: envelope, error: envelopeError } = await supabase
       .from('envelopes')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', context.params.id)
       .eq('user_id', user.id)
       .single();
 
@@ -41,13 +48,13 @@ export async function GET(
     const document = await docusign.downloadDocument(
       user.id,
       envelope.docusign_envelope_id,
-      params.documentId
+      context.params.documentId
     );
 
     // Get document info to set proper content type
     const documents = await docusign.listDocuments(user.id, envelope.docusign_envelope_id);
     const documentInfo = documents.envelopeDocuments?.find(
-      (doc: { documentId: string }) => doc.documentId === params.documentId
+      (doc: { documentId: string }) => doc.documentId === context.params.documentId
     );
 
     if (!documentInfo) {

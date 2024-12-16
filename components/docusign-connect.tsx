@@ -60,8 +60,8 @@ export default function DocuSignConnect() {
     }
   };
 
-  const error = searchParams.get('error');
-  const success = searchParams.get('success');
+  const error = searchParams?.get('error');
+  const success = searchParams?.get('success');
 
   if (isLoading) {
     return <div>Loading...</div>;
