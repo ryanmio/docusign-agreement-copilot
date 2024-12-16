@@ -7,10 +7,11 @@ import { z } from 'zod';
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -22,10 +23,9 @@ export async function GET(
       );
     }
 
-    // Get envelope from database
     const { data: envelope, error: envelopeError } = await supabase
       .from('envelopes')
-      .select('*, recipients(*)')
+      .select('*')
       .eq('id', params.id)
       .eq('user_id', user.id)
       .single();
@@ -37,18 +37,7 @@ export async function GET(
       );
     }
 
-    // Get envelope details from DocuSign
-    const docusign = new DocuSignEnvelopes();
-    const docusignEnvelope = await docusign.getEnvelope(user.id, envelope.docusign_envelope_id);
-
-    // Get documents list
-    const documents = await docusign.listDocuments(user.id, envelope.docusign_envelope_id);
-
-    return NextResponse.json({
-      ...envelope,
-      docusign_status: docusignEnvelope.status,
-      documents: documents.envelopeDocuments,
-    });
+    return NextResponse.json(envelope);
   } catch (error) {
     console.error('Error fetching envelope:', error);
     return NextResponse.json(
