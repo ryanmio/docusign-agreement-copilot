@@ -5,14 +5,10 @@ import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 
 export const dynamic = 'force-dynamic';
 
-type Context = {
-  params: {
-    id: string;
-    documentId: string;
-  };
-};
-
-export async function GET(request: NextRequest, context: Context) {
+export async function GET(
+  request: Request,
+  context: { params: { id: string; documentId: string } }
+) {
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
