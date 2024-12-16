@@ -7,6 +7,18 @@ interface DocuSignToken {
   expires_at: Date;
 }
 
+interface DocuSignUserInfo {
+  sub: string;
+  name: string;
+  email: string;
+  accounts: Array<{
+    account_id: string;
+    is_default: boolean;
+    account_name: string;
+    base_uri: string;
+  }>;
+}
+
 export class DocuSignClient {
   private clientId: string;
   private clientSecret: string;
@@ -151,5 +163,46 @@ export class DocuSignClient {
     }
 
     return credentials.access_token;
+  }
+
+  public async getUserInfo(userId: string): Promise<DocuSignUserInfo> {
+    const token = await this.getValidToken(userId);
+    const response = await fetch(`${this.basePath}/oauth/userinfo`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get user info');
+    }
+
+    const data = await response.json();
+    return {
+      sub: data.sub,
+      name: data.name,
+      email: data.email,
+      accounts: data.accounts.map((account: any) => ({
+        account_id: account.account_id,
+        is_default: account.is_default,
+        account_name: account.account_name,
+        base_uri: account.base_uri,
+      })),
+    };
+  }
+
+  public async getClient(userId: string): Promise<{ accountId: string; baseUrl: string; headers: HeadersInit }> {
+    const token = await this.getValidToken(userId);
+    const userInfo = await this.getUserInfo(userId);
+    const defaultAccount = userInfo.accounts.find(a => a.is_default) || userInfo.accounts[0];
+
+    return {
+      accountId: defaultAccount.account_id,
+      baseUrl: defaultAccount.base_uri,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    };
   }
 } 

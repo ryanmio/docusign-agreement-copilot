@@ -97,25 +97,30 @@
 
 ## Current Sprint: Envelope Management System 📨
 
-### 1. Database Schema
-- [ ] Create envelopes table
+### 1. Database Schema ✅
+- [x] Create envelopes table
   - Store envelope ID, status, metadata
   - Link to documents table
   - Track recipient information
-- [ ] Create recipients table
+- [x] Create recipients table
   - Store recipient details
   - Track signing status
   - Link to envelopes
-- [ ] Set up RLS policies
+- [x] Set up RLS policies
   - User can only access their envelopes
   - Proper insert/update/delete policies
 
-### 2. API Layer
+### 2. API Layer (In Progress) 🚀
 - [ ] Create envelope management endpoints
-  - POST /api/envelopes - Create new envelope
-  - GET /api/envelopes - List user's envelopes
-  - GET /api/envelopes/:id - Get envelope details
-  - GET /api/envelopes/:id/documents - Get envelope documents
+  1. Create base types and validation schemas
+     - Envelope creation payload
+     - Response types
+     - Error handling types
+  2. Implement endpoints:
+     - POST /api/envelopes - Create new envelope
+     - GET /api/envelopes - List user's envelopes
+     - GET /api/envelopes/:id - Get envelope details
+     - GET /api/envelopes/:id/documents - Get envelope documents
 - [ ] Implement error handling
   - Rate limiting
   - Error logging
@@ -125,7 +130,7 @@
   - File type/size validation
   - Recipient validation
 
-### 3. UI Components
+### 3. UI Components (Next Up)
 - [ ] Create /documents page
   - List view of all documents/envelopes
   - Status indicators

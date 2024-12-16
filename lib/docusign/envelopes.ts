@@ -1,74 +1,103 @@
 import { DocuSignClient } from './client';
 
+interface CreateEnvelopeDocument {
+  name: string;
+  fileExtension: string;
+  documentBase64: string;
+}
+
+interface CreateEnvelopeRecipient {
+  email: string;
+  name: string;
+  recipientId: string;
+  routingOrder: number;
+}
+
 interface CreateEnvelopeOptions {
   emailSubject: string;
   emailBlurb?: string;
-  documents: Array<{
-    name: string;
-    fileExtension: string;
-    documentBase64: string;
-  }>;
-  recipients: Array<{
-    email: string;
-    name: string;
-    recipientId: string;
-    routingOrder: number;
-  }>;
+  documents: CreateEnvelopeDocument[];
+  recipients: CreateEnvelopeRecipient[];
 }
 
 export class DocuSignEnvelopes {
   private client: DocuSignClient;
-  private accountId: string;
-  private basePath: string;
 
   constructor() {
     this.client = new DocuSignClient();
-    this.accountId = process.env.DOCUSIGN_ACCOUNT_ID!;
-    this.basePath = 'https://demo.docusign.net/restapi/v2.1';
   }
 
-  private async getHeaders(userId: string) {
-    const token = await this.client.getValidToken(userId);
+  async createEnvelope(userId: string, options: CreateEnvelopeOptions) {
+    const client = await this.client.getClient(userId);
+
+    const envelopeDefinition = {
+      emailSubject: options.emailSubject,
+      emailBlurb: options.emailBlurb,
+      status: "sent",
+      documents: options.documents.map((doc, index) => ({
+        documentBase64: doc.documentBase64,
+        name: doc.name,
+        fileExtension: doc.fileExtension,
+        documentId: (index + 1).toString(),
+      })),
+      recipients: {
+        signers: options.recipients.map((recipient, index) => ({
+          email: recipient.email,
+          name: recipient.name,
+          recipientId: (index + 1).toString(),
+          routingOrder: recipient.routingOrder || 1,
+          tabs: {
+            signHereTabs: [{
+              documentId: "1",
+              pageNumber: "1",
+              xPosition: "100",
+              yPosition: "100",
+              scale: 1,
+            }],
+          },
+        })),
+      },
+    };
+
+    console.log('Creating envelope with:', {
+      ...envelopeDefinition,
+      documents: envelopeDefinition.documents.map(d => ({ ...d, documentBase64: '(content)' }))
+    });
+
+    const response = await fetch(`${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes`, {
+      method: 'POST',
+      headers: {
+        ...client.headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(envelopeDefinition),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('DocuSign API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
+      throw new Error(`Failed to create envelope: ${errorData}`);
+    }
+
+    const data = await response.json();
+    console.log('DocuSign Create Envelope Response:', data);
+
     return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      envelopeId: data.envelopeId,
     };
   }
 
-  public async createEnvelope(userId: string, options: CreateEnvelopeOptions) {
-    const headers = await this.getHeaders(userId);
-    
+  async getEnvelope(userId: string, envelopeId: string) {
+    const client = await this.client.getClient(userId);
+
     const response = await fetch(
-      `${this.basePath}/accounts/${this.accountId}/envelopes`,
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}`,
       {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          emailSubject: options.emailSubject,
-          emailBlurb: options.emailBlurb,
-          documents: options.documents,
-          recipients: {
-            signers: options.recipients,
-          },
-          status: 'sent',
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to create envelope');
-    }
-
-    return response.json();
-  }
-
-  public async getEnvelope(userId: string, envelopeId: string) {
-    const headers = await this.getHeaders(userId);
-    
-    const response = await fetch(
-      `${this.basePath}/accounts/${this.accountId}/envelopes/${envelopeId}`,
-      {
-        headers,
+        headers: client.headers,
       }
     );
 
@@ -79,46 +108,57 @@ export class DocuSignEnvelopes {
     return response.json();
   }
 
-  public async listEnvelopes(userId: string, fromDate?: Date) {
-    const headers = await this.getHeaders(userId);
-    const queryParams = new URLSearchParams();
-    
-    if (fromDate) {
-      queryParams.append('from_date', fromDate.toISOString());
-    }
-    
+  async listDocuments(userId: string, envelopeId: string) {
+    const client = await this.client.getClient(userId);
+
     const response = await fetch(
-      `${this.basePath}/accounts/${this.accountId}/envelopes?${queryParams}`,
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}/documents`,
       {
-        headers,
+        headers: client.headers,
       }
     );
 
     if (!response.ok) {
-      throw new Error('Failed to list envelopes');
+      throw new Error('Failed to list documents');
     }
 
     return response.json();
   }
 
-  public async getEnvelopeDocument(
-    userId: string,
-    envelopeId: string,
-    documentId: string
-  ) {
-    const headers = await this.getHeaders(userId);
-    
+  async downloadDocument(userId: string, envelopeId: string, documentId: string) {
+    const client = await this.client.getClient(userId);
+
     const response = await fetch(
-      `${this.basePath}/accounts/${this.accountId}/envelopes/${envelopeId}/documents/${documentId}`,
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}/documents/${documentId}`,
       {
-        headers,
+        headers: client.headers,
       }
     );
 
     if (!response.ok) {
-      throw new Error('Failed to get envelope document');
+      throw new Error('Failed to download document');
     }
 
     return response.blob();
+  }
+
+  async voidEnvelope(userId: string, envelopeId: string, voidReason: string) {
+    const client = await this.client.getClient(userId);
+
+    const response = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}`,
+      {
+        method: 'PUT',
+        headers: client.headers,
+        body: JSON.stringify({
+          status: 'voided',
+          voidedReason: voidReason,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to void envelope');
+    }
   }
 } 
