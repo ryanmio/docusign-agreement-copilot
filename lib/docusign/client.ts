@@ -31,8 +31,13 @@ export class DocuSignClient {
     this.clientSecret = process.env.DOCUSIGN_CLIENT_SECRET!;
     this.authServer = process.env.DOCUSIGN_AUTHORIZATION_SERVER!;
     this.basePath = process.env.DOCUSIGN_OAUTH_BASE_PATH!;
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!.replace(/\/$/, '');
-    this.redirectUri = `${baseUrl}/api/auth/docusign/callback`;
+    
+    // Use URL constructor to handle slashes properly
+    const baseUrl = new URL(process.env.NEXT_PUBLIC_BASE_URL!);
+    this.redirectUri = new URL('/api/auth/docusign/callback', baseUrl).toString();
+    
+    console.log('BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL);
+    console.log('Final redirect URI:', this.redirectUri);
   }
 
   private async getSupabase() {
@@ -47,11 +52,14 @@ export class DocuSignClient {
       'impersonation',
     ].join('+');
 
-    return `${this.basePath}/oauth/auth?` +
+    const url = `${this.basePath}/oauth/auth?` +
       `response_type=code&` +
       `scope=${scopes}&` +
       `client_id=${this.clientId}&` +
       `redirect_uri=${encodeURIComponent(this.redirectUri)}`;
+    
+    console.log('Full auth URL:', url);
+    return url;
   }
 
   private async storeTokens(userId: string, tokens: DocuSignToken) {
