@@ -13,6 +13,7 @@ export async function GET() {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
+      console.log('Status check: No user found', userError);
       return NextResponse.json(
         { error: 'Not authenticated' },
         { 
@@ -24,12 +25,15 @@ export async function GET() {
       );
     }
 
+    console.log('Status check: Checking credentials for user', user.id);
     const { data: credentials, error: credentialsError } = await supabase
       .from('api_credentials')
       .select('created_at, expires_at')
       .eq('user_id', user.id)
       .eq('provider', 'docusign')
       .maybeSingle();
+
+    console.log('Status check: Credentials result', { credentials, credentialsError });
 
     if (credentialsError && credentialsError.code !== 'PGRST116') {
       console.error('Error fetching credentials:', credentialsError);

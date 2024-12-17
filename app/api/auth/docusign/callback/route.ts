@@ -4,10 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { DocuSignClient } from '@/lib/docusign/client';
 
 export async function GET(request: NextRequest) {
+  console.log('DocuSign callback received');
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
+
+  console.log('Callback params:', { code: code?.substring(0, 10) + '...', error, errorDescription });
 
   if (error) {
     console.error('DocuSign OAuth Error:', error, errorDescription);
@@ -18,6 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!code) {
+    console.log('No authorization code received');
     return NextResponse.redirect(
       new URL('/settings?error=No authorization code received', 
       process.env.NEXT_PUBLIC_BASE_URL)
@@ -29,6 +33,8 @@ export async function GET(request: NextRequest) {
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
+    console.log('Auth check:', { userId: user?.id, error: userError });
+
     if (userError || !user) {
       console.error('Auth error:', userError);
       return NextResponse.redirect(
@@ -36,8 +42,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log('Exchanging code for token...');
     const docusign = new DocuSignClient();
     await docusign.exchangeCodeForToken(code, user.id);
+    console.log('Token exchange successful');
 
     return NextResponse.redirect(
       new URL('/settings?success=DocuSign connected successfully', 

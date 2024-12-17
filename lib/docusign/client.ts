@@ -63,6 +63,7 @@ export class DocuSignClient {
   }
 
   private async storeTokens(userId: string, tokens: DocuSignToken) {
+    console.log('Storing tokens for user:', userId);
     const supabase = await this.getSupabase();
     const { error } = await supabase
       .from('api_credentials')
@@ -80,9 +81,11 @@ export class DocuSignClient {
       console.error('Error storing tokens:', error);
       throw new Error('Failed to store tokens');
     }
+    console.log('Tokens stored in database successfully');
   }
 
   public async exchangeCodeForToken(code: string, userId: string): Promise<void> {
+    console.log('Starting token exchange for user:', userId);
     const response = await fetch(`${this.basePath}/oauth/token`, {
       method: 'POST',
       headers: {
@@ -97,6 +100,7 @@ export class DocuSignClient {
       }),
     });
 
+    console.log('Token exchange response status:', response.status);
     if (!response.ok) {
       const error = await response.text();
       console.error('Token exchange error:', error);
@@ -104,6 +108,8 @@ export class DocuSignClient {
     }
 
     const data = await response.json();
+    console.log('Token exchange successful, got access token');
+    
     const expiresAt = new Date();
     expiresAt.setSeconds(expiresAt.getSeconds() + data.expires_in);
 
@@ -112,6 +118,7 @@ export class DocuSignClient {
       refresh_token: data.refresh_token,
       expires_at: expiresAt,
     });
+    console.log('Tokens stored successfully');
   }
 
   public async refreshToken(userId: string, refreshToken: string): Promise<DocuSignToken> {
