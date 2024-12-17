@@ -1,13 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/api/webhooks/docusign',
-        destination: '/api/webhooks/docusign',
-      },
-    ];
-  },
   async headers() {
     return [
       {
