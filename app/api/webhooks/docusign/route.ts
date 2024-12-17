@@ -41,19 +41,36 @@ export async function POST(request: NextRequest) {
       const status = mapDocuSignStatus(rawStatus);
       console.log('Mapped status:', { rawStatus, mappedStatus: status });
 
-      const { error: updateError } = await supabase
+      // First, verify the envelope exists
+      const { data: existingEnvelope, error: selectError } = await supabase
         .from('envelopes')
-        .update({ 
-          status: status,
-          updated_at: new Date().toISOString(),
-          completed_at: status === 'completed' ? new Date().toISOString() : null,
-        })
-        .eq('docusign_envelope_id', envelopeId);
+        .select('id, status')
+        .eq('docusign_envelope_id', envelopeId)
+        .single();
+
+      if (selectError) {
+        console.error('Error finding envelope:', selectError);
+        throw selectError;
+      }
+
+      console.log('Found envelope:', existingEnvelope);
+
+      // Use RPC call to update with proper enum casting
+      const { data: updatedEnvelope, error: updateError } = await supabase.rpc(
+        'update_envelope_status',
+        {
+          p_docusign_envelope_id: envelopeId,
+          p_status: status,
+          p_completed_at: status === 'completed' ? new Date().toISOString() : null
+        }
+      );
 
       if (updateError) {
         console.error('Error updating envelope:', updateError);
         throw updateError;
       }
+
+      console.log('Update result:', updatedEnvelope);
 
       // Update recipient status if available
       if (recipients?.length > 0) {
