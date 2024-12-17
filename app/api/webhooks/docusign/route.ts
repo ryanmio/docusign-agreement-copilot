@@ -6,7 +6,10 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Received DocuSign webhook');
     const payload = await request.json();
+    console.log('Webhook payload:', JSON.stringify(payload, null, 2));
+    
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
@@ -15,9 +18,15 @@ export async function POST(request: NextRequest) {
     const status = payload.data?.envelopeSummary?.status?.toLowerCase();
     const recipients = payload.data?.envelopeSummary?.recipients?.signers;
 
+    console.log('Processing webhook:', {
+      envelopeId,
+      status,
+      recipientCount: recipients?.length
+    });
+
     if (envelopeId && status) {
-      // Update envelope status in database
-      await supabase
+      console.log('Updating envelope status:', { envelopeId, status });
+      const { error: updateError } = await supabase
         .from('envelopes')
         .update({ 
           status: status,
@@ -26,10 +35,15 @@ export async function POST(request: NextRequest) {
         })
         .eq('docusign_envelope_id', envelopeId);
 
+      if (updateError) {
+        console.error('Error updating envelope:', updateError);
+      }
+
       // Update recipient status if available
       if (recipients?.length > 0) {
         for (const recipient of recipients) {
           if (recipient.email) {
+            console.log('Updating recipient:', { email: recipient.email, status: recipient.status });
             const { data: envelope } = await supabase
               .from('envelopes')
               .select('id')
@@ -37,7 +51,7 @@ export async function POST(request: NextRequest) {
               .single();
 
             if (envelope) {
-              await supabase
+              const { error: recipientError } = await supabase
                 .from('recipients')
                 .update({
                   status: recipient.status?.toLowerCase(),
@@ -46,6 +60,10 @@ export async function POST(request: NextRequest) {
                 })
                 .eq('envelope_id', envelope.id)
                 .eq('email', recipient.email);
+
+              if (recipientError) {
+                console.error('Error updating recipient:', recipientError);
+              }
             }
           }
         }
@@ -53,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the webhook event
-    await supabase
+    const { error: logError } = await supabase
       .from('webhook_events')
       .insert({
         provider: 'docusign',
@@ -62,6 +80,11 @@ export async function POST(request: NextRequest) {
         processed_at: new Date().toISOString(),
       });
 
+    if (logError) {
+      console.error('Error logging webhook event:', logError);
+    }
+
+    console.log('Webhook processed successfully');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error processing DocuSign webhook:', error);
