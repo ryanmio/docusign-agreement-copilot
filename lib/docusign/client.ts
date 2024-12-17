@@ -31,7 +31,8 @@ export class DocuSignClient {
     this.clientSecret = process.env.DOCUSIGN_CLIENT_SECRET!;
     this.authServer = process.env.DOCUSIGN_AUTHORIZATION_SERVER!;
     this.basePath = process.env.DOCUSIGN_OAUTH_BASE_PATH!;
-    this.redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/docusign/callback`;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!.replace(/\/$/, '');
+    this.redirectUri = `${baseUrl}/api/auth/docusign/callback`;
   }
 
   private async getSupabase() {
