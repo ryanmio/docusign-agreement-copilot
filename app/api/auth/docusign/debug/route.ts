@@ -2,8 +2,6 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   try {
     const cookieStore = cookies();
@@ -14,33 +12,43 @@ export async function GET() {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Get all credentials for this user
-    const { data: credentials, error: credentialsError } = await supabase
+    // Get all credentials for the user
+    const { data: credentials } = await supabase
       .from('api_credentials')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .eq('provider', 'docusign')
+      .order('created_at', { ascending: false });
 
-    if (credentialsError) {
-      return NextResponse.json({ error: credentialsError.message }, { status: 500 });
+    console.log('Found credentials:', credentials?.length);
+
+    if (credentials && credentials.length > 1) {
+      // Keep the most recent one and delete the rest
+      const [latest, ...oldOnes] = credentials;
+      const oldIds = oldOnes.map(c => c.id);
+
+      const { error: deleteError } = await supabase
+        .from('api_credentials')
+        .delete()
+        .in('id', oldIds);
+
+      if (deleteError) {
+        return NextResponse.json({ error: 'Failed to clean up' }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        message: 'Cleaned up duplicate credentials',
+        deleted: oldIds.length,
+        kept: latest.id
+      });
     }
 
-    // Get all tables
-    const { data: tables, error: tablesError } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public');
-
     return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email
-      },
-      credentials,
-      tables,
-      timestamp: new Date().toISOString()
+      message: 'No cleanup needed',
+      count: credentials?.length || 0
     });
   } catch (error) {
     console.error('Debug error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 } 

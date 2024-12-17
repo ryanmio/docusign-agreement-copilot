@@ -65,22 +65,50 @@ export class DocuSignClient {
   private async storeTokens(userId: string, tokens: DocuSignToken) {
     console.log('Storing tokens for user:', userId);
     const supabase = await this.getSupabase();
-    const { error } = await supabase
-      .from('api_credentials')
-      .upsert({
-        user_id: userId,
-        provider: 'docusign',
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expires_at: tokens.expires_at,
-        updated_at: new Date().toISOString(),
-      })
-      .match({ user_id: userId, provider: 'docusign' });
 
-    if (error) {
-      console.error('Error storing tokens:', error);
-      throw new Error('Failed to store tokens');
+    // First, try to find existing credentials
+    const { data: existing } = await supabase
+      .from('api_credentials')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('provider', 'docusign')
+      .maybeSingle();
+
+    if (existing) {
+      // Update existing record
+      const { error } = await supabase
+        .from('api_credentials')
+        .update({
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_at: tokens.expires_at,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id);
+
+      if (error) {
+        console.error('Error updating tokens:', error);
+        throw new Error('Failed to update tokens');
+      }
+    } else {
+      // Insert new record
+      const { error } = await supabase
+        .from('api_credentials')
+        .insert({
+          user_id: userId,
+          provider: 'docusign',
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_at: tokens.expires_at,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) {
+        console.error('Error inserting tokens:', error);
+        throw new Error('Failed to store tokens');
+      }
     }
+
     console.log('Tokens stored in database successfully');
   }
 
