@@ -52,10 +52,11 @@ const voidEnvelopeSchema = z.object({
 });
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
