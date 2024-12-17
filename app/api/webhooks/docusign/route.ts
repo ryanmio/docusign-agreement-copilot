@@ -1,8 +1,21 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { EnvelopeStatus } from '@/types/envelopes';
 
 export const dynamic = 'force-dynamic';
+
+// Map DocuSign status to our envelope status
+const mapDocuSignStatus = (status: string): EnvelopeStatus => {
+  const statusMap: Record<string, EnvelopeStatus> = {
+    'sent': 'sent',
+    'delivered': 'delivered',
+    'completed': 'completed',
+    'declined': 'declined',
+    'voided': 'voided',
+  };
+  return statusMap[status.toLowerCase()] || 'error';
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,17 +28,19 @@ export async function POST(request: NextRequest) {
 
     // Extract envelope data
     const envelopeId = payload.data?.envelopeId;
-    const status = payload.data?.envelopeSummary?.status?.toLowerCase();
+    const rawStatus = payload.data?.envelopeSummary?.status?.toLowerCase();
     const recipients = payload.data?.envelopeSummary?.recipients?.signers;
 
     console.log('Processing webhook:', {
       envelopeId,
-      status,
+      rawStatus,
       recipientCount: recipients?.length
     });
 
-    if (envelopeId && status) {
-      console.log('Updating envelope status:', { envelopeId, status });
+    if (envelopeId && rawStatus) {
+      const status = mapDocuSignStatus(rawStatus);
+      console.log('Mapped status:', { rawStatus, mappedStatus: status });
+
       const { error: updateError } = await supabase
         .from('envelopes')
         .update({ 
@@ -37,6 +52,7 @@ export async function POST(request: NextRequest) {
 
       if (updateError) {
         console.error('Error updating envelope:', updateError);
+        throw updateError;
       }
 
       // Update recipient status if available
@@ -51,11 +67,12 @@ export async function POST(request: NextRequest) {
               .single();
 
             if (envelope) {
+              const recipientStatus = recipient.status?.toLowerCase();
               const { error: recipientError } = await supabase
                 .from('recipients')
                 .update({
-                  status: recipient.status?.toLowerCase(),
-                  completed_at: recipient.status === 'completed' ? new Date().toISOString() : null,
+                  status: recipientStatus,
+                  completed_at: recipientStatus === 'completed' ? new Date().toISOString() : null,
                   updated_at: new Date().toISOString(),
                 })
                 .eq('envelope_id', envelope.id)
@@ -63,6 +80,7 @@ export async function POST(request: NextRequest) {
 
               if (recipientError) {
                 console.error('Error updating recipient:', recipientError);
+                throw recipientError;
               }
             }
           }
@@ -82,6 +100,7 @@ export async function POST(request: NextRequest) {
 
     if (logError) {
       console.error('Error logging webhook event:', logError);
+      throw logError;
     }
 
     console.log('Webhook processed successfully');
