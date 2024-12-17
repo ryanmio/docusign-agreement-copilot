@@ -41,20 +41,43 @@ export async function POST(request: NextRequest) {
       const status = mapDocuSignStatus(rawStatus);
       console.log('Mapped status:', { rawStatus, mappedStatus: status });
 
-      // Simple update with proper status
-      const { error: updateError } = await supabase
+      // First verify the envelope exists
+      const { data: existingEnvelope, error: findError } = await supabase
         .from('envelopes')
-        .update({
-          status: status,
-          updated_at: new Date().toISOString(),
-          completed_at: status === 'completed' ? new Date().toISOString() : null
-        })
-        .eq('docusign_envelope_id', envelopeId);
+        .select('id, status')
+        .eq('docusign_envelope_id', envelopeId)
+        .single();
+
+      if (findError) {
+        console.error('Error finding envelope:', findError);
+        throw findError;
+      }
+
+      console.log('Found envelope:', existingEnvelope);
+
+      // Prepare update data
+      const updateData = {
+        status: status,
+        updated_at: new Date().toISOString(),
+        completed_at: status === 'completed' ? new Date().toISOString() : null
+      };
+
+      console.log('Updating envelope with data:', updateData);
+
+      // Simple update with proper status
+      const { data: updatedEnvelope, error: updateError } = await supabase
+        .from('envelopes')
+        .update(updateData)
+        .eq('docusign_envelope_id', envelopeId)
+        .select()
+        .single();
 
       if (updateError) {
         console.error('Error updating envelope:', updateError);
         throw updateError;
       }
+
+      console.log('Update successful:', updatedEnvelope);
 
       // Update recipient status if available
       if (recipients?.length > 0) {
