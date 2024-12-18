@@ -223,13 +223,29 @@ export class DocuSignEnvelopes {
     }
 
     const data = await response.json();
-    console.log('DocuSignEnvelopes.listTemplates - Success:', {
-      resultSetSize: data.resultSetSize,
-      totalSetSize: data.totalSetSize,
-      templateCount: data.templates?.length
-    });
+    console.log('DocuSignEnvelopes.listTemplates - Raw response:', data);
 
-    return data as Promise<ListTemplatesResponse>;
+    // Map DocuSign response to our expected format
+    const templates = (data.envelopeTemplates || []).map(template => ({
+      templateId: template.templateId,
+      name: template.name,
+      description: template.description,
+      shared: template.shared === 'true',
+      created: template.created,
+      lastModified: template.lastModified,
+      roles: [], // We'll need to fetch roles separately if needed
+    }));
+
+    const result = {
+      templates,
+      resultSetSize: parseInt(data.resultSetSize) || 0,
+      totalSetSize: parseInt(data.totalSetSize) || 0,
+      startPosition: parseInt(data.startPosition) || 0,
+    };
+
+    console.log('DocuSignEnvelopes.listTemplates - Mapped response:', result);
+
+    return result;
   }
 
   async getTemplate(userId: string, templateId: string) {
@@ -252,7 +268,31 @@ export class DocuSignEnvelopes {
       throw new Error(`Failed to get template: ${errorData}`);
     }
 
-    return response.json() as Promise<TemplateResponse>;
+    const data = await response.json();
+    console.log('DocuSignEnvelopes.getTemplate - Raw response:', data);
+
+    // Map DocuSign response to our expected format
+    const template = {
+      templateId: data.templateId,
+      name: data.name,
+      description: data.description,
+      shared: data.shared === 'true',
+      created: data.created,
+      lastModified: data.lastModified,
+      roles: (data.recipients?.signers || []).map((signer: any) => ({
+        roleName: signer.roleName,
+        name: signer.name || '',
+        signingOrder: signer.routingOrder,
+        defaultRecipient: signer.email ? {
+          email: signer.email,
+          name: signer.name,
+        } : undefined,
+      })),
+    };
+
+    console.log('DocuSignEnvelopes.getTemplate - Mapped response:', template);
+
+    return template;
   }
 
   async createEnvelopeFromTemplate(userId: string, templateId: string, {
