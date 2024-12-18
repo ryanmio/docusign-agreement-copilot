@@ -99,18 +99,44 @@ export default function NewDocumentPage() {
       setLoading(true);
       setError(null);
 
+      console.log('Starting form submission:', {
+        useTemplate,
+        selectedTemplate: selectedTemplate?.templateId,
+        subject,
+        message,
+        recipientsCount: recipients.length,
+      });
+
       if (!useTemplate && documents.length === 0) {
         throw new Error('Please add at least one document');
       }
 
-      if (!useTemplate && recipients.length === 0) {
+      if (recipients.length === 0) {
         throw new Error('Please add at least one recipient');
       }
 
       if (useTemplate && !selectedTemplate) {
         throw new Error('Please select a template');
-        return;
       }
+
+      const payload = useTemplate 
+        ? {
+            subject,
+            message,
+            roles: recipients.map(recipient => ({
+              email: recipient.email,
+              name: recipient.name,
+              roleName: recipient.roleName || 'Signer 1', // Default role name if not specified
+            })),
+          }
+        : {
+            subject,
+            message,
+            documents,
+            recipients,
+          };
+
+      console.log('Sending request with payload:', payload);
 
       const response = await fetch(
         useTemplate 
@@ -121,21 +147,22 @@ export default function NewDocumentPage() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            subject,
-            message,
-            ...(useTemplate 
-              ? { roles: recipients }
-              : { documents, recipients }
-            ),
-          }),
+          body: JSON.stringify(payload),
         }
       );
+
+      console.log('Received response:', {
+        status: response.status,
+        ok: response.ok,
+      });
 
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'Failed to create envelope');
       }
+
+      const result = await response.json();
+      console.log('Successfully created envelope:', result);
 
       router.push('/documents');
     } catch (err) {
@@ -212,8 +239,9 @@ export default function NewDocumentPage() {
               <TemplateRoleForm
                 template={selectedTemplate}
                 onSubmit={(roles) => {
+                  console.log('TemplateRoleForm submitted with roles:', roles);
                   setRecipients(roles);
-                  handleSubmit(new Event('submit') as any);
+                  // Don't call handleSubmit here, let the form's submit handler work
                 }}
                 onCancel={() => setSelectedTemplate(null)}
               />
@@ -297,17 +325,17 @@ export default function NewDocumentPage() {
             </>
           )}
 
-          {!selectedTemplate && (
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md disabled:opacity-50"
-              >
-                {loading ? 'Creating...' : 'Create Envelope'}
-              </button>
-            </div>
-          )}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={loading}
+              className={`px-4 py-2 bg-blue-500 text-white rounded-md ${
+                loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+              }`}
+            >
+              {loading ? 'Sending...' : 'Send for Signature'}
+            </button>
+          </div>
         </form>
       </div>
     </main>
