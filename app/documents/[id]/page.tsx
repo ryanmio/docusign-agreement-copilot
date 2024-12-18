@@ -5,11 +5,13 @@ import { Alert } from '@/components/ui/alert';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 import PDFViewer from '@/components/pdf-viewer';
 
+interface PageProps {
+  params: { id: string };
+}
+
 export default async function DocumentDetailsPage({
   params
-}: {
-  params: { id: string }
-}) {
+}: PageProps) {
   const cookieStore = cookies();
   const supabase = createServerComponentClient({ cookies: () => cookieStore });
   const { data: { user }, error: userError } = await supabase.auth.getUser();
