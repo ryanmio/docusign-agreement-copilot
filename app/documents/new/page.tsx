@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
-import { CreateEnvelopePayload, Document, Recipient } from '@/types/envelopes';
+import { CreateEnvelopePayload, Document, Recipient, TemplateResponse } from '@/types/envelopes';
+import { TemplateSelector } from '@/components/template-selector';
+import { TemplateRoleForm } from '@/components/template-role-form';
 
 export default function NewDocumentPage() {
   const router = useRouter();
@@ -13,6 +15,8 @@ export default function NewDocumentPage() {
   const [message, setMessage] = useState('');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [recipients, setRecipients] = useState<Recipient[]>([{ email: '', name: '' }]);
+  const [useTemplate, setUseTemplate] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateResponse | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -58,49 +62,56 @@ export default function NewDocumentPage() {
     setRecipients([...recipients, { email: '', name: '' }]);
   };
 
+  const removeRecipient = (index: number) => {
+    setRecipients(recipients.filter((_, i) => i !== index));
+  };
+
   const updateRecipient = (index: number, field: keyof Recipient, value: string) => {
     const newRecipients = [...recipients];
     newRecipients[index] = { ...newRecipients[index], [field]: value };
     setRecipients(newRecipients);
   };
 
-  const removeRecipient = (index: number) => {
-    if (recipients.length > 1) {
-      setRecipients(recipients.filter((_, i) => i !== index));
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!documents.length) {
-      setError('Please add at least one document');
-      return;
-    }
-
-    if (!recipients.some(r => r.email && r.name)) {
-      setError('Please add at least one recipient');
-      return;
-    }
-
-    const payload: CreateEnvelopePayload = {
-      subject,
-      message,
-      documents,
-      recipients: recipients.filter(r => r.email && r.name),
-    };
+    if (loading) return;
 
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/envelopes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      if (!useTemplate && documents.length === 0) {
+        throw new Error('Please add at least one document');
+      }
+
+      if (!useTemplate && recipients.length === 0) {
+        throw new Error('Please add at least one recipient');
+      }
+
+      if (useTemplate && !selectedTemplate) {
+        throw new Error('Please select a template');
+        return;
+      }
+
+      const response = await fetch(
+        useTemplate 
+          ? `/api/templates/${selectedTemplate!.templateId}/envelopes`
+          : '/api/envelopes',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            subject,
+            message,
+            ...(useTemplate 
+              ? { roles: recipients.map(r => ({ ...r, roleName: 'Signer 1' })) }
+              : { documents, recipients }
+            ),
+          }),
+        }
+      );
 
       if (!response.ok) {
         const data = await response.json();
@@ -109,7 +120,8 @@ export default function NewDocumentPage() {
 
       router.push('/documents');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error creating envelope:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create envelope');
     } finally {
       setLoading(false);
     }
@@ -121,113 +133,157 @@ export default function NewDocumentPage() {
         <h1 className="text-3xl font-bold mb-8">New Document</h1>
 
         {error && (
-          <Alert variant="destructive" className="mb-4">
+          <Alert variant="destructive" className="mb-6">
             {error}
           </Alert>
         )}
 
+        <div className="mb-6">
+          <div className="flex gap-4 mb-4">
+            <button
+              onClick={() => setUseTemplate(false)}
+              className={`px-4 py-2 rounded-md ${!useTemplate ? 'bg-blue-500 text-white' : 'border'}`}
+            >
+              Upload Documents
+            </button>
+            <button
+              onClick={() => setUseTemplate(true)}
+              className={`px-4 py-2 rounded-md ${useTemplate ? 'bg-blue-500 text-white' : 'border'}`}
+            >
+              Use Template
+            </button>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block mb-2">Subject</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Subject
+            </label>
             <input
               type="text"
+              required
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              required
-              className="w-full border rounded-md px-3 py-2"
-              placeholder="Enter subject"
+              className="mt-1 block w-full px-3 py-2 border rounded-md"
+              placeholder="Please sign this document"
             />
           </div>
 
           <div>
-            <label className="block mb-2">Message (Optional)</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Message (Optional)
+            </label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full border rounded-md px-3 py-2"
+              className="mt-1 block w-full px-3 py-2 border rounded-md"
               rows={3}
-              placeholder="Enter message"
+              placeholder="Additional message for recipients"
             />
           </div>
 
-          <div>
-            <label className="block mb-2">Documents</label>
-            <input
-              type="file"
-              onChange={handleFileChange}
-              multiple
-              accept=".pdf,.doc,.docx,.txt"
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-            {documents.length > 0 && (
-              <ul className="mt-2 space-y-1">
-                {documents.map((doc, index) => (
-                  <li key={index} className="text-sm text-gray-600">
-                    {doc.name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div>
-            <label className="block mb-2">Recipients</label>
-            <div className="space-y-4">
-              {recipients.map((recipient, index) => (
-                <div key={index} className="flex gap-4">
+          {useTemplate ? (
+            selectedTemplate ? (
+              <TemplateRoleForm
+                template={selectedTemplate}
+                onSubmit={(roles) => {
+                  setRecipients(roles);
+                  handleSubmit(new Event('submit') as any);
+                }}
+                onCancel={() => setSelectedTemplate(null)}
+              />
+            ) : (
+              <TemplateSelector onSelect={setSelectedTemplate} />
+            )
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Documents
+                </label>
+                <div className="mt-1">
                   <input
-                    type="email"
-                    value={recipient.email}
-                    onChange={(e) => updateRecipient(index, 'email', e.target.value)}
-                    required
-                    className="flex-1 border rounded-md px-3 py-2"
-                    placeholder="Email"
+                    type="file"
+                    onChange={handleFileChange}
+                    multiple
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
-                  <input
-                    type="text"
-                    value={recipient.name}
-                    onChange={(e) => updateRecipient(index, 'name', e.target.value)}
-                    required
-                    className="flex-1 border rounded-md px-3 py-2"
-                    placeholder="Name"
-                  />
-                  {recipients.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeRecipient(index)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Remove
-                    </button>
-                  )}
                 </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={addRecipient}
-              className="mt-2 text-blue-600 hover:text-blue-800"
-            >
-              + Add Recipient
-            </button>
-          </div>
+                {documents.length > 0 && (
+                  <ul className="mt-2 space-y-2">
+                    {documents.map((doc, index) => (
+                      <li key={index} className="text-sm text-gray-600">
+                        {doc.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md disabled:opacity-50"
-            >
-              {loading ? 'Creating...' : 'Create Envelope'}
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push('/documents')}
-              className="border border-gray-300 hover:bg-gray-50 px-6 py-2 rounded-md"
-            >
-              Cancel
-            </button>
-          </div>
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Recipients
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addRecipient}
+                    className="text-sm text-blue-500 hover:text-blue-600"
+                  >
+                    Add Recipient
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {recipients.map((recipient, index) => (
+                    <div key={index} className="flex gap-4">
+                      <div className="flex-1">
+                        <input
+                          type="email"
+                          required
+                          value={recipient.email}
+                          onChange={(e) => updateRecipient(index, 'email', e.target.value)}
+                          className="block w-full px-3 py-2 border rounded-md"
+                          placeholder="Email"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          required
+                          value={recipient.name}
+                          onChange={(e) => updateRecipient(index, 'name', e.target.value)}
+                          className="block w-full px-3 py-2 border rounded-md"
+                          placeholder="Name"
+                        />
+                      </div>
+                      {recipients.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeRecipient(index)}
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {!selectedTemplate && (
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md disabled:opacity-50"
+              >
+                {loading ? 'Creating...' : 'Create Envelope'}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </main>
