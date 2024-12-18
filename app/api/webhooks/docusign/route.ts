@@ -46,31 +46,27 @@ export async function POST(request: NextRequest) {
         .from('envelopes')
         .select('id, status')
         .eq('docusign_envelope_id', envelopeId)
-        .single();
+        .maybeSingle();
 
       if (findError) {
         console.error('Error finding envelope:', findError);
         throw findError;
       }
 
+      if (!existingEnvelope) {
+        console.error('Envelope not found:', envelopeId);
+        throw new Error('Envelope not found');
+      }
+
       console.log('Found envelope:', existingEnvelope);
 
-      // Prepare update data
-      const updateData = {
-        status: status,
-        updated_at: new Date().toISOString(),
-        completed_at: status === 'completed' ? new Date().toISOString() : null
-      };
-
-      console.log('Updating envelope with data:', updateData);
-
-      // Simple update with proper status
+      // Use the stored procedure to update the status
       const { data: updatedEnvelope, error: updateError } = await supabase
-        .from('envelopes')
-        .update(updateData)
-        .eq('docusign_envelope_id', envelopeId)
-        .select()
-        .single();
+        .rpc('update_envelope_status', {
+          p_docusign_envelope_id: envelopeId,
+          p_status: status,
+          p_completed_at: status === 'completed' ? new Date().toISOString() : null
+        });
 
       if (updateError) {
         console.error('Error updating envelope:', updateError);
@@ -84,28 +80,20 @@ export async function POST(request: NextRequest) {
         for (const recipient of recipients) {
           if (recipient.email) {
             console.log('Updating recipient:', { email: recipient.email, status: recipient.status });
-            const { data: envelope } = await supabase
-              .from('envelopes')
-              .select('id')
-              .eq('docusign_envelope_id', envelopeId)
-              .single();
+            const recipientStatus = recipient.status?.toLowerCase();
+            const { error: recipientError } = await supabase
+              .from('recipients')
+              .update({
+                status: recipientStatus,
+                completed_at: recipientStatus === 'completed' ? new Date().toISOString() : null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('envelope_id', existingEnvelope.id)
+              .eq('email', recipient.email);
 
-            if (envelope) {
-              const recipientStatus = recipient.status?.toLowerCase();
-              const { error: recipientError } = await supabase
-                .from('recipients')
-                .update({
-                  status: recipientStatus,
-                  completed_at: recipientStatus === 'completed' ? new Date().toISOString() : null,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq('envelope_id', envelope.id)
-                .eq('email', recipient.email);
-
-              if (recipientError) {
-                console.error('Error updating recipient:', recipientError);
-                throw recipientError;
-              }
+            if (recipientError) {
+              console.error('Error updating recipient:', recipientError);
+              throw recipientError;
             }
           }
         }
