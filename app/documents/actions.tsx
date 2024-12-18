@@ -13,6 +13,7 @@ interface DocumentActionsProps {
 export function DocumentActions({ envelope }: DocumentActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   const handleVoid = async () => {
     if (!confirm('Are you sure you want to void this envelope? This action cannot be undone.')) {
@@ -61,10 +62,15 @@ export function DocumentActions({ envelope }: DocumentActionsProps) {
         throw new Error(data.error || 'Failed to resend envelope');
       }
 
-      router.refresh();
+      setResendSuccess(true);
+      setTimeout(() => {
+        setResendSuccess(false);
+        router.refresh();
+      }, 2000);
     } catch (err) {
       console.error('Error resending envelope:', err);
       alert(err instanceof Error ? err.message : 'Failed to resend envelope');
+      router.refresh();
     } finally {
       setLoading(false);
     }
@@ -75,10 +81,10 @@ export function DocumentActions({ envelope }: DocumentActionsProps) {
       {envelope.status !== 'completed' && envelope.status !== 'voided' && (
         <button
           onClick={handleResend}
-          disabled={loading}
+          disabled={loading || resendSuccess}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm disabled:opacity-50"
         >
-          {loading ? 'Processing...' : 'Resend'}
+          {loading ? 'Processing...' : resendSuccess ? 'Resent!' : 'Resend'}
         </button>
       )}
       {['sent', 'delivered', 'created'].includes(envelope.status) && (
