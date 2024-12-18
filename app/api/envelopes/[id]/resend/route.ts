@@ -49,7 +49,7 @@ export async function POST(
     }
 
     // Create new envelope with same content
-    const docusign = new DocuSignEnvelopes();
+    const docusign = new DocuSignEnvelopes(supabase);
 
     // Get original documents
     const originalDocs = await docusign.listDocuments(user.id, envelope.docusign_envelope_id);

@@ -42,7 +42,7 @@ export default function DocumentDetailsPage({
       setEnvelope(envelopeData);
 
       try {
-        const docusign = new DocuSignEnvelopes();
+        const docusign = new DocuSignEnvelopes(supabase);
         const docs = await docusign.listDocuments(user.id, envelopeData.docusign_envelope_id);
         setDocuments(docs);
       } catch (error) {

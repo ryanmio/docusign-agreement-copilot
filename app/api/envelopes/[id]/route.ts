@@ -87,7 +87,7 @@ export async function DELETE(
     const { reason } = voidEnvelopeSchema.parse(json);
 
     // Void envelope in DocuSign
-    const docusign = new DocuSignEnvelopes();
+    const docusign = new DocuSignEnvelopes(supabase);
     await docusign.voidEnvelope(user.id, envelope.docusign_envelope_id, reason);
 
     // Update status in database

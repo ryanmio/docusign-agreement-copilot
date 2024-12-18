@@ -1,4 +1,5 @@
 import { DocuSignClient } from './client';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 interface CreateEnvelopeDocument {
   name: string;
@@ -23,8 +24,8 @@ interface CreateEnvelopeOptions {
 export class DocuSignEnvelopes {
   private client: DocuSignClient;
 
-  constructor() {
-    this.client = new DocuSignClient();
+  constructor(supabase: SupabaseClient) {
+    this.client = new DocuSignClient(supabase);
   }
 
   async createEnvelope(userId: string, options: CreateEnvelopeOptions) {

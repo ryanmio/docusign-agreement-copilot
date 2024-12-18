@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('Exchanging code for token...');
-    const docusign = new DocuSignClient();
+    const docusign = new DocuSignClient(supabase);
     await docusign.exchangeCodeForToken(code, user.id);
     console.log('Token exchange successful');
 

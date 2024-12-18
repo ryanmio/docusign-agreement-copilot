@@ -38,7 +38,7 @@ export async function GET(
     }
 
     // Download document from DocuSign
-    const docusign = new DocuSignEnvelopes();
+    const docusign = new DocuSignEnvelopes(supabase);
     const document = await docusign.downloadDocument(
       user.id,
       envelope.docusign_envelope_id,

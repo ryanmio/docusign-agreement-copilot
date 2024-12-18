@@ -12,7 +12,7 @@ export async function GET() {
       return NextResponse.redirect(new URL('/auth/login', process.env.NEXT_PUBLIC_BASE_URL));
     }
 
-    const docusign = new DocuSignClient();
+    const docusign = new DocuSignClient(supabase);
     const authUrl = docusign.getAuthorizationUrl();
     
     console.log('DocuSign Auth Debug:');

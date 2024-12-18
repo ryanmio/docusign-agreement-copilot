@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const docusign = new DocuSignEnvelopes();
+    const docusign = new DocuSignEnvelopes(supabase);
     
     // Create envelope in DocuSign
     const docusignResponse = await docusign.createEnvelope(user.id, {

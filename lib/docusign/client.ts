@@ -1,5 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 interface DocuSignToken {
   access_token: string;
@@ -25,12 +24,14 @@ export class DocuSignClient {
   private redirectUri: string;
   private authServer: string;
   private basePath: string;
+  private supabase: SupabaseClient;
 
-  constructor() {
+  constructor(supabase: SupabaseClient) {
     this.clientId = process.env.DOCUSIGN_CLIENT_ID!;
     this.clientSecret = process.env.DOCUSIGN_CLIENT_SECRET!;
     this.authServer = process.env.DOCUSIGN_AUTHORIZATION_SERVER!;
     this.basePath = process.env.DOCUSIGN_OAUTH_BASE_PATH!;
+    this.supabase = supabase;
     
     // Use URL constructor to handle slashes properly
     const baseUrl = new URL(process.env.NEXT_PUBLIC_BASE_URL!);
@@ -40,34 +41,27 @@ export class DocuSignClient {
     console.log('Final redirect URI:', this.redirectUri);
   }
 
-  private async getSupabase() {
-    const cookieStore = cookies();
-    return createRouteHandlerClient({ cookies: () => cookieStore });
-  }
+  private async getCredentials(userId: string) {
+    const { data: credentials, error } = await this.supabase
+      .from('api_credentials')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('provider', 'docusign')
+      .single();
 
-  public getAuthorizationUrl(): string {
-    const scopes = [
-      'signature',
-      'extended',
-      'impersonation',
-    ].join('+');
+    if (error || !credentials) {
+      console.error('Error fetching credentials:', error);
+      throw new Error('No DocuSign credentials found');
+    }
 
-    const url = `${this.basePath}/oauth/auth?` +
-      `response_type=code&` +
-      `scope=${scopes}&` +
-      `client_id=${this.clientId}&` +
-      `redirect_uri=${encodeURIComponent(this.redirectUri)}`;
-    
-    console.log('Full auth URL:', url);
-    return url;
+    return credentials;
   }
 
   private async storeTokens(userId: string, tokens: DocuSignToken) {
     console.log('Storing tokens for user:', userId);
-    const supabase = await this.getSupabase();
 
     // First, try to find existing credentials
-    const { data: existing } = await supabase
+    const { data: existing } = await this.supabase
       .from('api_credentials')
       .select('id')
       .eq('user_id', userId)
@@ -76,7 +70,7 @@ export class DocuSignClient {
 
     if (existing) {
       // Update existing record
-      const { error } = await supabase
+      const { error } = await this.supabase
         .from('api_credentials')
         .update({
           access_token: tokens.access_token,
@@ -92,7 +86,7 @@ export class DocuSignClient {
       }
     } else {
       // Insert new record
-      const { error } = await supabase
+      const { error } = await this.supabase
         .from('api_credentials')
         .insert({
           user_id: userId,
@@ -110,6 +104,23 @@ export class DocuSignClient {
     }
 
     console.log('Tokens stored in database successfully');
+  }
+
+  public getAuthorizationUrl(): string {
+    const scopes = [
+      'signature',
+      'extended',
+      'impersonation',
+    ].join('+');
+
+    const url = `${this.basePath}/oauth/auth?` +
+      `response_type=code&` +
+      `scope=${scopes}&` +
+      `client_id=${this.clientId}&` +
+      `redirect_uri=${encodeURIComponent(this.redirectUri)}`;
+    
+    console.log('Full auth URL:', url);
+    return url;
   }
 
   public async exchangeCodeForToken(code: string, userId: string): Promise<void> {
@@ -184,19 +195,7 @@ export class DocuSignClient {
   }
 
   public async getValidToken(userId: string): Promise<string> {
-    const supabase = await this.getSupabase();
-    const { data: credentials, error } = await supabase
-      .from('api_credentials')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('provider', 'docusign')
-      .single();
-
-    if (error || !credentials) {
-      console.error('Error fetching credentials:', error);
-      throw new Error('No DocuSign credentials found');
-    }
-
+    const credentials = await this.getCredentials(userId);
     const expiresAt = new Date(credentials.expires_at);
     const now = new Date();
 
