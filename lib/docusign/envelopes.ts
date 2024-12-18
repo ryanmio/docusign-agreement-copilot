@@ -15,6 +15,44 @@ interface CreateEnvelopeRecipient {
   routingOrder: number;
 }
 
+// DocuSign API response types
+interface DocuSignTemplateResponse {
+  templateId: string;
+  name: string;
+  description?: string;
+  shared: string;
+  created: string;
+  lastModified: string;
+  uri: string;
+}
+
+interface DocuSignListTemplatesResponse {
+  resultSetSize: string;
+  totalSetSize: string;
+  startPosition: string;
+  endPosition: string;
+  envelopeTemplates: DocuSignTemplateResponse[];
+}
+
+interface DocuSignTemplateSigner {
+  roleName: string;
+  name?: string;
+  email?: string;
+  routingOrder?: number;
+}
+
+interface DocuSignTemplateDetailResponse {
+  templateId: string;
+  name: string;
+  description?: string;
+  shared: string;
+  created: string;
+  lastModified: string;
+  recipients?: {
+    signers?: DocuSignTemplateSigner[];
+  };
+}
+
 export class DocuSignEnvelopes {
   private client: DocuSignClient;
 
@@ -222,7 +260,7 @@ export class DocuSignEnvelopes {
       throw new Error(`Failed to list templates: ${errorData}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as DocuSignListTemplatesResponse;
     console.log('DocuSignEnvelopes.listTemplates - Raw response:', data);
 
     // Map DocuSign response to our expected format
@@ -268,7 +306,7 @@ export class DocuSignEnvelopes {
       throw new Error(`Failed to get template: ${errorData}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as DocuSignTemplateDetailResponse;
     console.log('DocuSignEnvelopes.getTemplate - Raw response:', data);
 
     // Map DocuSign response to our expected format
@@ -279,7 +317,7 @@ export class DocuSignEnvelopes {
       shared: data.shared === 'true',
       created: data.created,
       lastModified: data.lastModified,
-      roles: (data.recipients?.signers || []).map((signer: any) => ({
+      roles: (data.recipients?.signers || []).map(signer => ({
         roleName: signer.roleName,
         name: signer.name || '',
         signingOrder: signer.routingOrder,
