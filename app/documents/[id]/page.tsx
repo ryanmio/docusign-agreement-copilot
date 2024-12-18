@@ -7,11 +7,14 @@ import PDFViewer from '@/components/pdf-viewer';
 
 export const revalidate = 0;
 
-type Props = {
-  params: { id: string }
-}
+type Params = Promise<{ id: string }>;
 
-export default async function DocumentDetailsPage({ params }: Props) {
+export default async function DocumentDetailsPage({
+  params
+}: {
+  params: Params
+}) {
+  const { id } = await params;
   const supabase = createServerComponentClient({ cookies });
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
@@ -26,7 +29,7 @@ export default async function DocumentDetailsPage({ params }: Props) {
       *,
       recipients (*)
     `)
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', user.id)
     .single();
 
