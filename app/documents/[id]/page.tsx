@@ -3,13 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
-import dynamic from 'next/dynamic';
-
-// Dynamically import PDFViewer to avoid SSR issues
-const PDFViewer = dynamic(() => import('@/components/pdf-viewer'), {
-  ssr: false,
-  loading: () => <div className="text-center py-8">Loading viewer...</div>
-});
+import PDFViewer from '@/components/pdf-viewer';
 
 export const revalidate = 0;
 

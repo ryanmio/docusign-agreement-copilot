@@ -12,7 +12,7 @@ interface PDFViewerProps {
   url: string;
 }
 
-export default function PDFViewer({ url }: PDFViewerProps) {
+function PDFViewer({ url }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -81,4 +81,6 @@ export default function PDFViewer({ url }: PDFViewerProps) {
       )}
     </div>
   );
-} 
+}
+
+export default PDFViewer; 
