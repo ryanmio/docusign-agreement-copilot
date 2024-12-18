@@ -50,10 +50,28 @@ export async function POST(
 
     // Create new envelope with same content
     const docusign = new DocuSignEnvelopes();
+
+    // Get original documents
+    const originalDocs = await docusign.listDocuments(user.id, envelope.docusign_envelope_id);
+    const documents = await Promise.all(
+      originalDocs.envelopeDocuments.map(async (doc: any) => {
+        const content = await docusign.downloadDocument(user.id, envelope.docusign_envelope_id, doc.documentId);
+        // Convert blob to base64
+        const buffer = await content.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString('base64');
+        
+        return {
+          name: doc.name,
+          documentBase64: base64,
+          fileExtension: doc.name.split('.').pop() || 'pdf',
+        };
+      })
+    );
+
     const docusignResponse = await docusign.createEnvelope(user.id, {
       emailSubject: envelope.subject,
       emailBlurb: envelope.message || undefined,
-      documents: [], // We'll need to implement document fetching and re-upload
+      documents,
       recipients: envelope.recipients.map((recipient: Recipient) => ({
         email: recipient.email,
         name: recipient.name,
