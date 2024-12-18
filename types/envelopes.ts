@@ -92,6 +92,8 @@ export interface TemplateResponse {
   shared: boolean;
   created: string;
   lastModified: string;
+  emailSubject?: string;
+  emailBlurb?: string;
   roles: {
     roleName: string;
     name: string;

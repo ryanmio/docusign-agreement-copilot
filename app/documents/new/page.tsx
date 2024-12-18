@@ -72,6 +72,25 @@ export default function NewDocumentPage() {
     setRecipients(newRecipients);
   };
 
+  const handleTemplateSelect = async (template: TemplateResponse) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/templates/${template.templateId}`);
+      if (!response.ok) {
+        throw new Error('Failed to load template details');
+      }
+      const templateDetails = await response.json();
+      setSelectedTemplate(templateDetails);
+      // Pre-fill subject from template
+      setSubject(template.emailSubject || `Sign ${template.name}`);
+    } catch (err) {
+      console.error('Error loading template details:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load template details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
@@ -141,12 +160,17 @@ export default function NewDocumentPage() {
         <div className="mb-6">
           <div className="flex gap-4 mb-4">
             <button
-              onClick={() => setUseTemplate(false)}
+              type="button"
+              onClick={() => {
+                setUseTemplate(false);
+                setSelectedTemplate(null);
+              }}
               className={`px-4 py-2 rounded-md ${!useTemplate ? 'bg-blue-500 text-white' : 'border'}`}
             >
               Upload Documents
             </button>
             <button
+              type="button"
               onClick={() => setUseTemplate(true)}
               className={`px-4 py-2 rounded-md ${useTemplate ? 'bg-blue-500 text-white' : 'border'}`}
             >
@@ -194,7 +218,7 @@ export default function NewDocumentPage() {
                 onCancel={() => setSelectedTemplate(null)}
               />
             ) : (
-              <TemplateSelector onSelect={setSelectedTemplate} />
+              <TemplateSelector onSelect={handleTemplateSelect} />
             )
           ) : (
             <>

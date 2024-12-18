@@ -24,6 +24,8 @@ interface DocuSignTemplateResponse {
   created: string;
   lastModified: string;
   uri: string;
+  emailSubject: string;
+  emailBlurb: string;
 }
 
 interface DocuSignListTemplatesResponse {
@@ -51,6 +53,8 @@ interface DocuSignTemplateDetailResponse {
   recipients?: {
     signers?: DocuSignTemplateSigner[];
   };
+  emailSubject: string;
+  emailBlurb: string;
 }
 
 export class DocuSignEnvelopes {
@@ -271,6 +275,8 @@ export class DocuSignEnvelopes {
       shared: template.shared === 'true',
       created: template.created,
       lastModified: template.lastModified,
+      emailSubject: template.emailSubject,
+      emailBlurb: template.emailBlurb,
       roles: [], // We'll need to fetch roles separately if needed
     }));
 
@@ -317,6 +323,8 @@ export class DocuSignEnvelopes {
       shared: data.shared === 'true',
       created: data.created,
       lastModified: data.lastModified,
+      emailSubject: data.emailSubject,
+      emailBlurb: data.emailBlurb,
       roles: (data.recipients?.signers || []).map(signer => ({
         roleName: signer.roleName,
         name: signer.name || '',
