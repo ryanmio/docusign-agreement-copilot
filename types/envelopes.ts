@@ -69,4 +69,43 @@ export interface EnvelopeDocumentResponse {
   name: string;
   type: string;
   uri: string;
+}
+
+export interface TemplateRole {
+  email: string;
+  name: string;
+  roleName: string;
+  routingOrder?: number;
+}
+
+export interface CreateFromTemplatePayload {
+  templateId: string;
+  subject: string;
+  message?: string;
+  roles: TemplateRole[];
+}
+
+export interface TemplateResponse {
+  templateId: string;
+  name: string;
+  description?: string;
+  shared: boolean;
+  created: string;
+  lastModified: string;
+  roles: {
+    roleName: string;
+    name: string;
+    signingOrder?: number;
+    defaultRecipient?: {
+      email: string;
+      name: string;
+    };
+  }[];
+}
+
+export interface ListTemplatesResponse {
+  templates: TemplateResponse[];
+  resultSetSize: number;
+  totalSetSize: number;
+  startPosition: number;
 } 

@@ -1,5 +1,6 @@
 import { DocuSignClient } from './client';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { CreateEnvelopeOptions, TemplateRole, ListTemplatesResponse, TemplateResponse } from '@/types/envelopes';
 
 interface CreateEnvelopeDocument {
   name: string;
@@ -12,13 +13,6 @@ interface CreateEnvelopeRecipient {
   name: string;
   recipientId: string;
   routingOrder: number;
-}
-
-interface CreateEnvelopeOptions {
-  emailSubject: string;
-  emailBlurb?: string;
-  documents: CreateEnvelopeDocument[];
-  recipients: CreateEnvelopeRecipient[];
 }
 
 export class DocuSignEnvelopes {
@@ -180,5 +174,131 @@ export class DocuSignEnvelopes {
     }
 
     return await response.json();
+  }
+
+  async listTemplates(userId: string, options?: { 
+    searchText?: string;
+    folder?: string;
+    shared?: boolean;
+    page?: number;
+    pageSize?: number;
+  }) {
+    const client = await this.client.getClient(userId);
+    const searchText = options?.searchText ? `search_text=${encodeURIComponent(options.searchText)}` : '';
+    const folder = options?.folder ? `folder=${encodeURIComponent(options.folder)}` : '';
+    const shared = options?.shared !== undefined ? `shared=${options.shared}` : '';
+    const page = options?.page || 1;
+    const pageSize = options?.pageSize || 100;
+    const startPosition = (page - 1) * pageSize;
+
+    const queryParams = [
+      searchText,
+      folder,
+      shared,
+      `start_position=${startPosition}`,
+      `count=${pageSize}`,
+    ].filter(Boolean).join('&');
+
+    const response = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/templates?${queryParams}`,
+      {
+        headers: client.headers,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('DocuSign API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
+      throw new Error(`Failed to list templates: ${errorData}`);
+    }
+
+    return response.json() as Promise<ListTemplatesResponse>;
+  }
+
+  async getTemplate(userId: string, templateId: string) {
+    const client = await this.client.getClient(userId);
+
+    const response = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/templates/${templateId}`,
+      {
+        headers: client.headers,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('DocuSign API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
+      throw new Error(`Failed to get template: ${errorData}`);
+    }
+
+    return response.json() as Promise<TemplateResponse>;
+  }
+
+  async createEnvelopeFromTemplate(userId: string, templateId: string, {
+    emailSubject,
+    emailBlurb,
+    roles,
+  }: {
+    emailSubject: string;
+    emailBlurb?: string;
+    roles: TemplateRole[];
+  }) {
+    const client = await this.client.getClient(userId);
+
+    const envelopeDefinition = {
+      emailSubject,
+      emailBlurb,
+      templateId,
+      templateRoles: roles.map(role => ({
+        email: role.email,
+        name: role.name,
+        roleName: role.roleName,
+        routingOrder: role.routingOrder || 1,
+      })),
+      status: "sent",
+    };
+
+    console.log('Creating envelope from template:', {
+      ...envelopeDefinition,
+      templateId,
+      roleCount: roles.length,
+    });
+
+    const response = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes`,
+      {
+        method: 'POST',
+        headers: {
+          ...client.headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(envelopeDefinition),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('DocuSign API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
+      throw new Error(`Failed to create envelope from template: ${errorData}`);
+    }
+
+    const data = await response.json();
+    console.log('DocuSign Create Envelope From Template Response:', data);
+
+    return {
+      envelopeId: data.envelopeId,
+    };
   }
 } 
