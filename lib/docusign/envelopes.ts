@@ -146,11 +146,22 @@ export class DocuSignEnvelopes {
   async voidEnvelope(userId: string, envelopeId: string, voidReason: string) {
     const client = await this.client.getClient(userId);
 
+    // First, check if the envelope exists and can be voided
+    const envelopeStatus = await this.getEnvelope(userId, envelopeId);
+    const voidableStatuses = ['sent', 'delivered', 'created'];
+    
+    if (!voidableStatuses.includes(envelopeStatus.status)) {
+      throw new Error(`Cannot void envelope in status: ${envelopeStatus.status}. Envelope must be in one of these states: ${voidableStatuses.join(', ')}`);
+    }
+
     const response = await fetch(
       `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}`,
       {
         method: 'PUT',
-        headers: client.headers,
+        headers: {
+          ...client.headers,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           status: 'voided',
           voidedReason: voidReason,
@@ -159,7 +170,15 @@ export class DocuSignEnvelopes {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to void envelope');
+      const errorData = await response.text();
+      console.error('DocuSign Void Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
+      throw new Error(`Failed to void envelope: ${errorData}`);
     }
+
+    return await response.json();
   }
 } 
