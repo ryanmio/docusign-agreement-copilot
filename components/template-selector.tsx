@@ -12,6 +12,7 @@ export function TemplateSelector({ onSelect }: TemplateSelectorProps) {
   const [error, setError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
   const [search, setSearch] = useState('');
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     loadTemplates();
@@ -23,14 +24,21 @@ export function TemplateSelector({ onSelect }: TemplateSelectorProps) {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       
+      console.log('Fetching templates...');
       const response = await fetch(`/api/templates?${params}`);
-      if (!response.ok) {
-        throw new Error('Failed to load templates');
-      }
+      console.log('Response status:', response.status);
       
       const data = await response.json();
+      console.log('Templates response:', data);
+      
+      setDebugInfo(data); // Store full response for debugging
       setTemplates(data.templates || []);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load templates');
+      }
     } catch (err) {
+      console.error('Error loading templates:', err);
       setError(err instanceof Error ? err.message : 'Failed to load templates');
     } finally {
       setLoading(false);
@@ -39,8 +47,17 @@ export function TemplateSelector({ onSelect }: TemplateSelectorProps) {
 
   if (error) {
     return (
-      <div className="p-4 text-red-500">
-        Error: {error}
+      <div className="space-y-4">
+        <div className="p-4 text-red-500">
+          Error: {error}
+        </div>
+        {/* Debug information */}
+        <div className="p-4 bg-gray-50 rounded-md">
+          <h3 className="font-medium mb-2">Debug Information:</h3>
+          <pre className="text-xs overflow-auto">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </div>
       </div>
     );
   }
@@ -60,8 +77,17 @@ export function TemplateSelector({ onSelect }: TemplateSelectorProps) {
       {loading ? (
         <div className="p-4 text-center">Loading templates...</div>
       ) : templates.length === 0 ? (
-        <div className="p-4 text-center text-gray-500">
-          No templates found
+        <div className="space-y-4">
+          <div className="p-4 text-center text-gray-500">
+            No templates found
+          </div>
+          {/* Debug information */}
+          <div className="p-4 bg-gray-50 rounded-md">
+            <h3 className="font-medium mb-2">Debug Information:</h3>
+            <pre className="text-xs overflow-auto">
+              {JSON.stringify(debugInfo, null, 2)}
+            </pre>
+          </div>
         </div>
       ) : (
         <div className="grid gap-4">

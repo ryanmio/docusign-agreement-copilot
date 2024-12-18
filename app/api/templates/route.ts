@@ -14,11 +14,13 @@ const listTemplatesSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('GET /api/templates - Starting request');
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
+      console.log('GET /api/templates - Authentication error:', userError);
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
@@ -34,6 +36,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (credentialsError || !credentials) {
+      console.log('GET /api/templates - DocuSign credentials error:', credentialsError);
       return NextResponse.json(
         { error: 'Please connect your DocuSign account first' },
         { status: 400 }
@@ -50,12 +53,20 @@ export async function GET(request: NextRequest) {
       pageSize: searchParams.get('pageSize') ? parseInt(searchParams.get('pageSize')!) : undefined,
     });
 
+    console.log('GET /api/templates - Fetching templates with params:', params);
+
     const docusign = new DocuSignEnvelopes(supabase);
     const templates = await docusign.listTemplates(user.id, params);
 
+    console.log('GET /api/templates - Success:', {
+      resultSetSize: templates.resultSetSize,
+      totalSetSize: templates.totalSetSize,
+      templateCount: templates.templates?.length
+    });
+
     return NextResponse.json(templates);
   } catch (error) {
-    console.error('Error listing templates:', error);
+    console.error('GET /api/templates - Error:', error);
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

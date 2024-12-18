@@ -183,6 +183,7 @@ export class DocuSignEnvelopes {
     page?: number;
     pageSize?: number;
   }) {
+    console.log('DocuSignEnvelopes.listTemplates - Getting client for user:', userId);
     const client = await this.client.getClient(userId);
     const searchText = options?.searchText ? `search_text=${encodeURIComponent(options.searchText)}` : '';
     const folder = options?.folder ? `folder=${encodeURIComponent(options.folder)}` : '';
@@ -199,24 +200,36 @@ export class DocuSignEnvelopes {
       `count=${pageSize}`,
     ].filter(Boolean).join('&');
 
-    const response = await fetch(
-      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/templates?${queryParams}`,
-      {
-        headers: client.headers,
-      }
-    );
+    const url = `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/templates?${queryParams}`;
+    console.log('DocuSignEnvelopes.listTemplates - Fetching templates:', {
+      url,
+      accountId: client.accountId,
+      options
+    });
+
+    const response = await fetch(url, {
+      headers: client.headers,
+    });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('DocuSign API Error:', {
+      console.error('DocuSignEnvelopes.listTemplates - API Error:', {
         status: response.status,
         statusText: response.statusText,
         error: errorData,
+        headers: client.headers,
       });
       throw new Error(`Failed to list templates: ${errorData}`);
     }
 
-    return response.json() as Promise<ListTemplatesResponse>;
+    const data = await response.json();
+    console.log('DocuSignEnvelopes.listTemplates - Success:', {
+      resultSetSize: data.resultSetSize,
+      totalSetSize: data.totalSetSize,
+      templateCount: data.templates?.length
+    });
+
+    return data as Promise<ListTemplatesResponse>;
   }
 
   async getTemplate(userId: string, templateId: string) {
