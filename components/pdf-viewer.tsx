@@ -49,13 +49,7 @@ function PDFViewer({ url }: PDFViewerProps) {
       )}
       
       <Document
-        file={{
-          url,
-          httpHeaders: {
-            'Accept': 'application/pdf',
-          },
-          withCredentials: true
-        }}
+        file={url}
         onLoadSuccess={onDocumentLoadSuccess}
         onLoadError={onDocumentLoadError}
         loading={<div className="text-center py-8">Loading PDF...</div>}
