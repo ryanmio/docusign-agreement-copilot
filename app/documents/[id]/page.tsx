@@ -7,11 +7,14 @@ import { Alert } from '@/components/ui/alert';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 import PDFViewer from '@/components/pdf-viewer';
 
+interface PageProps {
+  params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
 export default function DocumentDetailsPage({
   params
-}: {
-  params: { id: string }
-}) {
+}: PageProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
