@@ -10,8 +10,8 @@ interface Recipient {
 }
 
 export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
   try {
     const cookieStore = cookies();
@@ -29,7 +29,7 @@ export async function POST(
     const { data: envelope, error: envelopeError } = await supabase
       .from('envelopes')
       .select('*, recipients(*)')
-      .eq('id', params.id)
+      .eq('id', context.params.id)
       .eq('user_id', user.id)
       .single();
 
@@ -88,7 +88,7 @@ export async function POST(
         status: 'sent',
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.id);
+      .eq('id', context.params.id);
 
     if (updateError) {
       throw new Error('Failed to update envelope');
