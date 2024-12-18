@@ -62,11 +62,14 @@ export async function GET(
     const contentType = documentInfo.type || 'application/pdf';
     
     // Create response with proper headers
-    const response = new NextResponse(document as any, {
+    const response = new NextResponse(document, {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `attachment; filename="${documentInfo.name}"`,
+        'Content-Disposition': `inline; filename="${documentInfo.name}"`,
+        'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_BASE_URL || '*',
       },
     });
 

@@ -24,6 +24,7 @@ function PDFViewer({ url }: PDFViewerProps) {
   }
 
   function onDocumentLoadError(error: Error) {
+    console.error('PDF loading error:', error);
     setError(error);
     setLoading(false);
   }
@@ -32,6 +33,9 @@ function PDFViewer({ url }: PDFViewerProps) {
     return (
       <div className="text-center py-8 text-red-600">
         Error loading PDF. Please try downloading instead.
+        <div className="mt-2 text-sm text-gray-600">
+          {error.message}
+        </div>
       </div>
     );
   }
@@ -45,7 +49,13 @@ function PDFViewer({ url }: PDFViewerProps) {
       )}
       
       <Document
-        file={url}
+        file={{
+          url,
+          httpHeaders: {
+            'Accept': 'application/pdf',
+          },
+          withCredentials: true
+        }}
         onLoadSuccess={onDocumentLoadSuccess}
         onLoadError={onDocumentLoadError}
         loading={<div className="text-center py-8">Loading PDF...</div>}
@@ -55,6 +65,7 @@ function PDFViewer({ url }: PDFViewerProps) {
           renderTextLayer={true}
           renderAnnotationLayer={true}
           className="border shadow-lg"
+          scale={1.2}
         />
       </Document>
 
