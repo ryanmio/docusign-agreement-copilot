@@ -86,9 +86,26 @@ export async function DELETE(
     const json = await request.json();
     const { reason } = voidEnvelopeSchema.parse(json);
 
+    // Check if envelope can be voided
+    const voidableStatuses = ['sent', 'delivered', 'created'];
+    if (!voidableStatuses.includes(envelope.status)) {
+      return NextResponse.json(
+        { error: `Cannot void envelope in status: ${envelope.status}. Envelope must be in one of these states: ${voidableStatuses.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
     // Void envelope in DocuSign
-    const docusign = new DocuSignEnvelopes(supabase);
-    await docusign.voidEnvelope(user.id, envelope.docusign_envelope_id, reason);
+    try {
+      const docusign = new DocuSignEnvelopes(supabase);
+      await docusign.voidEnvelope(user.id, envelope.docusign_envelope_id, reason);
+    } catch (error) {
+      console.error('Error voiding envelope:', error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Failed to void envelope' },
+        { status: 400 }
+      );
+    }
 
     // Update status in database
     const { error: updateError } = await supabase

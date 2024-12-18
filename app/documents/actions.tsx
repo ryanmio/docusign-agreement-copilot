@@ -81,7 +81,7 @@ export function DocumentActions({ envelope }: DocumentActionsProps) {
           {loading ? 'Processing...' : 'Resend'}
         </button>
       )}
-      {envelope.status !== 'voided' && (
+      {['sent', 'delivered', 'created'].includes(envelope.status) && (
         <button
           onClick={handleVoid}
           disabled={loading}
