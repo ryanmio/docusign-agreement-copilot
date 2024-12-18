@@ -6,11 +6,10 @@ import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 import PDFViewer from '@/components/pdf-viewer';
 
 export default async function DocumentDetailsPage({
-  params
+  params: { id }
 }: {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }) {
-  const { id } = await params;
   const cookieStore = cookies();
   const supabase = createServerComponentClient({ cookies: () => cookieStore });
   const { data: { user }, error: userError } = await supabase.auth.getUser();
