@@ -87,7 +87,7 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
           type="submit"
           className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
         >
-          Create Envelope
+          Send for Signature
         </button>
       </div>
     </form>
