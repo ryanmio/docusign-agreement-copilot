@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+// Set worker source immediately
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface PDFViewerProps {
   url: string;
@@ -14,15 +17,6 @@ function PDFViewer({ url }: PDFViewerProps) {
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    // Initialize worker
-    const initWorker = async () => {
-      const worker = await import('pdfjs-dist/build/pdf.worker.min.js');
-      pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-    };
-    initWorker().catch(console.error);
-  }, []);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
