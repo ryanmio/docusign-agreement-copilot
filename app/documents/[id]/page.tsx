@@ -1,122 +1,39 @@
-'use client';
-
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 import PDFViewer from '@/components/pdf-viewer';
 
-interface PageProps {
-  params: { id: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
-
-export default function DocumentDetailsPage({
+export default async function DocumentDetailsPage({
   params
-}: PageProps) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [envelope, setEnvelope] = useState<any>(null);
-  const [documents, setDocuments] = useState<any>(null);
-  const supabase = createClientComponentClient();
+}: {
+  params: { id: string }
+}) {
+  const cookieStore = cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    async function fetchData() {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        router.push('/auth/login');
-        return;
-      }
+  if (!user) {
+    redirect('/auth/login');
+  }
 
-      const { data: envelopeData, error: envelopeError } = await supabase
-        .from('envelopes')
-        .select('*, recipients(*)')
-        .eq('id', params.id)
-        .single();
+  const { data: envelope, error: envelopeError } = await supabase
+    .from('envelopes')
+    .select('*, recipients(*)')
+    .eq('id', params.id)
+    .single();
 
-      if (envelopeError) {
-        setError('Error loading envelope details');
-        return;
-      }
+  if (envelopeError) {
+    return (
+      <Alert variant="destructive" className="m-4">
+        Error loading envelope details
+      </Alert>
+    );
+  }
 
-      setEnvelope(envelopeData);
-
-      try {
-        const docusign = new DocuSignEnvelopes(supabase);
-        const docs = await docusign.listDocuments(user.id, envelopeData.docusign_envelope_id);
-        setDocuments(docs);
-      } catch (error) {
-        console.error('Error fetching documents:', error);
-      }
-    }
-
-    fetchData();
-  }, [params.id, supabase, router]);
-
-  const handleVoid = async () => {
-    if (!confirm('Are you sure you want to void this envelope? This action cannot be undone.')) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const response = await fetch(`/api/envelopes/${params.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reason: 'Voided by user',
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to void envelope');
-      }
-
-      setSuccess('Envelope voided successfully');
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to void envelope');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    if (!confirm('Are you sure you want to resend this envelope?')) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const response = await fetch(`/api/envelopes/${params.id}/resend`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to resend envelope');
-      }
-
-      setSuccess('Envelope resent successfully');
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resend envelope');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const docusign = new DocuSignEnvelopes(supabase);
+  const documents = await docusign.listDocuments(user.id, envelope.docusign_envelope_id);
 
   const formatDate = (date: string | null) => {
     if (!date) return 'N/A';
@@ -147,38 +64,8 @@ export default function DocumentDetailsPage({
             <span className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(envelope?.status || 'pending')}`}>
               {envelope?.status}
             </span>
-            {envelope?.status !== 'completed' && envelope?.status !== 'voided' && (
-              <button
-                onClick={handleResend}
-                disabled={loading}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm disabled:opacity-50"
-              >
-                {loading ? 'Processing...' : 'Resend'}
-              </button>
-            )}
-            {envelope?.status !== 'voided' && (
-              <button
-                onClick={handleVoid}
-                disabled={loading}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm disabled:opacity-50"
-              >
-                {loading ? 'Processing...' : 'Void'}
-              </button>
-            )}
           </div>
         </div>
-
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            {error}
-          </Alert>
-        )}
-
-        {success && (
-          <Alert className="mb-4 border-green-500 bg-green-50">
-            {success}
-          </Alert>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
