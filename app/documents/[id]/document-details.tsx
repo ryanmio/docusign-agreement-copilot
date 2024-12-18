@@ -30,6 +30,19 @@ export default function DocumentDetails({
         return;
       }
 
+      // Check DocuSign connection
+      const { data: credentials } = await supabase
+        .from('api_credentials')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('provider', 'docusign')
+        .single();
+
+      if (!credentials) {
+        setError('Please connect your DocuSign account first');
+        return;
+      }
+
       const { data: envelopeData, error: envelopeError } = await supabase
         .from('envelopes')
         .select('*, recipients(*)')
@@ -49,7 +62,7 @@ export default function DocumentDetails({
         setDocuments(docs);
       } catch (error) {
         console.error('Error fetching documents:', error);
-        setError('Error loading documents');
+        setError('Error loading documents. Please reconnect your DocuSign account.');
       }
     }
 
