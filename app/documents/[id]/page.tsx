@@ -5,13 +5,11 @@ import { Alert } from '@/components/ui/alert';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 import PDFViewer from '@/components/pdf-viewer';
 
-interface PageProps {
-  params: { id: string };
-}
-
 export default async function DocumentDetailsPage({
-  params
-}: PageProps) {
+  params: { id }
+}: {
+  params: { id: string }
+}) {
   const cookieStore = cookies();
   const supabase = createServerComponentClient({ cookies: () => cookieStore });
   const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -23,7 +21,7 @@ export default async function DocumentDetailsPage({
   const { data: envelope, error: envelopeError } = await supabase
     .from('envelopes')
     .select('*, recipients(*)')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   if (envelopeError) {
