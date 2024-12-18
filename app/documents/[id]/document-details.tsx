@@ -24,8 +24,8 @@ export default function DocumentDetails({
 
   useEffect(() => {
     async function fetchData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
         router.push('/auth/login');
         return;
       }
@@ -49,6 +49,7 @@ export default function DocumentDetails({
         setDocuments(docs);
       } catch (error) {
         console.error('Error fetching documents:', error);
+        setError('Error loading documents');
       }
     }
 
