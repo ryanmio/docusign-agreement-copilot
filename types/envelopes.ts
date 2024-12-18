@@ -108,4 +108,20 @@ export interface ListTemplatesResponse {
   resultSetSize: number;
   totalSetSize: number;
   startPosition: number;
+}
+
+export interface CreateEnvelopeOptions {
+  emailSubject: string;
+  emailBlurb?: string;
+  documents: {
+    name: string;
+    fileExtension: string;
+    documentBase64: string;
+  }[];
+  recipients: {
+    email: string;
+    name: string;
+    recipientId: string;
+    routingOrder: number;
+  }[];
 } 
