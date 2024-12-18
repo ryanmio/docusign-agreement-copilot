@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import workerSrc from 'pdfjs-dist/build/pdf.worker.min.js';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
-// Set worker source immediately
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/build/pdf.worker.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 interface PDFViewerProps {
   url: string;
