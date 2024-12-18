@@ -106,7 +106,7 @@ export default function NewDocumentPage() {
             subject,
             message,
             ...(useTemplate 
-              ? { roles: recipients.map(r => ({ ...r, roleName: 'Signer 1' })) }
+              ? { roles: recipients }
               : { documents, recipients }
             ),
           }),
