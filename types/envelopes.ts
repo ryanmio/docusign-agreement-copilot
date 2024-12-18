@@ -12,6 +12,7 @@ export interface Recipient {
   email: string;
   name: string;
   routingOrder?: number;
+  roleName?: string;
 }
 
 export interface Document {
