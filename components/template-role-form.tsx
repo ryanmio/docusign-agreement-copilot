@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TemplateResponse, TemplateRole } from '@/types/envelopes';
 
 interface TemplateRoleFormProps {
@@ -18,10 +18,15 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
       routingOrder: role.signingOrder,
     }))
   );
+  
+  const isInitialMount = useRef(true);
 
-  // Update parent component whenever roles change
+  // Update parent component whenever roles change, but skip the initial mount
   useEffect(() => {
-    console.log('Updating roles:', roles);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     onSubmit(roles);
   }, [roles, onSubmit]);
 

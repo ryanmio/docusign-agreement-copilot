@@ -53,59 +53,93 @@ export async function POST(
     const docusign = new DocuSignEnvelopes(supabase);
     
     // Create envelope from template
-    const docusignResponse = await docusign.createEnvelopeFromTemplate(
-      user.id,
-      params.id,
-      {
-        emailSubject: payload.subject,
-        emailBlurb: payload.message,
-        roles: payload.roles,
-      }
-    );
+    let docusignResponse;
+    try {
+      docusignResponse = await docusign.createEnvelopeFromTemplate(
+        user.id,
+        params.id,
+        {
+          emailSubject: payload.subject,
+          emailBlurb: payload.message,
+          roles: payload.roles,
+        }
+      );
+    } catch (error) {
+      console.error('DocuSign API Error:', error);
+      return NextResponse.json(
+        { error: 'Failed to create envelope in DocuSign' },
+        { status: 400 }
+      );
+    }
 
     // Store envelope in database
-    const { data: envelope, error: envelopeError } = await supabase
-      .from('envelopes')
-      .insert({
-        user_id: user.id,
-        docusign_envelope_id: docusignResponse.envelopeId,
-        subject: payload.subject,
-        message: payload.message,
-        status: 'sent',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        metadata: {
-          template_id: params.id,
-        },
-      })
-      .select()
-      .single();
-
-    if (envelopeError) {
-      console.error('Database error:', envelopeError);
-      throw new Error('Failed to store envelope');
-    }
-
-    // Store recipients
-    const { error: recipientsError } = await supabase
-      .from('recipients')
-      .insert(
-        payload.roles.map(role => ({
-          envelope_id: envelope.id,
-          email: role.email,
-          name: role.name,
-          routing_order: role.routingOrder || 1,
+    try {
+      const { data: envelope, error: envelopeError } = await supabase
+        .from('envelopes')
+        .insert({
+          user_id: user.id,
+          docusign_envelope_id: docusignResponse.envelopeId,
+          subject: payload.subject,
+          message: payload.message,
+          status: 'sent',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           metadata: {
-            role_name: role.roleName,
+            template_id: params.id,
           },
-        }))
+        })
+        .select()
+        .single();
+
+      if (envelopeError) {
+        console.error('Database error:', envelopeError);
+        // Even if database storage fails, the envelope was created in DocuSign
+        return NextResponse.json(
+          { 
+            warning: 'Envelope created in DocuSign but failed to store in database',
+            envelopeId: docusignResponse.envelopeId 
+          },
+          { status: 200 }
+        );
+      }
+
+      // Store recipients
+      const { error: recipientsError } = await supabase
+        .from('recipients')
+        .insert(
+          payload.roles.map(role => ({
+            envelope_id: envelope.id,
+            email: role.email,
+            name: role.name,
+            routing_order: role.routingOrder || 1,
+            metadata: {
+              role_name: role.roleName,
+            },
+          }))
+        );
+
+      if (recipientsError) {
+        console.error('Recipients storage error:', recipientsError);
+        return NextResponse.json(
+          { 
+            warning: 'Envelope created but recipient details not stored',
+            envelope 
+          },
+          { status: 200 }
+        );
+      }
+
+      return NextResponse.json(envelope);
+    } catch (error) {
+      console.error('Database operation error:', error);
+      return NextResponse.json(
+        { 
+          warning: 'Envelope created in DocuSign but database operation failed',
+          envelopeId: docusignResponse.envelopeId 
+        },
+        { status: 200 }
       );
-
-    if (recipientsError) {
-      throw new Error('Failed to store recipients');
     }
-
-    return NextResponse.json(envelope);
   } catch (error) {
     console.error('Error creating envelope from template:', error);
     
