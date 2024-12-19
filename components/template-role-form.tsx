@@ -31,7 +31,7 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium">Assign Recipients</h3>
         <p className="text-sm text-gray-500">
@@ -75,7 +75,7 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
         ))}
       </div>
 
-      <div className="flex justify-end gap-4">
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={onCancel}
@@ -83,13 +83,7 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
-        >
-          Send for Signature
-        </button>
       </div>
-    </form>
+    </div>
   );
 } 

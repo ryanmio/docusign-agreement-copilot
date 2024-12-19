@@ -241,7 +241,6 @@ export default function NewDocumentPage() {
                 onSubmit={(roles) => {
                   console.log('TemplateRoleForm submitted with roles:', roles);
                   setRecipients(roles);
-                  // Don't call handleSubmit here, let the form's submit handler work
                 }}
                 onCancel={() => setSelectedTemplate(null)}
               />
