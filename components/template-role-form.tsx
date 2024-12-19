@@ -19,11 +19,6 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
     }))
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(roles);
-  };
-
   const updateRole = (index: number, field: keyof TemplateRole, value: string | number) => {
     const newRoles = [...roles];
     newRoles[index] = { ...newRoles[index], [field]: value };
@@ -53,7 +48,10 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
                   type="email"
                   required
                   value={role.email}
-                  onChange={(e) => updateRole(index, 'email', e.target.value)}
+                  onChange={(e) => {
+                    updateRole(index, 'email', e.target.value);
+                    onSubmit([...roles.slice(0, index), { ...role, email: e.target.value }, ...roles.slice(index + 1)]);
+                  }}
                   className="mt-1 block w-full px-3 py-2 border rounded-md"
                 />
               </div>
@@ -66,7 +64,10 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
                   type="text"
                   required
                   value={role.name}
-                  onChange={(e) => updateRole(index, 'name', e.target.value)}
+                  onChange={(e) => {
+                    updateRole(index, 'name', e.target.value);
+                    onSubmit([...roles.slice(0, index), { ...role, name: e.target.value }, ...roles.slice(index + 1)]);
+                  }}
                   className="mt-1 block w-full px-3 py-2 border rounded-md"
                 />
               </div>
