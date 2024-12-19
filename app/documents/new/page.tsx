@@ -124,9 +124,9 @@ export default function NewDocumentPage() {
             subject,
             message,
             roles: recipients.map(recipient => ({
-              email: recipient.email,
-              name: recipient.name,
-              roleName: recipient.roleName || 'Signer 1', // Default role name if not specified
+              email: recipient.email.trim(),
+              name: recipient.name.trim(),
+              roleName: recipient.roleName,
             })),
           }
         : {
@@ -136,7 +136,11 @@ export default function NewDocumentPage() {
             recipients,
           };
 
-      console.log('Sending request with payload:', payload);
+      console.log('Sending request with payload:', {
+        ...payload,
+        useTemplate,
+        templateId: selectedTemplate?.templateId,
+      });
 
       const response = await fetch(
         useTemplate 

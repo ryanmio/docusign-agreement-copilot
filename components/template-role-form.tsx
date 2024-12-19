@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TemplateResponse, TemplateRole } from '@/types/envelopes';
 
 interface TemplateRoleFormProps {
@@ -18,6 +18,12 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
       routingOrder: role.signingOrder,
     }))
   );
+
+  // Update parent component whenever roles change
+  useEffect(() => {
+    console.log('Updating roles:', roles);
+    onSubmit(roles);
+  }, [roles, onSubmit]);
 
   const updateRole = (index: number, field: keyof TemplateRole, value: string | number) => {
     const newRoles = [...roles];
@@ -48,11 +54,9 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
                   type="email"
                   required
                   value={role.email}
-                  onChange={(e) => {
-                    updateRole(index, 'email', e.target.value);
-                    onSubmit([...roles.slice(0, index), { ...role, email: e.target.value }, ...roles.slice(index + 1)]);
-                  }}
+                  onChange={(e) => updateRole(index, 'email', e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border rounded-md"
+                  placeholder="Enter email address"
                 />
               </div>
 
@@ -64,11 +68,9 @@ export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleF
                   type="text"
                   required
                   value={role.name}
-                  onChange={(e) => {
-                    updateRole(index, 'name', e.target.value);
-                    onSubmit([...roles.slice(0, index), { ...role, name: e.target.value }, ...roles.slice(index + 1)]);
-                  }}
+                  onChange={(e) => updateRole(index, 'name', e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border rounded-md"
+                  placeholder="Enter full name"
                 />
               </div>
             </div>
