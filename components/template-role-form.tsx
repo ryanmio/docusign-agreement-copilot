@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { TemplateResponse, TemplateRole } from '@/types/envelopes';
 
 interface TemplateRoleFormProps {
@@ -10,30 +10,29 @@ interface TemplateRoleFormProps {
 }
 
 export function TemplateRoleForm({ template, onSubmit, onCancel }: TemplateRoleFormProps) {
-  const [roles, setRoles] = useState<TemplateRole[]>(
+  const [roles, setRoles] = useState<TemplateRole[]>(() => 
     template.roles.map(role => ({
-      roleName: role.roleName,
+      roleName: role.roleName || 'Signer 1',
       email: role.defaultRecipient?.email || '',
       name: role.defaultRecipient?.name || '',
-      routingOrder: role.signingOrder,
+      routingOrder: role.signingOrder || 1,
     }))
   );
-  
-  const isInitialMount = useRef(true);
 
-  // Update parent component whenever roles change, but skip the initial mount
+  // Call onSubmit with initial roles
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
     onSubmit(roles);
-  }, [roles, onSubmit]);
+  }, []);
 
   const updateRole = (index: number, field: keyof TemplateRole, value: string | number) => {
     const newRoles = [...roles];
-    newRoles[index] = { ...newRoles[index], [field]: value };
+    newRoles[index] = { 
+      ...newRoles[index], 
+      [field]: value,
+      roleName: template.roles[index].roleName || 'Signer 1', // Ensure roleName is always set
+    };
     setRoles(newRoles);
+    onSubmit(newRoles); // Immediately notify parent of changes
   };
 
   return (
