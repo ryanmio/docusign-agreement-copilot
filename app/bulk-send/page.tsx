@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: 'Manage your bulk send operations'
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function BulkSendPage() {
   return (
     <div className="container mx-auto py-6">

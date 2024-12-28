@@ -12,6 +12,8 @@ const listTemplatesSchema = z.object({
   pageSize: z.number().optional(),
 });
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     console.log('GET /api/templates - Starting request');

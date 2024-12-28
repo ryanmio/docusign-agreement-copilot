@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { DocumentActions } from '@/app/documents/actions';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DocumentsPage() {
   const supabase = createServerComponentClient({ cookies });
   const { data: { user }, error: userError } = await supabase.auth.getUser();
