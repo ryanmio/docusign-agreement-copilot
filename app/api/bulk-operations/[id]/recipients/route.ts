@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 // PATCH /api/bulk-operations/[id]/recipients - Update recipient statuses
 export async function PATCH(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
@@ -22,7 +22,7 @@ export async function PATCH(
     const { data: operation, error: operationError } = await supabase
       .from('bulk_operations')
       .select('id')
-      .eq('id', context.params.id)
+      .eq('id', (await context.params).id)
       .eq('user_id', user.id)
       .single();
 
@@ -63,7 +63,7 @@ export async function PATCH(
           completed_at: status === 'completed' ? new Date().toISOString() : null
         })
         .eq('id', id)
-        .eq('bulk_operation_id', context.params.id);
+        .eq('bulk_operation_id', (await context.params).id);
 
       return {
         id,
@@ -83,7 +83,7 @@ export async function PATCH(
       const { data: stats, error: statsError } = await supabase
         .from('bulk_recipients')
         .select('status')
-        .eq('bulk_operation_id', context.params.id);
+        .eq('bulk_operation_id', (await context.params).id);
 
       if (!statsError && stats) {
         const totalProcessed = stats.filter(r => r.status !== null).length;
@@ -101,7 +101,7 @@ export async function PATCH(
             completed_at: isCompleted ? new Date().toISOString() : null,
             updated_at: new Date().toISOString()
           })
-          .eq('id', context.params.id);
+          .eq('id', (await context.params).id);
       }
     }
 

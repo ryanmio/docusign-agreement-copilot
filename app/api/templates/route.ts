@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
   try {
     console.log('GET /api/templates - Starting request');
     const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {

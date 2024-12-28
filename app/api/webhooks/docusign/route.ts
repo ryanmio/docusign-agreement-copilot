@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const payload = await request.json();
     console.log('Webhook payload:', JSON.stringify(payload, null, 2));
     
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Extract envelope data

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import DocuSignConnect from '@/components/docusign-connect';
 
 export default async function SettingsPage() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerComponentClient({ cookies: () => cookieStore });
   const { data: { user }, error } = await supabase.auth.getUser();
 

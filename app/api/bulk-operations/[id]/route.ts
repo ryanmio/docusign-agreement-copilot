@@ -3,12 +3,10 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 // GET /api/bulk-operations/[id] - Get details of a specific bulk operation
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -72,10 +70,8 @@ export async function GET(
 }
 
 // PATCH /api/bulk-operations/[id] - Update status of a bulk operation
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = createRouteHandlerClient({ cookies });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
