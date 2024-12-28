@@ -3,20 +3,20 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
-import { CreateEnvelopePayload, Document, Recipient, TemplateResponse } from '@/types/envelopes';
+import type { CreateEnvelopePayload, Document, Recipient, TemplateResponse } from '@/types/envelopes';
 import { TemplateSelector } from '@/components/template-selector';
 import { TemplateRoleForm } from '@/components/template-role-form';
 
 export default function NewDocumentPage() {
   const router = useRouter();
+  const [useTemplate, setUseTemplate] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [recipients, setRecipients] = useState<Recipient[]>([{ email: '', name: '' }]);
-  const [useTemplate, setUseTemplate] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateResponse | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -79,10 +79,24 @@ export default function NewDocumentPage() {
       if (!response.ok) {
         throw new Error('Failed to load template details');
       }
-      const templateDetails = await response.json() as TemplateResponse;
-      setSelectedTemplate(templateDetails);
+      const data = await response.json();
+      const template: TemplateResponse = {
+        templateId: data.templateId,
+        name: data.name,
+        description: data.description,
+        shared: data.shared,
+        created: data.created,
+        lastModified: data.lastModified,
+        emailSubject: data.emailSubject,
+        emailBlurb: data.emailBlurb,
+        roles: data.roles,
+      };
+      if (!template.templateId || !template.name || !template.roles) {
+        throw new Error('Invalid template data received');
+      }
+      setSelectedTemplate(template);
       // Pre-fill subject from template
-      setSubject(templateDetails.emailSubject || `Sign ${templateDetails.name}`);
+      setSubject(template.emailSubject || `Sign ${template.name}`);
     } catch (err) {
       console.error('Error loading template details:', err);
       setError(err instanceof Error ? err.message : 'Failed to load template details');
@@ -177,6 +191,37 @@ export default function NewDocumentPage() {
     }
   };
 
+  // Separate component for template selection
+  const TemplateSelectionSection = ({
+    selectedTemplate,
+    onSelect,
+    onCancel,
+  }: {
+    selectedTemplate: TemplateResponse | null;
+    onSelect: (templateId: string) => void;
+    onCancel: () => void;
+  }) => {
+    if (selectedTemplate) {
+      return (
+        <TemplateRoleForm
+          template={selectedTemplate}
+          onSubmit={(roles) => {
+            console.log('TemplateRoleForm submitted with roles:', roles);
+            setRecipients(roles);
+          }}
+          onCancel={onCancel}
+        />
+      );
+    }
+
+    return (
+      <TemplateSelector
+        value={undefined}
+        onChange={onSelect}
+      />
+    );
+  };
+
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
@@ -238,98 +283,90 @@ export default function NewDocumentPage() {
             />
           </div>
 
-          {useTemplate ? (
-            selectedTemplate ? (
-              <TemplateRoleForm
-                template={selectedTemplate}
-                onSubmit={(roles) => {
-                  console.log('TemplateRoleForm submitted with roles:', roles);
-                  setRecipients(roles);
-                }}
+          <div className="space-y-4">
+            {useTemplate ? (
+              <TemplateSelectionSection
+                selectedTemplate={selectedTemplate}
+                onSelect={handleTemplateSelect}
                 onCancel={() => setSelectedTemplate(null)}
               />
             ) : (
-              <TemplateSelector 
-                value={selectedTemplate?.templateId ?? ''}
-                onChange={handleTemplateSelect}
-              />
-            )
-          ) : (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Documents
-                </label>
-                <div className="mt-1">
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    multiple
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
-                </div>
-                {documents.length > 0 && (
-                  <ul className="mt-2 space-y-2">
-                    {documents.map((doc, index) => (
-                      <li key={index} className="text-sm text-gray-600">
-                        {doc.name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-2">
+              <>
+                <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Recipients
+                    Documents
                   </label>
-                  <button
-                    type="button"
-                    onClick={addRecipient}
-                    className="text-sm text-blue-500 hover:text-blue-600"
-                  >
-                    Add Recipient
-                  </button>
+                  <div className="mt-1">
+                    <input
+                      type="file"
+                      onChange={handleFileChange}
+                      multiple
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                  </div>
+                  {documents.length > 0 && (
+                    <ul className="mt-2 space-y-2">
+                      {documents.map((doc, index) => (
+                        <li key={index} className="text-sm text-gray-600">
+                          {doc.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <div className="space-y-4">
-                  {recipients.map((recipient, index) => (
-                    <div key={index} className="flex gap-4">
-                      <div className="flex-1">
-                        <input
-                          type="email"
-                          required
-                          value={recipient.email}
-                          onChange={(e) => updateRecipient(index, 'email', e.target.value)}
-                          className="block w-full px-3 py-2 border rounded-md"
-                          placeholder="Email"
-                        />
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Recipients
+                    </label>
+                    <button
+                      type="button"
+                      onClick={addRecipient}
+                      className="text-sm text-blue-500 hover:text-blue-600"
+                    >
+                      Add Recipient
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    {recipients.map((recipient, index) => (
+                      <div key={index} className="flex gap-4">
+                        <div className="flex-1">
+                          <input
+                            type="email"
+                            required
+                            value={recipient.email}
+                            onChange={(e) => updateRecipient(index, 'email', e.target.value)}
+                            className="block w-full px-3 py-2 border rounded-md"
+                            placeholder="Email"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            required
+                            value={recipient.name}
+                            onChange={(e) => updateRecipient(index, 'name', e.target.value)}
+                            className="block w-full px-3 py-2 border rounded-md"
+                            placeholder="Name"
+                          />
+                        </div>
+                        {recipients.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeRecipient(index)}
+                            className="text-red-500 hover:text-red-600"
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
-                      <div className="flex-1">
-                        <input
-                          type="text"
-                          required
-                          value={recipient.name}
-                          onChange={(e) => updateRecipient(index, 'name', e.target.value)}
-                          className="block w-full px-3 py-2 border rounded-md"
-                          placeholder="Name"
-                        />
-                      </div>
-                      {recipients.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeRecipient(index)}
-                          className="text-red-500 hover:text-red-600"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
 
           <div className="flex justify-end">
             <button
