@@ -2,6 +2,42 @@ import { DocuSignClient } from './client';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CreateEnvelopeOptions, TemplateRole, ListTemplatesResponse, TemplateResponse } from '@/types/envelopes';
 
+interface EnvelopeDefinition {
+  emailSubject: string;
+  emailBlurb?: string;
+  status: string;
+  documents?: Array<{
+    documentBase64: string;
+    name: string;
+    fileExtension: string;
+    documentId: string;
+  }>;
+  recipients?: {
+    signers: Array<{
+      email: string;
+      name: string;
+      recipientId: string;
+      routingOrder: number;
+      tabs?: {
+        signHereTabs?: Array<{
+          documentId: string;
+          pageNumber: string;
+          xPosition: string;
+          yPosition: string;
+          scale: number;
+        }>;
+      };
+    }>;
+  };
+  templateId?: string;
+  templateRoles?: Array<{
+    email: string;
+    name: string;
+    roleName: string;
+    routingOrder?: number;
+  }>;
+}
+
 interface CreateEnvelopeDocument {
   name: string;
   fileExtension: string;
@@ -57,6 +93,33 @@ interface DocuSignTemplateDetailResponse {
   emailBlurb: string;
 }
 
+interface CreateEnvelopeArgs {
+  templateId?: string;
+  templateRoles?: Array<{
+    email: string;
+    name: string;
+    roleName: string;
+    routingOrder?: number;
+  }>;
+  documents?: Array<{
+    documentBase64: string;
+    name: string;
+    fileExtension: string;
+    documentId: string;
+  }>;
+  recipients?: {
+    signers: Array<{
+      email: string;
+      name: string;
+      recipientId: string;
+      routingOrder: number;
+    }>;
+  };
+  status: string;
+  emailSubject: string;
+  emailBlurb?: string;
+}
+
 export class DocuSignEnvelopes {
   private client: DocuSignClient;
 
@@ -64,42 +127,22 @@ export class DocuSignEnvelopes {
     this.client = new DocuSignClient(supabase);
   }
 
-  async createEnvelope(userId: string, options: CreateEnvelopeOptions) {
+  async createEnvelope(userId: string, args: CreateEnvelopeArgs) {
     const client = await this.client.getClient(userId);
 
-    const envelopeDefinition = {
-      emailSubject: options.emailSubject,
-      emailBlurb: options.emailBlurb,
-      status: "sent",
-      documents: options.documents.map((doc, index) => ({
-        documentBase64: doc.documentBase64,
-        name: doc.name,
-        fileExtension: doc.fileExtension,
-        documentId: (index + 1).toString(),
-      })),
-      recipients: {
-        signers: options.recipients.map((recipient, index) => ({
-          email: recipient.email,
-          name: recipient.name,
-          recipientId: (index + 1).toString(),
-          routingOrder: recipient.routingOrder || 1,
-          tabs: {
-            signHereTabs: [{
-              documentId: "1",
-              pageNumber: "1",
-              xPosition: "100",
-              yPosition: "100",
-              scale: 1,
-            }],
-          },
-        })),
-      },
+    const envelopeDefinition: EnvelopeDefinition = {
+      emailSubject: args.emailSubject,
+      emailBlurb: args.emailBlurb,
+      status: args.status,
     };
 
-    console.log('Creating envelope with:', {
-      ...envelopeDefinition,
-      documents: envelopeDefinition.documents.map(d => ({ ...d, documentBase64: '(content)' }))
-    });
+    if (args.templateId) {
+      envelopeDefinition.templateId = args.templateId;
+      envelopeDefinition.templateRoles = args.templateRoles;
+    } else {
+      envelopeDefinition.documents = args.documents;
+      envelopeDefinition.recipients = args.recipients;
+    }
 
     const response = await fetch(`${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes`, {
       method: 'POST',
@@ -121,8 +164,6 @@ export class DocuSignEnvelopes {
     }
 
     const data = await response.json();
-    console.log('DocuSign Create Envelope Response:', data);
-
     return {
       envelopeId: data.envelopeId,
     };

@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { TemplateResponse } from '@/types/envelopes';
 
 interface TemplateSelectorProps {
-  onSelect: (template: TemplateResponse) => void;
+  value: string | undefined;
+  onChange: (value: string) => void;
 }
 
-export function TemplateSelector({ onSelect }: TemplateSelectorProps) {
+export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
@@ -94,8 +95,12 @@ export function TemplateSelector({ onSelect }: TemplateSelectorProps) {
           {templates.map((template) => (
             <button
               key={template.templateId}
-              onClick={() => onSelect(template)}
-              className="p-4 border rounded-lg hover:bg-gray-50 text-left"
+              onClick={() => onChange(template.templateId)}
+              className={`p-4 border rounded-lg text-left transition-colors ${
+                value === template.templateId 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-muted'
+              }`}
             >
               <div className="font-medium">{template.name}</div>
               {template.description && (

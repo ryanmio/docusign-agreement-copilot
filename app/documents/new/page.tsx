@@ -72,17 +72,17 @@ export default function NewDocumentPage() {
     setRecipients(newRecipients);
   };
 
-  const handleTemplateSelect = async (template: TemplateResponse) => {
+  const handleTemplateSelect = async (templateId: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/templates/${template.templateId}`);
+      const response = await fetch(`/api/templates/${templateId}`);
       if (!response.ok) {
         throw new Error('Failed to load template details');
       }
-      const templateDetails = await response.json();
+      const templateDetails: TemplateResponse = await response.json();
       setSelectedTemplate(templateDetails);
       // Pre-fill subject from template
-      setSubject(template.emailSubject || `Sign ${template.name}`);
+      setSubject(templateDetails.emailSubject || `Sign ${templateDetails.name}`);
     } catch (err) {
       console.error('Error loading template details:', err);
       setError(err instanceof Error ? err.message : 'Failed to load template details');
@@ -249,7 +249,10 @@ export default function NewDocumentPage() {
                 onCancel={() => setSelectedTemplate(null)}
               />
             ) : (
-              <TemplateSelector onSelect={handleTemplateSelect} />
+              <TemplateSelector 
+                value={selectedTemplate?.templateId}
+                onChange={handleTemplateSelect}
+              />
             )
           ) : (
             <>
