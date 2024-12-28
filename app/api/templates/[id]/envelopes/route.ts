@@ -16,15 +16,12 @@ const createFromTemplateSchema = z.object({
 });
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await context.params;
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ 
-      cookies: () => cookieStore 
-    });
+    const supabase = createRouteHandlerClient({ cookies });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {

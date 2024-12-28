@@ -4,15 +4,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await context.params;
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ 
-      cookies: () => cookieStore 
-    });
+    const supabase = createRouteHandlerClient({ cookies });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {

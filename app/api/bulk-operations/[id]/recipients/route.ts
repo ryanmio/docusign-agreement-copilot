@@ -1,17 +1,15 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 // PATCH /api/bulk-operations/[id]/recipients - Update recipient statuses
 export async function PATCH(
-  request: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  props: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await props.params;
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ 
-      cookies: () => cookieStore 
-    });
+    const supabase = createRouteHandlerClient({ cookies });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -25,7 +23,7 @@ export async function PATCH(
     const { data: operation, error: operationError } = await supabase
       .from('bulk_operations')
       .select('id')
-      .eq('id', context.params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
@@ -66,7 +64,7 @@ export async function PATCH(
           completed_at: status === 'completed' ? new Date().toISOString() : null
         })
         .eq('id', id)
-        .eq('bulk_operation_id', context.params.id);
+        .eq('bulk_operation_id', id);
 
       return {
         id,
@@ -86,7 +84,7 @@ export async function PATCH(
       const { data: stats, error: statsError } = await supabase
         .from('bulk_recipients')
         .select('status')
-        .eq('bulk_operation_id', context.params.id);
+        .eq('bulk_operation_id', id);
 
       if (!statsError && stats) {
         const totalProcessed = stats.filter(r => r.status !== null).length;
@@ -104,7 +102,7 @@ export async function PATCH(
             completed_at: isCompleted ? new Date().toISOString() : null,
             updated_at: new Date().toISOString()
           })
-          .eq('id', context.params.id);
+          .eq('id', id);
       }
     }
 

@@ -10,13 +10,12 @@ interface Recipient {
 }
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await context.params;
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ cookies });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
@@ -79,6 +78,7 @@ export async function POST(
         recipientId: Math.random().toString(36).substring(7),
         routingOrder: recipient.routing_order || 1,
       })),
+      status: 'sent',
     });
 
     // Update envelope in database

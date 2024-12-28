@@ -5,8 +5,7 @@ import { redirect } from 'next/navigation';
 import { DocumentActions } from '@/app/documents/actions';
 
 export default async function DocumentsPage() {
-  const cookieStore = await cookies();
-  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  const supabase = createServerComponentClient({ cookies });
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (!user) {

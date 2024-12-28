@@ -9,8 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ cookies });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
@@ -44,17 +43,21 @@ export async function POST(request: NextRequest) {
     const docusignResponse = await docusign.createEnvelope(user.id, {
       emailSubject: payload.subject,
       emailBlurb: payload.message,
-      documents: payload.documents.map(doc => ({
+      documents: payload.documents.map((doc, index) => ({
         name: doc.name,
         fileExtension: doc.fileExtension,
         documentBase64: doc.content,
+        documentId: `${index + 1}`,
       })),
-      recipients: payload.recipients.map(recipient => ({
-        email: recipient.email,
-        name: recipient.name,
-        recipientId: Math.random().toString(36).substring(7),
-        routingOrder: recipient.routingOrder || 1,
-      })),
+      recipients: {
+        signers: payload.recipients.map(recipient => ({
+          email: recipient.email,
+          name: recipient.name,
+          recipientId: Math.random().toString(36).substring(7),
+          routingOrder: recipient.routingOrder || 1,
+        })),
+      },
+      status: 'sent',
     });
 
     // Store envelope in database
@@ -124,8 +127,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ cookies });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {

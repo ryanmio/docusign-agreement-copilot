@@ -11,8 +11,7 @@ export default async function DocumentDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  const supabase = createServerComponentClient({ cookies });
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (!user) {
