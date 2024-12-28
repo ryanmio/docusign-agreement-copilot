@@ -79,7 +79,7 @@ export default function NewDocumentPage() {
       if (!response.ok) {
         throw new Error('Failed to load template details');
       }
-      const templateDetails: TemplateResponse = await response.json();
+      const templateDetails = await response.json() as TemplateResponse;
       setSelectedTemplate(templateDetails);
       // Pre-fill subject from template
       setSubject(templateDetails.emailSubject || `Sign ${templateDetails.name}`);
@@ -250,7 +250,7 @@ export default function NewDocumentPage() {
               />
             ) : (
               <TemplateSelector 
-                value={selectedTemplate?.templateId}
+                value={selectedTemplate?.templateId ?? ''}
                 onChange={handleTemplateSelect}
               />
             )

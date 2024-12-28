@@ -6,8 +6,10 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    });
     
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
