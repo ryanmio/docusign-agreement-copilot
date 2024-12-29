@@ -154,6 +154,20 @@ async function processEnvelopes(
     let successCount = 0;
     let errorCount = 0;
 
+    // If using template, get template details first
+    let templateRoles: { roleName: string }[] = [];
+    if (templateId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not found');
+      
+      const template = await docusign.getTemplate(user.id, templateId);
+      templateRoles = template.roles;
+      
+      if (!templateRoles || templateRoles.length === 0) {
+        throw new Error('Template has no roles defined');
+      }
+    }
+
     // Process each recipient
     for (const recipient of recipients) {
       try {
@@ -163,7 +177,8 @@ async function processEnvelopes(
           templateRoles: [{
             email: recipient.email,
             name: recipient.name,
-            roleName: 'signer'
+            // Use the first role from the template if available, otherwise fallback to 'signer'
+            roleName: templateRoles[0]?.roleName || 'signer'
           }],
           emailSubject: `${operationName} - Please sign this document`,
           emailBlurb: 'Please sign this document at your earliest convenience.',
