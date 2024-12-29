@@ -180,5 +180,61 @@ export const tools = {
         mode: 'collect'
       };
     }
+  },
+  sendTemplate: {
+    description: 'Send a template with collected recipient information',
+    parameters: z.object({
+      templateId: z.string().describe('The ID of the template to send'),
+      subject: z.string().describe('Email subject for the envelope'),
+      message: z.string().optional().describe('Optional email message'),
+      recipients: z.array(z.object({
+        email: z.string(),
+        name: z.string(),
+        roleName: z.string()
+      })).describe('The recipients to send the template to')
+    }),
+    execute: async ({ templateId, subject, message, recipients }: { 
+      templateId: string;
+      subject: string;
+      message?: string;
+      recipients: Array<{
+        email: string;
+        name: string;
+        roleName: string;
+      }>;
+    }) => {
+      console.log('Starting sendTemplate execution:', { templateId, recipients });
+      const supabase = createClientComponentClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Send the template using the API
+      const response = await fetch(`/api/templates/${templateId}/envelopes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject,
+          message,
+          roles: recipients
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to send template');
+      }
+
+      const envelope = await response.json();
+      return {
+        success: true,
+        envelopeId: envelope.id,
+        status: 'sent'
+      };
+    }
   }
 }; 

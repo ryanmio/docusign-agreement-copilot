@@ -114,6 +114,18 @@ export default function ChatPage() {
                   );
                 }
 
+                if (toolName === 'sendTemplate') {
+                  const { result } = toolInvocation;
+                  if (result.success) {
+                    return (
+                      <div key={toolCallId} className="p-4 bg-green-50 text-green-700 rounded-lg">
+                        Template sent successfully! The envelope has been created and sent to the recipients.
+                      </div>
+                    );
+                  }
+                  return null;
+                }
+
                 if (toolName === 'displayEnvelopeList') {
                   const { result } = toolInvocation;
                   return (
