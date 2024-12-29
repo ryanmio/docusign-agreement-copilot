@@ -15,13 +15,25 @@ const statusOptions: EnvelopeStatus[] = [
   'error',
 ];
 
-export function EnvelopeList() {
+interface EnvelopeListProps {
+  initialStatus?: EnvelopeStatus | '';
+  initialPage?: number;
+  showStatusFilter?: boolean;
+  onEnvelopeClick?: (envelopeId: string) => void;
+}
+
+export function EnvelopeList({ 
+  initialStatus = '', 
+  initialPage = 1,
+  showStatusFilter = true,
+  onEnvelopeClick
+}: EnvelopeListProps) {
   const [envelopes, setEnvelopes] = useState<EnvelopeListResponse['envelopes']>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<EnvelopeStatus | ''>('');
+  const [page, setPage] = useState(initialPage);
+  const [status, setStatus] = useState<EnvelopeStatus | ''>(initialStatus);
   const limit = 10;
 
   useEffect(() => {
@@ -66,20 +78,22 @@ export function EnvelopeList() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-4">
-        <select
-          value={status}
-          onChange={(e) => handleStatusChange(e.target.value as EnvelopeStatus | '')}
-          className="border rounded-md px-3 py-2"
-        >
-          <option value="">All Status</option>
-          {statusOptions.map((option) => (
-            <option key={option} value={option}>
-              {option.charAt(0).toUpperCase() + option.slice(1)}
-            </option>
-          ))}
-        </select>
-      </div>
+      {showStatusFilter && (
+        <div className="mb-4 flex items-center gap-4">
+          <select
+            value={status}
+            onChange={(e) => handleStatusChange(e.target.value as EnvelopeStatus | '')}
+            className="border rounded-md px-3 py-2"
+          >
+            <option value="">All Status</option>
+            {statusOptions.map((option) => (
+              <option key={option} value={option}>
+                {option.charAt(0).toUpperCase() + option.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {error && (
         <Alert variant="destructive" className="mb-4">
@@ -98,7 +112,8 @@ export function EnvelopeList() {
           {envelopes.map((envelope) => (
             <div
               key={envelope.id}
-              className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+              className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => onEnvelopeClick ? onEnvelopeClick(envelope.id) : window.location.href = `/documents/${envelope.id}`}
             >
               <div className="flex justify-between items-start">
                 <div>
@@ -110,14 +125,6 @@ export function EnvelopeList() {
                 <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(envelope.status)}`}>
                   {envelope.status}
                 </span>
-              </div>
-              <div className="mt-2">
-                <a
-                  href={`/documents/${envelope.id}`}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
-                >
-                  View Details →
-                </a>
               </div>
             </div>
           ))}

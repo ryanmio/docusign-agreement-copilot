@@ -24,6 +24,7 @@ export async function POST(req: Request) {
           When users want to view a PDF, use the displayPdfViewer tool.
           When users ask about bulk operations, use the displayBulkOperation tool.
           When users want to see or select templates, use the displayTemplateSelector tool.
+          When users want to see their envelopes or documents, use the displayEnvelopeList tool.
           Always use the appropriate tool to display information rather than just describing it.`
         },
         ...messages
@@ -148,6 +149,59 @@ export async function POST(req: Request) {
               };
             } catch (error) {
               console.error('Error in displayTemplateSelector:', error);
+              throw error;
+            }
+          }
+        }),
+        displayEnvelopeList: tool({
+          description: 'Display a list of envelopes with filtering and pagination',
+          parameters: z.object({
+            status: z.enum(['created', 'sent', 'delivered', 'signed', 'completed', 'declined', 'voided', 'error']).optional().describe('Filter envelopes by status'),
+            page: z.number().min(1).optional().describe('Page number for pagination'),
+            showStatusFilter: z.boolean().optional().describe('Whether to show the status filter')
+          }),
+          execute: async ({ status, page, showStatusFilter }) => {
+            console.log('Starting displayEnvelopeList execution:', { status, page, showStatusFilter });
+            try {
+              const cookieStore = cookies();
+              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              if (sessionError || !session?.user) {
+                throw new Error('User not authenticated');
+              }
+
+              // Fetch envelopes from Supabase
+              const query = supabase
+                .from('envelopes')
+                .select('*', { count: 'exact' })
+                .eq('user_id', session.user.id)
+                .order('created_at', { ascending: false });
+
+              if (status) {
+                query.eq('status', status);
+              }
+
+              const limit = 10;
+              const from = ((page || 1) - 1) * limit;
+              const to = from + limit - 1;
+
+              const { data: envelopes, error: envelopesError, count } = await query
+                .range(from, to);
+
+              if (envelopesError) {
+                throw new Error('Error loading envelopes');
+              }
+
+              return {
+                envelopes: envelopes || [],
+                count: count || 0,
+                initialStatus: status || '',
+                initialPage: page || 1,
+                showStatusFilter: showStatusFilter ?? true
+              };
+            } catch (error) {
+              console.error('Error in displayEnvelopeList:', error);
               throw error;
             }
           }

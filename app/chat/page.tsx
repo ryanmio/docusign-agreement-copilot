@@ -1,13 +1,24 @@
 'use client';
 
+import React from 'react';
 import { useChat } from 'ai/react';
 import { DocumentView } from '@/components/document-view';
 import { BulkOperationView } from '@/components/bulk-operation-view';
 import PDFViewer from '@/components/pdf-viewer';
 import { TemplateSelector } from '@/components/template-selector';
+import { EnvelopeList } from '@/components/envelope-list';
 
 export default function ChatPage() {
   const { messages, input, handleInputChange, handleSubmit } = useChat();
+
+  const handleEnvelopeClick = (envelopeId: string) => {
+    // When an envelope is clicked, ask about it in the chat
+    const message = `Tell me about envelope ${envelopeId}`;
+    const event = { preventDefault: () => {} } as React.FormEvent<HTMLFormElement>;
+    handleSubmit(event);
+    // Set the input value after submission
+    handleInputChange({ target: { value: message } } as React.ChangeEvent<HTMLInputElement>);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -57,12 +68,20 @@ export default function ChatPage() {
                   const { result } = toolInvocation;
                   return (
                     <div key={toolCallId}>
-                      <TemplateSelector 
-                        value={result.selectedTemplateId}
-                        onChange={(templateId) => {
-                          // Handle template selection
-                          console.log('Selected template:', templateId);
-                        }}
+                      <TemplateSelector value={result.selectedTemplateId} onChange={() => {}} />
+                    </div>
+                  );
+                }
+
+                if (toolName === 'displayEnvelopeList') {
+                  const { result } = toolInvocation;
+                  return (
+                    <div key={toolCallId}>
+                      <EnvelopeList 
+                        initialStatus={result.initialStatus}
+                        initialPage={result.initialPage}
+                        showStatusFilter={result.showStatusFilter}
+                        onEnvelopeClick={handleEnvelopeClick}
                       />
                     </div>
                   );
@@ -83,17 +102,14 @@ export default function ChatPage() {
           </div>
         ))}
 
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="flex gap-4">
           <input
             value={input}
             onChange={handleInputChange}
             placeholder="Ask about your documents..."
-            className="flex-1 p-2 border rounded-md"
+            className="flex-1 p-4 border rounded-lg"
           />
-          <button 
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-          >
+          <button type="submit" className="px-8 py-4 bg-blue-500 text-white rounded-lg">
             Send
           </button>
         </form>
