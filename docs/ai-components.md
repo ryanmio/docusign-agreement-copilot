@@ -175,6 +175,75 @@ import { DocumentView } from '@/components/document-view';
 - Responsive layout
 - Authentication-aware with user-specific data
 
+### TemplateSelector
+
+A component that displays a list of DocuSign templates with search functionality.
+
+#### Tool Definition
+
+```typescript
+displayTemplateSelector: tool({
+  description: 'Display a template selector with search capabilities',
+  parameters: z.object({
+    preselectedId: z.string().optional().describe('Optional template ID to preselect'),
+    showSearch: z.boolean().optional().describe('Whether to show the search input')
+  }),
+  execute: async ({ preselectedId, showSearch }) => {
+    return {
+      selectedTemplateId: preselectedId,
+      showSearch: showSearch ?? true
+    };
+  }
+})
+```
+
+#### Component Usage
+
+```tsx
+import { TemplateSelector } from '@/components/template-selector';
+
+// In your page component:
+{message.toolInvocations?.map(toolInvocation => {
+  const { toolName, toolCallId, state } = toolInvocation;
+
+  if (state === 'result' && toolName === 'displayTemplateSelector') {
+    const { result } = toolInvocation;
+    return (
+      <div key={toolCallId}>
+        <TemplateSelector 
+          value={result.selectedTemplateId}
+          onChange={(templateId) => {
+            // Handle template selection
+            console.log('Selected template:', templateId);
+          }}
+        />
+      </div>
+    );
+  }
+})}
+```
+
+**Features:**
+- Template listing with search
+- Real-time search filtering
+- Loading states
+- Error handling
+- Selection handling
+- Debug information in development
+- Responsive design
+
+**Use Cases:**
+- Selecting templates for new documents
+- Viewing available templates
+- Searching through templates
+- Starting document workflows
+
+**Technical Details:**
+- Uses DocuSign templates API
+- Requires authentication context
+- Auto-refreshes on search
+- TypeScript support with proper type definitions
+
 ## Database Schema Dependencies
 
 Components may depend on specific database tables and schemas. Here are the current dependencies:

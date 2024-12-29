@@ -92,5 +92,40 @@ export const tools = {
         documents
       };
     }
+  },
+  displayTemplateSelector: {
+    name: 'displayTemplateSelector',
+    description: 'Display a template selector with search capabilities',
+    parameters: {
+      type: 'object',
+      properties: {
+        preselectedId: {
+          type: 'string',
+          description: 'Optional template ID to preselect'
+        },
+        showSearch: {
+          type: 'boolean',
+          description: 'Whether to show the search input'
+        }
+      }
+    },
+    execute: async (args: { preselectedId?: string; showSearch?: boolean }) => {
+      const supabase = createClientComponentClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Fetch templates from DocuSign
+      const docusign = new DocuSignEnvelopes(supabase);
+      const { templates } = await docusign.listTemplates(user.id);
+
+      return {
+        selectedTemplateId: args.preselectedId,
+        showSearch: args.showSearch ?? true,
+        templates
+      };
+    }
   }
 }; 
