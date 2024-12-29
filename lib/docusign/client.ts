@@ -27,17 +27,19 @@ export class DocuSignClient {
   private supabase: SupabaseClient;
 
   constructor(supabase: SupabaseClient) {
-    this.clientId = process.env.DOCUSIGN_CLIENT_ID!;
-    this.clientSecret = process.env.DOCUSIGN_CLIENT_SECRET!;
-    this.authServer = process.env.DOCUSIGN_AUTHORIZATION_SERVER!;
-    this.basePath = process.env.DOCUSIGN_OAUTH_BASE_PATH!;
     this.supabase = supabase;
+    this.clientId = process.env.NEXT_PUBLIC_DOCUSIGN_CLIENT_ID || '';
+    this.clientSecret = process.env.DOCUSIGN_CLIENT_SECRET || '';
+    this.authServer = process.env.NEXT_PUBLIC_DOCUSIGN_AUTHORIZATION_SERVER || 'https://account-d.docusign.com';
+    this.basePath = process.env.NEXT_PUBLIC_DOCUSIGN_OAUTH_BASE_PATH || 'https://account-d.docusign.com';
     
-    // Use URL constructor to handle slashes properly
-    const baseUrl = new URL(process.env.NEXT_PUBLIC_BASE_URL!);
-    this.redirectUri = new URL('/api/auth/docusign/callback', baseUrl).toString();
-    
-    console.log('BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL);
+    if (!this.clientId || !this.clientSecret) {
+      throw new Error('DocuSign client ID and secret are required');
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+    console.log('BASE_URL:', baseUrl);
+    this.redirectUri = `${baseUrl}/api/auth/docusign/callback`;
     console.log('Final redirect URI:', this.redirectUri);
   }
 
@@ -210,7 +212,8 @@ export class DocuSignClient {
 
   public async getUserInfo(userId: string): Promise<DocuSignUserInfo> {
     const token = await this.getValidToken(userId);
-    const response = await fetch(`${this.basePath}/oauth/userinfo`, {
+    console.log('Fetching user info from:', `${this.authServer}/oauth/userinfo`);
+    const response = await fetch(`${this.authServer}/oauth/userinfo`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
