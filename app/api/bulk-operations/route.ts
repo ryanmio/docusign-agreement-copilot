@@ -208,7 +208,43 @@ async function processEnvelopes(
 
         const envelope = await docusign.createEnvelope(user.id, envelopeArgs);
 
-        // Update recipient status
+        // Store envelope in database
+        const { data: storedEnvelope, error: envelopeError } = await supabase
+          .from('envelopes')
+          .insert({
+            user_id: user.id,
+            docusign_envelope_id: envelope.envelopeId,
+            subject: `${operationName} - Please sign this document`,
+            message: 'Please sign this document at your earliest convenience.',
+            status: 'sent',
+            metadata: {
+              bulk_operation_id: operationId,
+              template_id: templateId || null,
+            },
+          })
+          .select()
+          .single();
+
+        if (envelopeError) {
+          throw new Error(`Failed to store envelope: ${envelopeError.message}`);
+        }
+
+        // Store recipient
+        const { error: recipientError } = await supabase
+          .from('recipients')
+          .insert({
+            envelope_id: storedEnvelope.id,
+            email: recipient.email,
+            name: recipient.name,
+            status: 'sent',
+            routing_order: 1,
+          });
+
+        if (recipientError) {
+          throw new Error(`Failed to store recipient: ${recipientError.message}`);
+        }
+
+        // Update bulk recipient status
         await supabase
           .from('bulk_recipients')
           .update({
