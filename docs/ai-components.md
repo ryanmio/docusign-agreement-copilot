@@ -175,9 +175,63 @@ import { DocumentView } from '@/components/document-view';
 - Responsive layout
 - Authentication-aware with user-specific data
 
+### EnvelopeList
+
+A component that displays a list of envelopes with filtering and pagination capabilities.
+
+#### Tool Definition
+
+```typescript
+displayEnvelopeList: tool({
+  description: 'Display a list of envelopes with filtering and pagination',
+  parameters: z.object({
+    status: z.enum(['created', 'sent', 'delivered', 'signed', 'completed', 'declined', 'voided', 'error'])
+      .optional()
+      .describe('Filter envelopes by status'),
+    page: z.number().min(1).optional().describe('Page number for pagination'),
+    showStatusFilter: z.boolean().optional().describe('Whether to show the status filter')
+  }),
+  execute: async ({ status, page, showStatusFilter }) => {
+    // Implementation details...
+  }
+})
+```
+
+#### Component Usage
+
+```typescript
+<EnvelopeList
+  initialStatus={status}
+  initialPage={page}
+  showStatusFilter={true}
+  onEnvelopeClick={(envelopeId) => {
+    // Handle envelope selection
+  }}
+/>
+```
+
+**Features:**
+- Real-time envelope list with pagination
+- Status filtering (created, sent, delivered, signed, completed, declined, voided, error)
+- Loading states and error handling
+- Responsive design with mobile support
+- Interactive envelope selection
+
+**Use Cases:**
+- Viewing all envelopes
+- Filtering envelopes by status
+- Monitoring document progress
+- Quick access to envelope details
+
+**Technical Details:**
+- Uses Supabase for data fetching
+- Requires authentication context
+- Auto-refreshes on filter/page changes
+- TypeScript support with proper type definitions
+
 ### TemplateSelector
 
-A component that displays a list of DocuSign templates with search functionality.
+A component that allows users to browse and select DocuSign templates.
 
 #### Tool Definition
 
@@ -189,60 +243,65 @@ displayTemplateSelector: tool({
     showSearch: z.boolean().optional().describe('Whether to show the search input')
   }),
   execute: async ({ preselectedId, showSearch }) => {
-    return {
-      selectedTemplateId: preselectedId,
-      showSearch: showSearch ?? true
-    };
+    // Implementation details...
   }
 })
 ```
 
 #### Component Usage
 
-```tsx
-import { TemplateSelector } from '@/components/template-selector';
-
-// In your page component:
-{message.toolInvocations?.map(toolInvocation => {
-  const { toolName, toolCallId, state } = toolInvocation;
-
-  if (state === 'result' && toolName === 'displayTemplateSelector') {
-    const { result } = toolInvocation;
-    return (
-      <div key={toolCallId}>
-        <TemplateSelector 
-          value={result.selectedTemplateId}
-          onChange={(templateId) => {
-            // Handle template selection
-            console.log('Selected template:', templateId);
-          }}
-        />
-      </div>
-    );
-  }
-})}
+```typescript
+<TemplateSelector
+  value={selectedTemplateId}
+  onChange={(templateId) => {
+    // Handle template selection
+  }}
+/>
 ```
 
 **Features:**
 - Template listing with search
 - Real-time search filtering
-- Loading states
-- Error handling
+- Loading states and error handling
 - Selection handling
 - Debug information in development
 - Responsive design
 
 **Use Cases:**
 - Selecting templates for new documents
-- Viewing available templates
-- Searching through templates
-- Starting document workflows
+- Browsing available templates
+- Quick template lookup
+- Template management
 
 **Technical Details:**
-- Uses DocuSign templates API
-- Requires authentication context
-- Auto-refreshes on search
+- Uses DocuSign API for template fetching
+- Requires DocuSign authentication
+- Real-time search updates
 - TypeScript support with proper type definitions
+
+**Example Chat Interactions:**
+
+For Envelopes:
+```
+User: Show me my documents
+Assistant: Here are your envelopes:
+[EnvelopeList component displays]
+
+User: Show me my completed documents
+Assistant: Here are your completed envelopes:
+[EnvelopeList component displays with status filter set to 'completed']
+```
+
+For Templates:
+```
+User: I want to select a template
+Assistant: Here are your available templates:
+[TemplateSelector component displays]
+
+User: Show me my templates
+Assistant: Here are your templates:
+[TemplateSelector component displays with search enabled]
+```
 
 ## Database Schema Dependencies
 
