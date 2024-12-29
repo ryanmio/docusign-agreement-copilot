@@ -1,8 +1,9 @@
 import { openai } from '@ai-sdk/openai';
 import { streamText, tool } from 'ai';
 import { z } from 'zod';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
+import { cookies } from 'next/headers';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -58,30 +59,51 @@ export async function POST(req: Request) {
             showActions: z.boolean().optional().describe('Whether to show action buttons like void and resend')
           }),
           execute: async ({ envelopeId, showActions }) => {
-            console.log('Executing displayDocumentDetails:', { envelopeId, showActions });
+            console.log('Starting displayDocumentDetails execution:', { envelopeId, showActions });
             try {
-              const supabase = createClientComponentClient();
-              const { data: { user } } = await supabase.auth.getUser();
+              console.log('Creating Supabase client');
+              const cookieStore = cookies();
+              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
               
-              if (!user) {
+              console.log('Getting user session');
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              console.log('Session data:', { userId: session?.user?.id });
+              if (sessionError) {
+                console.error('Session error:', sessionError);
+                throw sessionError;
+              }
+
+              if (!session?.user) {
+                console.error('No user found in session');
                 throw new Error('User not authenticated');
               }
 
               // Fetch envelope data
-              const { data: envelope, error: envelopeError } = await supabase
+              console.log('Fetching envelope data:', { envelopeId, userId: session.user.id });
+              const { data: envelopes, error: envelopeError } = await supabase
                 .from('envelopes')
                 .select('*, recipients(*)')
                 .eq('id', envelopeId)
-                .single();
+                .eq('user_id', session.user.id);
 
               if (envelopeError) {
                 console.error('Error loading envelope:', envelopeError);
                 throw new Error('Error loading envelope details');
               }
 
+              if (!envelopes || envelopes.length === 0) {
+                console.error('No envelope found with ID:', envelopeId);
+                throw new Error(`No envelope found with ID: ${envelopeId}`);
+              }
+
+              const envelope = envelopes[0];
+              console.log('Envelope data loaded:', { id: envelope.id, status: envelope.status });
+
               // Fetch documents
+              console.log('Fetching documents:', { docusignEnvelopeId: envelope.docusign_envelope_id });
               const docusign = new DocuSignEnvelopes(supabase);
-              const documents = await docusign.listDocuments(user.id, envelope.docusign_envelope_id);
+              const documents = await docusign.listDocuments(session.user.id, envelope.docusign_envelope_id);
+              console.log('Documents loaded:', documents);
 
               const result = { 
                 envelopeId, 
@@ -105,7 +127,10 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('Error in chat route:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'An error occurred' }),
+      JSON.stringify({ 
+        error: error.message || 'An error occurred',
+        details: error.details || error.stack
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
