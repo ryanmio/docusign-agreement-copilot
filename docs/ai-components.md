@@ -11,21 +11,19 @@ A component that displays the progress and status of a bulk document sending ope
 #### Tool Definition
 
 ```typescript
-// ai/tools.ts
-export const bulkOperationTool = createTool({
+displayBulkOperation: tool({
   description: 'Display progress and status of a bulk document sending operation',
   parameters: z.object({
     operationId: z.string().describe('The ID of the bulk operation to display'),
     showBackButton: z.boolean().optional().describe('Whether to show a back button')
   }),
-  execute: async function ({ operationId, showBackButton = false }) {
-    return { operationId, showBackButton };
-  },
-});
-
-export const tools = {
-  displayBulkOperation: bulkOperationTool,
-};
+  execute: async ({ operationId, showBackButton }) => {
+    return {
+      operationId,
+      showBackButton: showBackButton ?? false
+    };
+  }
+})
 ```
 
 #### Component Usage
@@ -74,16 +72,15 @@ A component that displays PDF documents with built-in viewer controls.
 #### Tool Definition
 
 ```typescript
-// ai/tools.ts
-export const pdfViewerTool = createTool({
+displayPdfViewer: tool({
   description: 'Display a PDF document with viewer controls',
   parameters: z.object({
     url: z.string().describe('The URL of the PDF document to display')
   }),
-  execute: async function ({ url }) {
+  execute: async ({ url }) => {
     return { url };
-  },
-});
+  }
+})
 ```
 
 #### Component Usage
@@ -120,17 +117,32 @@ A component that displays detailed information about a document envelope includi
 #### Tool Definition
 
 ```typescript
-// ai/tools.ts
-export const documentDetailsTool = createTool({
+displayDocumentDetails: tool({
   description: 'Display detailed information about a document envelope',
   parameters: z.object({
     envelopeId: z.string().describe('The ID of the envelope to display details for'),
     showActions: z.boolean().optional().describe('Whether to show action buttons like void and resend')
   }),
-  execute: async function ({ envelopeId, showActions = true }) {
-    return { envelopeId, showActions };
-  },
-});
+  execute: async ({ envelopeId, showActions }) => {
+    // Fetch envelope data from Supabase
+    const { data: envelopes } = await supabase
+      .from('envelopes')
+      .select('*, recipients(*)')
+      .eq('id', envelopeId)
+      .eq('user_id', session.user.id);
+
+    // Fetch documents from DocuSign
+    const docusign = new DocuSignEnvelopes(supabase);
+    const documents = await docusign.listDocuments(session.user.id, envelope.docusign_envelope_id);
+
+    return { 
+      envelopeId, 
+      showActions: showActions ?? true,
+      envelope: envelopes[0],
+      documents
+    };
+  }
+})
 ```
 
 #### Component Usage
@@ -161,6 +173,7 @@ import { DocumentView } from '@/components/document-view';
 - Action buttons (void/resend) when enabled
 - Error handling and success notifications
 - Responsive layout
+- Authentication-aware with user-specific data
 
 ## Database Schema Dependencies
 
@@ -190,6 +203,7 @@ Components may depend on specific database tables and schemas. Here are the curr
 
 **envelopes table:**
 - id: string
+- user_id: string (foreign key to auth.users.id)
 - subject: string
 - message: string
 - status: string
