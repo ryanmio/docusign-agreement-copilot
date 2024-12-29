@@ -160,5 +160,25 @@ export const tools = {
         selectedTemplate
       };
     }
+  },
+  collectRecipients: {
+    description: 'Display a form to collect recipient information for a template',
+    parameters: z.object({
+      templateId: z.string().describe('The ID of the template to collect recipients for'),
+      roles: z.array(z.object({
+        roleName: z.string()
+      })).describe('The roles required by the template')
+    }),
+    execute: async ({ templateId, roles }: { 
+      templateId: string; 
+      roles: Array<{ roleName: string }> 
+    }) => {
+      console.log('Starting collectRecipients execution:', { templateId, roles });
+      return {
+        templateId,
+        roles,
+        mode: 'collect'
+      };
+    }
   }
 }; 

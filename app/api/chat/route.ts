@@ -24,9 +24,16 @@ export async function POST(req: Request) {
           When users want to view a PDF, use the displayPdfViewer tool.
           When users ask about bulk operations, use the displayBulkOperation tool.
           When users want to see or select templates, use the displayTemplateSelector tool.
-          When users want to preview and send a template, use the previewTemplate tool.
           When users want to see their envelopes or documents, use the displayEnvelopeList tool.
-          Always use the appropriate tool to display information rather than just describing it.`
+
+          For sending templates, follow this flow:
+          1. When users want to send a template, use previewTemplate to show available templates
+          2. After template selection, show preview and get confirmation
+          3. When confirmed, use collectRecipients to gather recipient information
+          4. After recipients are added, proceed to send the template
+
+          Always use the appropriate tool to display information rather than just describing it.
+          Guide the user through each step clearly.`
         },
         ...messages
       ],

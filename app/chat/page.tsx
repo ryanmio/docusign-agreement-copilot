@@ -8,6 +8,7 @@ import PDFViewer from '@/components/pdf-viewer';
 import { TemplateSelector } from '@/components/template-selector';
 import { EnvelopeList } from '@/components/envelope-list';
 import { TemplatePreview } from '@/components/template-preview';
+import { RecipientForm } from '@/components/recipient-form';
 
 export default function ChatPage() {
   const { messages, input, handleInputChange, handleSubmit, addToolResult } = useChat();
@@ -96,6 +97,23 @@ export default function ChatPage() {
                   );
                 }
 
+                if (toolName === 'collectRecipients') {
+                  const { result } = toolInvocation;
+                  return (
+                    <div key={toolCallId}>
+                      <RecipientForm 
+                        roles={result.roles}
+                        onSubmit={(recipients) => {
+                          addToolResult({ toolCallId, result: { ...result, recipients, completed: true } });
+                        }}
+                        onBack={() => {
+                          addToolResult({ toolCallId, result: { ...result, goBack: true } });
+                        }}
+                      />
+                    </div>
+                  );
+                }
+
                 if (toolName === 'displayEnvelopeList') {
                   const { result } = toolInvocation;
                   return (
@@ -116,6 +134,8 @@ export default function ChatPage() {
                 <div key={toolCallId} className="p-4 text-gray-500">
                   {toolName === 'displayTemplateSelector' || toolName === 'previewTemplate' ? (
                     'Loading templates...'
+                  ) : toolName === 'collectRecipients' ? (
+                    'Loading recipient form...'
                   ) : (
                     'Loading...'
                   )}
