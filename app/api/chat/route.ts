@@ -30,7 +30,16 @@ export async function POST(req: Request) {
           1. When users want to send a template, use previewTemplate to show available templates
           2. After template selection, show preview and get confirmation
           3. When confirmed, use collectRecipients to gather recipient information
-          4. After recipients are added, proceed to send the template
+          4. After recipients are collected, use sendTemplate to send the envelope with:
+             - A clear subject line (e.g. "Please sign: [Template Name]")
+             - The collected recipient information with proper role assignment
+             - The template ID
+
+          When collecting recipient information:
+          - If the user provides an email and name but no role, use "Signer" as the default role
+          - Format the recipient data as { email, name, roleName }
+          - Validate that the email is properly formatted
+          - Ensure the name is provided
 
           Always use the appropriate tool to display information rather than just describing it.
           Guide the user through each step clearly.`
@@ -249,6 +258,103 @@ export async function POST(req: Request) {
               };
             } catch (error) {
               console.error('Error in displayEnvelopeList:', error);
+              throw error;
+            }
+          }
+        }),
+        sendTemplate: tool({
+          description: 'Send a template with collected recipient information',
+          parameters: z.object({
+            templateId: z.string().describe('The ID of the template to send'),
+            subject: z.string().describe('Email subject for the envelope'),
+            message: z.string().optional().describe('Optional email message'),
+            recipients: z.array(z.object({
+              email: z.string(),
+              name: z.string(),
+              roleName: z.string()
+            })).describe('The recipients to send the template to')
+          }),
+          execute: async ({ templateId, subject, message, recipients }) => {
+            console.log('Starting sendTemplate execution:', { templateId, recipients });
+            try {
+              const cookieStore = cookies();
+              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              if (sessionError || !session?.user) {
+                throw new Error('User not authenticated');
+              }
+
+              // Send the template using DocuSign
+              const docusign = new DocuSignEnvelopes(supabase);
+              const docusignResponse = await docusign.createEnvelopeFromTemplate(
+                session.user.id,
+                templateId,
+                {
+                  emailSubject: subject,
+                  emailBlurb: message,
+                  roles: recipients
+                }
+              );
+
+              // Store envelope in database
+              const { data: envelope, error: envelopeError } = await supabase
+                .from('envelopes')
+                .insert({
+                  user_id: session.user.id,
+                  docusign_envelope_id: docusignResponse.envelopeId,
+                  subject,
+                  message,
+                  status: 'sent',
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                  metadata: {
+                    template_id: templateId,
+                  },
+                })
+                .select()
+                .single();
+
+              if (envelopeError) {
+                console.error('Database error:', envelopeError);
+                return {
+                  success: true,
+                  warning: 'Envelope created in DocuSign but failed to store in database',
+                  envelopeId: docusignResponse.envelopeId
+                };
+              }
+
+              // Store recipients
+              const { error: recipientsError } = await supabase
+                .from('recipients')
+                .insert(
+                  recipients.map(role => ({
+                    envelope_id: envelope.id,
+                    email: role.email,
+                    name: role.name,
+                    routing_order: 1,
+                    metadata: {
+                      role_name: role.roleName,
+                    },
+                  }))
+                );
+
+              if (recipientsError) {
+                console.error('Recipients storage error:', recipientsError);
+                return {
+                  success: true,
+                  warning: 'Envelope created but recipient details not stored',
+                  envelope
+                };
+              }
+
+              return {
+                success: true,
+                envelopeId: envelope.id,
+                status: 'sent'
+              };
+            } catch (error) {
+              console.error('Error in sendTemplate:', error);
               throw error;
             }
           }
