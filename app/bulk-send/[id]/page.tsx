@@ -69,7 +69,9 @@ export default function BulkOperationPage({ params }: { params: Promise<{ id: st
         (payload) => {
           setRecipients(current => 
             current.map(recipient => 
-              recipient.id === payload.new.id ? payload.new : recipient
+              recipient.id === (payload.new as BulkRecipient).id 
+                ? { ...recipient, ...payload.new as BulkRecipient }
+                : recipient
             )
           );
         }
