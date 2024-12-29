@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { TemplateSelector } from './template-selector';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { CheckCircle2, Clock, Users } from 'lucide-react';
+import { CheckCircle2, Users } from 'lucide-react';
 
 interface TemplatePreviewProps {
   value?: string;
@@ -49,31 +49,24 @@ export function TemplatePreview({
               )}
             </div>
             
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="h-4 w-4" />
-                <span>Estimated signing time: 5-10 minutes</span>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <h4 className="font-medium">Required Signers</h4>
               </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  <h4 className="font-medium">Required Signers</h4>
-                </div>
-                <div className="grid gap-2 pl-6">
-                  {selectedTemplate.roles.map((role, index) => (
-                    <div 
-                      key={index}
-                      className="flex items-center gap-2 text-sm text-gray-600"
-                    >
-                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium">{role.roleName}</span>
-                        <span className="text-gray-400 ml-2">Will receive email to sign</span>
-                      </div>
+              <div className="grid gap-2 pl-6">
+                {selectedTemplate.roles.map((role, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-center gap-2 text-sm text-gray-600"
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium">{role.roleName}</span>
+                      <span className="text-gray-400 ml-2">Will receive email to sign</span>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
 
