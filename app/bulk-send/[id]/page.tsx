@@ -5,8 +5,10 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { BulkOperation, BulkRecipient } from '@/types/bulk-operations';
+import { use } from 'react';
 
-export default function BulkOperationPage({ params }: { params: { id: string } }) {
+export default function BulkOperationPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
   const [operation, setOperation] = useState<BulkOperation | null>(null);
   const [recipients, setRecipients] = useState<BulkRecipient[]>([]);
   const router = useRouter();
@@ -18,7 +20,7 @@ export default function BulkOperationPage({ params }: { params: { id: string } }
       const { data: operation } = await supabase
         .from('bulk_operations')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', resolvedParams.id)
         .single();
 
       if (operation) {
@@ -28,7 +30,7 @@ export default function BulkOperationPage({ params }: { params: { id: string } }
       const { data: recipients } = await supabase
         .from('bulk_recipients')
         .select('*')
-        .eq('bulk_operation_id', params.id);
+        .eq('bulk_operation_id', resolvedParams.id);
 
       if (recipients) {
         setRecipients(recipients);
@@ -46,7 +48,7 @@ export default function BulkOperationPage({ params }: { params: { id: string } }
           event: 'UPDATE',
           schema: 'public',
           table: 'bulk_operations',
-          filter: `id=eq.${params.id}`
+          filter: `id=eq.${resolvedParams.id}`
         },
         (payload) => {
           setOperation(payload.new as BulkOperation);
@@ -62,7 +64,7 @@ export default function BulkOperationPage({ params }: { params: { id: string } }
           event: 'UPDATE',
           schema: 'public',
           table: 'bulk_recipients',
-          filter: `bulk_operation_id=eq.${params.id}`
+          filter: `bulk_operation_id=eq.${resolvedParams.id}`
         },
         (payload) => {
           setRecipients(current => 
@@ -78,7 +80,7 @@ export default function BulkOperationPage({ params }: { params: { id: string } }
       operationSubscription.unsubscribe();
       recipientsSubscription.unsubscribe();
     };
-  }, [params.id, supabase]);
+  }, [resolvedParams.id, supabase]);
 
   if (!operation) {
     return <div>Loading...</div>;
