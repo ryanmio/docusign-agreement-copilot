@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { TemplateSelector } from './template-selector';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Users } from 'lucide-react';
 
 interface TemplatePreviewProps {
   value?: string;
@@ -41,30 +41,43 @@ export function TemplatePreview({
     <div className="space-y-4">
       {mode === 'preview' && selectedTemplate ? (
         <Card className="p-6">
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold">{selectedTemplate.name}</h3>
               {selectedTemplate.description && (
-                <p className="text-sm text-gray-500">{selectedTemplate.description}</p>
+                <p className="text-sm text-gray-500 mt-1">{selectedTemplate.description}</p>
               )}
             </div>
             
-            <div className="space-y-2">
-              <h4 className="font-medium">Required Roles</h4>
-              <div className="grid gap-2">
-                {selectedTemplate.roles.map((role, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-center gap-2 text-sm text-gray-600"
-                  >
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    {role.roleName}
-                  </div>
-                ))}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock className="h-4 w-4" />
+                <span>Estimated signing time: 5-10 minutes</span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <h4 className="font-medium">Required Signers</h4>
+                </div>
+                <div className="grid gap-2 pl-6">
+                  {selectedTemplate.roles.map((role, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center gap-2 text-sm text-gray-600"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <div>
+                        <span className="font-medium">{role.roleName}</span>
+                        <span className="text-gray-400 ml-2">Will receive email to sign</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex justify-end gap-3 pt-2">
               {onCancel && (
                 <Button
                   variant="outline"
@@ -79,7 +92,7 @@ export function TemplatePreview({
                   onClick={handleProceed}
                   disabled={!value || isLoading}
                 >
-                  {isLoading ? 'Loading...' : 'Proceed'}
+                  {isLoading ? 'Loading...' : 'Proceed to Recipients'}
                 </Button>
               )}
             </div>
