@@ -23,6 +23,7 @@ export async function POST(req: Request) {
           When users ask about documents or envelopes, use the displayDocumentDetails tool to show them.
           When users want to view a PDF, use the displayPdfViewer tool.
           When users ask about bulk operations, use the displayBulkOperation tool.
+          When users want to see or select templates, use the displayTemplateSelector tool.
           Always use the appropriate tool to display information rather than just describing it.`
         },
         ...messages
@@ -115,6 +116,38 @@ export async function POST(req: Request) {
               return result;
             } catch (error) {
               console.error('Error in displayDocumentDetails:', error);
+              throw error;
+            }
+          }
+        }),
+        displayTemplateSelector: tool({
+          description: 'Display a template selector with search capabilities',
+          parameters: z.object({
+            preselectedId: z.string().optional().describe('Optional template ID to preselect'),
+            showSearch: z.boolean().optional().describe('Whether to show the search input')
+          }),
+          execute: async ({ preselectedId, showSearch }) => {
+            console.log('Starting displayTemplateSelector execution:', { preselectedId, showSearch });
+            try {
+              const cookieStore = cookies();
+              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              if (sessionError || !session?.user) {
+                throw new Error('User not authenticated');
+              }
+
+              // Fetch templates from DocuSign
+              const docusign = new DocuSignEnvelopes(supabase);
+              const { templates } = await docusign.listTemplates(session.user.id);
+
+              return {
+                selectedTemplateId: preselectedId,
+                showSearch: showSearch ?? true,
+                templates
+              };
+            } catch (error) {
+              console.error('Error in displayTemplateSelector:', error);
               throw error;
             }
           }
