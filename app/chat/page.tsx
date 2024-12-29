@@ -9,6 +9,7 @@ import { TemplateSelector } from '@/components/template-selector';
 import { EnvelopeList } from '@/components/envelope-list';
 import { TemplatePreview } from '@/components/template-preview';
 import { RecipientForm } from '@/components/recipient-form';
+import { EnvelopeSuccess } from '@/components/envelope-success';
 
 export default function ChatPage() {
   const { messages, input, handleInputChange, handleSubmit, addToolResult } = useChat();
@@ -118,8 +119,8 @@ export default function ChatPage() {
                   const { result } = toolInvocation;
                   if (result.success) {
                     return (
-                      <div key={toolCallId} className="p-4 bg-green-50 text-green-700 rounded-lg">
-                        Template sent successfully! The envelope has been created and sent to the recipients.
+                      <div key={toolCallId}>
+                        <EnvelopeSuccess envelopeId={result.envelopeId} />
                       </div>
                     );
                   }
