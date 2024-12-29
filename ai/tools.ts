@@ -1,5 +1,6 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
+import { z } from 'zod';
 
 export const tools = {
   displayBulkOperation: {
@@ -125,6 +126,38 @@ export const tools = {
         selectedTemplateId: args.preselectedId,
         showSearch: args.showSearch ?? true,
         templates
+      };
+    }
+  },
+  previewTemplate: {
+    description: 'Display a template preview with details and get user confirmation',
+    parameters: z.object({
+      templateId: z.string().optional().describe('Optional template ID to preview'),
+      showSearch: z.boolean().optional().describe('Whether to show the search input')
+    }),
+    execute: async ({ templateId, showSearch }: { templateId?: string; showSearch?: boolean }) => {
+      const supabase = createClientComponentClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Fetch templates from DocuSign
+      const docusign = new DocuSignEnvelopes(supabase);
+      const { templates } = await docusign.listTemplates(user.id);
+      
+      // If templateId is provided, find that specific template
+      const selectedTemplate = templateId ? 
+        templates.find(t => t.templateId === templateId) : 
+        undefined;
+
+      return {
+        selectedTemplateId: templateId,
+        showSearch: showSearch ?? !templateId,
+        templates,
+        mode: 'preview',
+        selectedTemplate
       };
     }
   }

@@ -24,6 +24,7 @@ export async function POST(req: Request) {
           When users want to view a PDF, use the displayPdfViewer tool.
           When users ask about bulk operations, use the displayBulkOperation tool.
           When users want to see or select templates, use the displayTemplateSelector tool.
+          When users want to preview and send a template, use the previewTemplate tool.
           When users want to see their envelopes or documents, use the displayEnvelopeList tool.
           Always use the appropriate tool to display information rather than just describing it.`
         },
@@ -149,6 +150,45 @@ export async function POST(req: Request) {
               };
             } catch (error) {
               console.error('Error in displayTemplateSelector:', error);
+              throw error;
+            }
+          }
+        }),
+        previewTemplate: tool({
+          description: 'Display a template preview with details and get user confirmation',
+          parameters: z.object({
+            templateId: z.string().optional().describe('Optional template ID to preview'),
+            showSearch: z.boolean().optional().describe('Whether to show the search input')
+          }),
+          execute: async ({ templateId, showSearch }) => {
+            console.log('Starting previewTemplate execution:', { templateId, showSearch });
+            try {
+              const cookieStore = cookies();
+              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              if (sessionError || !session?.user) {
+                throw new Error('User not authenticated');
+              }
+
+              // Fetch templates from DocuSign
+              const docusign = new DocuSignEnvelopes(supabase);
+              const { templates } = await docusign.listTemplates(session.user.id);
+              
+              // If templateId is provided, find that specific template
+              const selectedTemplate = templateId ? 
+                templates.find(t => t.templateId === templateId) : 
+                undefined;
+
+              return {
+                selectedTemplateId: templateId,
+                showSearch: showSearch ?? !templateId,
+                templates,
+                mode: 'preview',
+                selectedTemplate
+              };
+            } catch (error) {
+              console.error('Error in previewTemplate:', error);
               throw error;
             }
           }

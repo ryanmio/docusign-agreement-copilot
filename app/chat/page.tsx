@@ -7,9 +7,10 @@ import { BulkOperationView } from '@/components/bulk-operation-view';
 import PDFViewer from '@/components/pdf-viewer';
 import { TemplateSelector } from '@/components/template-selector';
 import { EnvelopeList } from '@/components/envelope-list';
+import { TemplatePreview } from '@/components/template-preview';
 
 export default function ChatPage() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat();
+  const { messages, input, handleInputChange, handleSubmit, addToolResult } = useChat();
 
   const handleEnvelopeClick = (envelopeId: string) => {
     // When an envelope is clicked, ask about it in the chat
@@ -73,6 +74,28 @@ export default function ChatPage() {
                   );
                 }
 
+                if (toolName === 'previewTemplate') {
+                  const { result } = toolInvocation;
+                  return (
+                    <div key={toolCallId}>
+                      <TemplatePreview 
+                        value={result.selectedTemplateId}
+                        onChange={(templateId) => {
+                          addToolResult({ toolCallId, result: { ...result, selectedTemplateId: templateId } });
+                        }}
+                        mode={result.mode}
+                        selectedTemplate={result.selectedTemplate}
+                        onProceed={() => {
+                          addToolResult({ toolCallId, result: { ...result, confirmed: true } });
+                        }}
+                        onCancel={() => {
+                          addToolResult({ toolCallId, result: { ...result, cancelled: true } });
+                        }}
+                      />
+                    </div>
+                  );
+                }
+
                 if (toolName === 'displayEnvelopeList') {
                   const { result } = toolInvocation;
                   return (
@@ -91,7 +114,7 @@ export default function ChatPage() {
               // Show loading states
               return (
                 <div key={toolCallId} className="p-4 text-gray-500">
-                  {toolName === 'displayTemplateSelector' ? (
+                  {toolName === 'displayTemplateSelector' || toolName === 'previewTemplate' ? (
                     'Loading templates...'
                   ) : (
                     'Loading...'
