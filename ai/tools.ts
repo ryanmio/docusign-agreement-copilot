@@ -130,12 +130,15 @@ export const tools = {
     }
   },
   previewTemplate: {
-    description: 'Display a template preview with details and get user confirmation',
+    description: 'Display a preview of a DocuSign template with its details and required roles',
     parameters: z.object({
-      templateId: z.string().optional().describe('Optional template ID to preview'),
-      showSearch: z.boolean().optional().describe('Whether to show the search input')
+      templateId: z.string().describe('The ID of the template to preview'),
+      showBackButton: z.boolean().optional().describe('Whether to show the back button')
     }),
-    execute: async ({ templateId, showSearch }: { templateId?: string; showSearch?: boolean }) => {
+    execute: async ({ templateId, showBackButton }: { 
+      templateId: string; 
+      showBackButton?: boolean 
+    }) => {
       const supabase = createClientComponentClient();
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -143,21 +146,19 @@ export const tools = {
         throw new Error('User not authenticated');
       }
 
-      // Fetch templates from DocuSign
+      // Get template details from DocuSign
       const docusign = new DocuSignEnvelopes(supabase);
-      const { templates } = await docusign.listTemplates(user.id);
-      
-      // If templateId is provided, find that specific template
-      const selectedTemplate = templateId ? 
-        templates.find(t => t.templateId === templateId) : 
-        undefined;
+      const template = await docusign.getTemplate(user.id, templateId);
 
       return {
-        selectedTemplateId: templateId,
-        showSearch: showSearch ?? !templateId,
-        templates,
-        mode: 'preview',
-        selectedTemplate
+        templateId,
+        templateName: template.name,
+        description: template.description || '',
+        roles: template.roles.map(role => ({
+          roleId: role.roleName,
+          roleName: role.roleName
+        })),
+        showBackButton: showBackButton ?? false
       };
     }
   },
