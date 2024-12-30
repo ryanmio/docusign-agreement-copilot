@@ -303,6 +303,76 @@ Assistant: Here are your templates:
 [TemplateSelector component displays with search enabled]
 ```
 
+### TemplatePreview
+
+A component that displays detailed information about a DocuSign template including its name, description, and required roles.
+
+#### Tool Definition
+
+```typescript
+previewTemplate: tool({
+  description: 'Display a preview of a DocuSign template with its details and required roles',
+  parameters: z.object({
+    templateId: z.string().describe('The ID of the template to preview'),
+    showBackButton: z.boolean().optional().describe('Whether to show the back button')
+  }),
+  execute: async ({ templateId, showBackButton }) => {
+    // Implementation details...
+  }
+})
+```
+
+#### Component Usage
+
+```tsx
+import { TemplatePreview } from '@/components/template-preview';
+
+// In your page component:
+{message.toolInvocations?.map(toolInvocation => {
+  const { toolName, toolCallId, state } = toolInvocation;
+
+  if (state === 'result' && toolName === 'previewTemplate') {
+    const { result } = toolInvocation;
+    return (
+      <div key={toolCallId}>
+        <TemplatePreview {...result} />
+      </div>
+    );
+  }
+})}
+```
+
+**Features:**
+- Template name and description display
+- Required signers list with role information
+- Proceed to Recipients button
+- Optional back button
+- Clean, modern UI design
+- Responsive layout
+
+**Use Cases:**
+- Previewing template details before sending
+- Confirming template selection
+- Reviewing required signers
+- Multi-step document sending flow
+
+**Technical Details:**
+- Uses DocuSign API for template data
+- Requires authentication context
+- TypeScript support with proper type definitions
+- Integrates with multi-step sending flow
+
+**Example Chat Interactions:**
+```
+User: I want to send our vendor renewal agreement
+Assistant: Here's a preview of the vendor renewal template:
+[TemplatePreview component displays with template details]
+
+User: Show me the details of the offboarding template
+Assistant: Here's the employee offboarding template:
+[TemplatePreview component displays with offboarding template details]
+```
+
 ## Database Schema Dependencies
 
 Components may depend on specific database tables and schemas. Here are the current dependencies:

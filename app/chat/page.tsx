@@ -80,20 +80,7 @@ export default function ChatPage() {
                   const { result } = toolInvocation;
                   return (
                     <div key={toolCallId}>
-                      <TemplatePreview 
-                        value={result.selectedTemplateId}
-                        onChange={(templateId) => {
-                          addToolResult({ toolCallId, result: { ...result, selectedTemplateId: templateId } });
-                        }}
-                        mode={result.mode}
-                        selectedTemplate={result.selectedTemplate}
-                        onProceed={() => {
-                          addToolResult({ toolCallId, result: { ...result, confirmed: true } });
-                        }}
-                        onCancel={() => {
-                          addToolResult({ toolCallId, result: { ...result, cancelled: true } });
-                        }}
-                      />
+                      <TemplatePreview {...result} />
                     </div>
                   );
                 }
