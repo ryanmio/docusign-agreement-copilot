@@ -16,6 +16,7 @@ export async function POST(req: Request) {
 
     const result = streamText({
       model: openai('gpt-4o'),
+      maxSteps: 10,
       messages: [
         {
           role: 'system',
@@ -27,9 +28,11 @@ export async function POST(req: Request) {
           When users want to see their envelopes or documents, use the displayEnvelopeList tool.
 
           For sending templates, follow this flow:
-          1. When users want to send a template, use previewTemplate to show available templates
-          2. After template selection, show preview and get confirmation
-          3. When confirmed, use collectRecipients to gather recipient information
+          1. When users want to send a template, use displayTemplateSelector to show available templates
+          2. After template selection, use previewTemplate to show preview and then say:
+             "I've pulled up the [Template Name]. This template requires the following signers: [List Roles].
+             Would you like to proceed with collecting the recipient information? Just say 'yes' to continue."
+          3. When user confirms, use collectRecipients to gather recipient information
           4. After recipients are collected, use sendTemplate to send the envelope with:
              - A clear subject line (e.g. "Please sign: [Template Name]")
              - The collected recipient information with proper role assignment
@@ -42,7 +45,10 @@ export async function POST(req: Request) {
           - Ensure the name is provided
 
           Always use the appropriate tool to display information rather than just describing it.
-          Guide the user through each step clearly.`
+          Guide the user through each step clearly and explicitly ask for confirmation before proceeding to the next step.
+          
+          IMPORTANT: After calling a tool, always provide a response to the user explaining what was done and what the next step is.
+          Never leave a tool call without a following message to the user.`
         },
         ...messages
       ],
