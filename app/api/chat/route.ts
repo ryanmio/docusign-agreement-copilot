@@ -27,28 +27,41 @@ export async function POST(req: Request) {
           When users want to see or select templates, use the displayTemplateSelector tool.
           When users want to see their envelopes or documents, use the displayEnvelopeList tool.
 
-          For sending templates, follow this flow:
+          For sending templates, follow this EXACT flow:
           1. When users want to send a template, use displayTemplateSelector to show available templates
           2. After template selection, use previewTemplate to show preview and then say:
              "I've pulled up the [Template Name]. This template requires the following signers: [List Roles].
              Would you like to proceed with collecting the recipient information? Just say 'yes' to continue."
-          3. When user confirms, use collectRecipients to gather recipient information
-          4. After recipients are collected, use sendTemplate to send the envelope with:
-             - A clear subject line (e.g. "Please sign: [Template Name]")
+          3. When user confirms, use collectRecipients to gather recipient information. Ask for each role:
+             "Please provide the following information for the [Role Name]:
+             - Email address
+             - Full name"
+          4. After ALL recipient information is collected, show a summary and ask for confirmation:
+             "I'll send the [Template Name] to:
+             - [Role 1]: [Name] ([Email])
+             - [Role 2]: [Name] ([Email])
+             Is this correct? Please confirm by saying 'send' or go back by saying 'edit recipients'."
+          5. Only after explicit 'send' confirmation, use sendTemplate with:
+             - Subject: "Please sign: [Template Name]"
              - The collected recipient information with proper role assignment
              - The template ID
+             - Any prefill data collected
 
           When collecting recipient information:
-          - If the user provides an email and name but no role, use "Signer" as the default role
+          - NEVER use example.com email addresses
+          - NEVER assume or prefill recipient information
           - Format the recipient data as { email, name, roleName }
           - Validate that the email is properly formatted
           - Ensure the name is provided
+          - Ask for each recipient's information separately and clearly
+          - Wait for user's response before proceeding
 
           Always use the appropriate tool to display information rather than just describing it.
           Guide the user through each step clearly and explicitly ask for confirmation before proceeding to the next step.
           
           IMPORTANT: After calling a tool, always provide a response to the user explaining what was done and what the next step is.
-          Never leave a tool call without a following message to the user.`
+          Never leave a tool call without a following message to the user.
+          Never skip steps in the flow - each step requires explicit user input.`
         },
         ...messages
       ],
@@ -274,10 +287,11 @@ export async function POST(req: Request) {
               email: z.string(),
               name: z.string(),
               roleName: z.string()
-            })).describe('The recipients to send the template to')
+            })).describe('The recipients to send the template to'),
+            prefillData: z.record(z.string(), z.record(z.string(), z.string())).optional().describe('Prefill data for template fields, keyed by role name and field name')
           }),
-          execute: async ({ templateId, subject, message, recipients }) => {
-            console.log('Starting sendTemplate execution:', { templateId, recipients });
+          execute: async ({ templateId, subject, message, recipients, prefillData }) => {
+            console.log('Starting sendTemplate execution:', { templateId, recipients, prefillData });
             try {
               const cookieStore = cookies();
               const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -295,7 +309,8 @@ export async function POST(req: Request) {
                 {
                   emailSubject: subject,
                   emailBlurb: message,
-                  roles: recipients
+                  roles: recipients,
+                  prefillData
                 }
               );
 

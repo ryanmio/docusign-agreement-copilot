@@ -168,17 +168,21 @@ export const tools = {
       templateId: z.string().describe('The ID of the template to collect recipients for'),
       roles: z.array(z.object({
         roleName: z.string()
-      })).describe('The roles required by the template')
+      })).describe('The roles required by the template'),
+      showBackButton: z.boolean().optional().describe('Whether to show a back button')
     }),
-    execute: async ({ templateId, roles }: { 
+    execute: async ({ templateId, roles, showBackButton }: { 
       templateId: string; 
-      roles: Array<{ roleName: string }> 
+      roles: Array<{ roleName: string }>;
+      showBackButton?: boolean;
     }) => {
       console.log('Starting collectRecipients execution:', { templateId, roles });
       return {
         templateId,
         roles,
-        mode: 'collect'
+        mode: 'collect',
+        showBackButton: showBackButton ?? false,
+        requireConfirmation: true
       };
     }
   },

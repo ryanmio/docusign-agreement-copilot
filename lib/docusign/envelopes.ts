@@ -386,43 +386,43 @@ export class DocuSignEnvelopes {
     emailSubject,
     emailBlurb,
     roles,
+    prefillData,
   }: {
     emailSubject: string;
     emailBlurb?: string;
     roles: TemplateRole[];
+    prefillData?: Record<string, Record<string, string>>;
   }) {
     const client = await this.client.getClient(userId);
 
-    const envelopeDefinition = {
+    const envelopeDefinition: EnvelopeDefinition = {
       emailSubject,
       emailBlurb,
+      status: 'sent',
       templateId,
       templateRoles: roles.map(role => ({
         email: role.email,
         name: role.name,
         roleName: role.roleName,
-        routingOrder: role.routingOrder || 1,
+        routingOrder: role.routingOrder,
+        // Add prefill data for each role
+        tabs: prefillData?.[role.roleName] ? {
+          textTabs: Object.entries(prefillData[role.roleName]).map(([tabLabel, value]) => ({
+            tabLabel,
+            value,
+          })),
+        } : undefined,
       })),
-      status: "sent",
     };
 
-    console.log('Creating envelope from template:', {
-      ...envelopeDefinition,
-      templateId,
-      roleCount: roles.length,
+    const response = await fetch(`${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes`, {
+      method: 'POST',
+      headers: {
+        ...client.headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(envelopeDefinition),
     });
-
-    const response = await fetch(
-      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes`,
-      {
-        method: 'POST',
-        headers: {
-          ...client.headers,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(envelopeDefinition),
-      }
-    );
 
     if (!response.ok) {
       const errorData = await response.text();
@@ -435,8 +435,6 @@ export class DocuSignEnvelopes {
     }
 
     const data = await response.json();
-    console.log('DocuSign Create Envelope From Template Response:', data);
-
     return {
       envelopeId: data.envelopeId,
     };
