@@ -2,6 +2,30 @@ import { DocuSignClient } from './client';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CreateEnvelopeOptions, TemplateRole, ListTemplatesResponse, TemplateResponse } from '@/types/envelopes';
 
+interface TabDefinition {
+  textTabs?: Array<{
+    tabLabel: string;
+    value: string;
+  }>;
+  numberTabs?: Array<{
+    tabLabel: string;
+    value: string;
+  }>;
+  numericalTabs?: Array<{
+    tabLabel: string;
+    value: string;
+    numericalValue: string;
+  }>;
+  dateTabs?: Array<{
+    tabLabel: string;
+    value: string;
+  }>;
+  currencyTabs?: Array<{
+    tabLabel: string;
+    value: string;
+  }>;
+}
+
 interface EnvelopeDefinition {
   emailSubject: string;
   emailBlurb?: string;
@@ -35,6 +59,7 @@ interface EnvelopeDefinition {
     name: string;
     roleName: string;
     routingOrder?: number;
+    tabs?: TabDefinition;
   }>;
 }
 
@@ -118,6 +143,15 @@ interface CreateEnvelopeArgs {
   status: string;
   emailSubject: string;
   emailBlurb?: string;
+}
+
+interface TemplateTab {
+  tabLabel: string;
+  tabType: 'text' | 'number' | 'date';
+  required: boolean;
+  documentId: string;
+  recipientId: string;
+  pageNumber: string;
 }
 
 export class DocuSignEnvelopes {
@@ -391,8 +425,15 @@ export class DocuSignEnvelopes {
     emailSubject: string;
     emailBlurb?: string;
     roles: TemplateRole[];
-    prefillData?: Record<string, Record<string, string>>;
+    prefillData?: Record<string, Record<string, { value: string; type: 'text' | 'number' | 'date' }>>;
   }) {
+    console.log('Creating envelope from template:', {
+      templateId,
+      emailSubject,
+      roles,
+      prefillData
+    });
+
     const client = await this.client.getClient(userId);
 
     const envelopeDefinition: EnvelopeDefinition = {
@@ -400,20 +441,65 @@ export class DocuSignEnvelopes {
       emailBlurb,
       status: 'sent',
       templateId,
-      templateRoles: roles.map(role => ({
-        email: role.email,
-        name: role.name,
-        roleName: role.roleName,
-        routingOrder: role.routingOrder,
-        // Add prefill data for each role
-        tabs: prefillData?.[role.roleName] ? {
-          textTabs: Object.entries(prefillData[role.roleName]).map(([tabLabel, value]) => ({
-            tabLabel,
-            value,
-          })),
-        } : undefined,
-      })),
+      templateRoles: roles.map(role => {
+        console.log('Processing role for envelope:', {
+          roleName: role.roleName,
+          prefillData: prefillData?.[role.roleName]
+        });
+
+        const roleTabs = prefillData?.[role.roleName];
+        const tabs: TabDefinition = {};
+
+        if (roleTabs) {
+          console.log('Processing tabs for role:', {
+            roleName: role.roleName,
+            tabs: roleTabs
+          });
+
+          Object.entries(roleTabs).forEach(([tabLabel, { value, type }]) => {
+            console.log('Processing tab:', {
+              tabLabel,
+              value,
+              type
+            });
+
+            switch (type) {
+              case 'text':
+                if (!tabs.textTabs) tabs.textTabs = [];
+                tabs.textTabs.push({ tabLabel, value });
+                break;
+              case 'number':
+                if (!tabs.numericalTabs) tabs.numericalTabs = [];
+                tabs.numericalTabs.push({ 
+                  tabLabel, 
+                  value,
+                  numericalValue: value
+                });
+                break;
+              case 'date':
+                if (!tabs.dateTabs) tabs.dateTabs = [];
+                tabs.dateTabs.push({ tabLabel, value });
+                break;
+            }
+          });
+        }
+
+        console.log('Final tabs for role:', {
+          roleName: role.roleName,
+          tabs
+        });
+
+        return {
+          email: role.email,
+          name: role.name,
+          roleName: role.roleName,
+          routingOrder: role.routingOrder,
+          tabs: Object.keys(tabs).length > 0 ? tabs : undefined,
+        };
+      }),
     };
+
+    console.log('Final envelope definition:', envelopeDefinition);
 
     const response = await fetch(`${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes`, {
       method: 'POST',
@@ -438,5 +524,128 @@ export class DocuSignEnvelopes {
     return {
       envelopeId: data.envelopeId,
     };
+  }
+
+  async getTemplateRecipientTabs(userId: string, templateId: string, roleName: string): Promise<TemplateTab[]> {
+    console.log('Starting getTemplateRecipientTabs:', { userId, templateId, roleName });
+    const client = await this.client.getClient(userId);
+    
+    // First get template details to find recipient ID
+    console.log('Fetching template details...');
+    const templateResponse = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/templates/${templateId}`,
+      {
+        method: 'GET',
+        headers: client.headers,
+      }
+    );
+
+    if (!templateResponse.ok) {
+      const errorData = await templateResponse.text();
+      console.error('Template details error:', {
+        status: templateResponse.status,
+        statusText: templateResponse.statusText,
+        error: errorData
+      });
+      throw new Error(`Failed to get template details: ${errorData}`);
+    }
+
+    const templateData = await templateResponse.json();
+    console.log('Template data:', {
+      templateId: templateData.templateId,
+      recipients: templateData.recipients,
+      signers: templateData.recipients?.signers
+    });
+
+    const recipient = templateData.recipients?.signers?.find(
+      (signer: any) => signer.roleName === roleName
+    );
+
+    if (!recipient) {
+      console.error('Could not find recipient:', {
+        roleName,
+        availableRoles: templateData.recipients?.signers?.map((s: any) => s.roleName)
+      });
+      throw new Error(`Could not find recipient with role name: ${roleName}`);
+    }
+
+    console.log('Found recipient:', {
+      roleName,
+      recipientId: recipient.recipientId
+    });
+
+    // Now get the tabs using the recipient ID
+    console.log('Fetching tabs for recipient...');
+    const response = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/templates/${templateId}/recipients/${recipient.recipientId}/tabs`,
+      {
+        method: 'GET',
+        headers: client.headers,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Tabs fetch error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
+      throw new Error(`Failed to get template tabs: ${errorData}`);
+    }
+
+    const data = await response.json();
+    console.log('Raw tabs data:', data);
+    const tabs: TemplateTab[] = [];
+
+    // Map DocuSign tab types to our simplified types
+    const processTab = (tab: any, type: 'text' | 'number' | 'date') => {
+      console.log('Processing tab:', { label: tab.tabLabel, type, required: tab.required });
+      if (tab.tabLabel) {
+        tabs.push({
+          tabLabel: tab.tabLabel,
+          tabType: type,
+          required: tab.required === 'true',
+          documentId: tab.documentId,
+          recipientId: tab.recipientId,
+          pageNumber: tab.pageNumber,
+        });
+      }
+    };
+
+    // Process all tab types
+    if (data.textTabs) {
+      data.textTabs.forEach((tab: any) => processTab(tab, 'text'));
+    }
+    if (data.numberTabs) {
+      data.numberTabs.forEach((tab: any) => processTab(tab, 'number'));
+    }
+    if (data.numericalTabs) {
+      data.numericalTabs.forEach((tab: any) => processTab(tab, 'number'));
+    }
+    if (data.currencyTabs) {
+      data.currencyTabs.forEach((tab: any) => processTab(tab, 'number'));
+    }
+    if (data.formulaTabs) {
+      data.formulaTabs.forEach((tab: any) => processTab(tab, 'number'));
+    }
+    if (data.dateTabs) {
+      data.dateTabs.forEach((tab: any) => processTab(tab, 'date'));
+    }
+    if (data.dateSignedTabs) {
+      data.dateSignedTabs.forEach((tab: any) => processTab(tab, 'date'));
+    }
+    if (data.titleTabs) {
+      data.titleTabs.forEach((tab: any) => processTab(tab, 'text'));
+    }
+    if (data.companyTabs) {
+      data.companyTabs.forEach((tab: any) => processTab(tab, 'text'));
+    }
+    if (data.fullNameTabs) {
+      data.fullNameTabs.forEach((tab: any) => processTab(tab, 'text'));
+    }
+
+    console.log('Final processed tabs:', tabs);
+    return tabs;
   }
 } 

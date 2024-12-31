@@ -31,17 +31,27 @@ export async function POST(req: Request) {
           1. When users want to send a template, use displayTemplateSelector to show available templates
           2. After template selection, use previewTemplate to show preview and then say:
              "I've pulled up the [Template Name]. This template requires the following signers: [List Roles].
-             Would you like to proceed with collecting the recipient information? Just say 'yes' to continue."
+             Would you like to proceed with collecting recipient information? Just say 'yes' to continue."
           3. When user confirms, use collectRecipients to gather recipient information. Ask for each role:
              "Please provide the following information for the [Role Name]:
              - Email address
              - Full name"
-          4. After ALL recipient information is collected, show a summary and ask for confirmation:
+          4. After collecting ALL recipient information, use getTemplateTabs for each role to check available fields.
+             If any fillable fields are found, ask for each role:
+             "For [Role Name], I found the following fields that can be prefilled:
+             [List fields with their types]
+             Would you like me to prefill any of these fields? Please specify which ones."
+             If no fillable fields are found for any role, proceed to step 5.
+          5. After ALL information is collected, show a summary and ask for confirmation:
              "I'll send the [Template Name] to:
              - [Role 1]: [Name] ([Email])
              - [Role 2]: [Name] ([Email])
+             [If there are prefilled values, include:]
+             With the following prefilled values:
+             - [Field 1]: [Value]
+             - [Field 2]: [Value]
              Is this correct? Please confirm by saying 'send' or go back by saying 'edit recipients'."
-          5. Only after explicit 'send' confirmation, use sendTemplate with:
+          6. Only after explicit 'send' confirmation, use sendTemplate with:
              - Subject: "Please sign: [Template Name]"
              - The collected recipient information with proper role assignment
              - The template ID
@@ -56,12 +66,38 @@ export async function POST(req: Request) {
           - Ask for each recipient's information separately and clearly
           - Wait for user's response before proceeding
 
+          When handling prefill data:
+          - Use getTemplateTabs to get available fields for each role
+          - Use the correct tab type (text, number, date) for each field
+          - Format dates in ISO format (YYYY-MM-DD)
+          - Format numbers without currency symbols or commas (e.g., "105000" not "$105,000")
+          - Only prefill fields when explicitly confirmed by the user
+          - Structure prefill data as { [roleName]: { [tabLabel]: { value, type } } }
+          - When sending template with prefilled values:
+            * Remove any currency symbols ($) and commas from number values
+            * Include the prefillData parameter in sendTemplate
+            * Double check the tab labels match exactly with what DocuSign expects
+
+          For example, if user says "annual fee should be $105,000":
+          1. Format as "105000" (remove $ and commas)
+          2. Structure as:
+             prefillData: {
+               "Company Representative": {
+                 "Annual Fee": {
+                   value: "105000",
+                   type: "number"
+                 }
+               }
+             }
+          3. Include this prefillData when calling sendTemplate
+
           Always use the appropriate tool to display information rather than just describing it.
           Guide the user through each step clearly and explicitly ask for confirmation before proceeding to the next step.
           
           IMPORTANT: After calling a tool, always provide a response to the user explaining what was done and what the next step is.
           Never leave a tool call without a following message to the user.
-          Never skip steps in the flow - each step requires explicit user input.`
+          Never skip steps in the flow - each step requires explicit user input.
+          If a tool call fails, inform the user and suggest retrying or contacting support.`
         },
         ...messages
       ],
@@ -288,7 +324,10 @@ export async function POST(req: Request) {
               name: z.string(),
               roleName: z.string()
             })).describe('The recipients to send the template to'),
-            prefillData: z.record(z.string(), z.record(z.string(), z.string())).optional().describe('Prefill data for template fields, keyed by role name and field name')
+            prefillData: z.record(z.string(), z.record(z.string(), z.object({
+              value: z.string(),
+              type: z.enum(['text', 'number', 'date'])
+            }))).optional().describe('Prefill data for template fields, keyed by role name and field name')
           }),
           execute: async ({ templateId, subject, message, recipients, prefillData }) => {
             console.log('Starting sendTemplate execution:', { templateId, recipients, prefillData });
@@ -372,6 +411,44 @@ export async function POST(req: Request) {
               };
             } catch (error) {
               console.error('Error in sendTemplate:', error);
+              throw error;
+            }
+          }
+        }),
+        getTemplateTabs: tool({
+          description: 'Get the available tabs (fields) for a template role',
+          parameters: z.object({
+            templateId: z.string().describe('The ID of the template to get tabs for'),
+            roleName: z.string().describe('The role name to get tabs for')
+          }),
+          execute: async ({ templateId, roleName }) => {
+            console.log('Starting getTemplateTabs tool execution:', { templateId, roleName });
+            try {
+              const cookieStore = cookies();
+              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              if (sessionError || !session?.user) {
+                console.error('Authentication error:', sessionError);
+                throw new Error('User not authenticated');
+              }
+
+              console.log('Getting tabs for user:', session.user.id);
+              const docusign = new DocuSignEnvelopes(supabase);
+              const tabs = await docusign.getTemplateRecipientTabs(session.user.id, templateId, roleName);
+              
+              console.log('Retrieved tabs:', tabs);
+              const result = {
+                tabs: tabs.map(tab => ({
+                  label: tab.tabLabel,
+                  type: tab.tabType,
+                  required: tab.required
+                }))
+              };
+              console.log('Returning result:', result);
+              return result;
+            } catch (error) {
+              console.error('Error in getTemplateTabs tool:', error);
               throw error;
             }
           }

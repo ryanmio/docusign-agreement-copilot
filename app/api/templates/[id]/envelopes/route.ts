@@ -13,6 +13,10 @@ const createFromTemplateSchema = z.object({
     roleName: z.string().min(1, 'Role name is required'),
     routingOrder: z.number().optional(),
   })),
+  prefillData: z.record(z.string(), z.record(z.string(), z.object({
+    value: z.string(),
+    type: z.enum(['text', 'number', 'date'])
+  }))).optional(),
 });
 
 export async function POST(
@@ -61,6 +65,7 @@ export async function POST(
           emailSubject: payload.subject,
           emailBlurb: payload.message,
           roles: payload.roles,
+          prefillData: payload.prefillData,
         }
       );
     } catch (error) {
