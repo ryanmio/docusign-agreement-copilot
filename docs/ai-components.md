@@ -373,6 +373,84 @@ Assistant: Here's the employee offboarding template:
 [TemplatePreview component displays with offboarding template details]
 ```
 
+### PriorityDashboard
+
+A component that displays urgent agreements requiring attention, categorized by priority level.
+
+#### Tool Definition
+
+```typescript
+displayPriorityDashboard: tool({
+  description: 'Display a dashboard of prioritized agreements requiring attention',
+  parameters: z.object({
+    showBackButton: z.boolean().optional().describe('Whether to show a back button')
+  }),
+  execute: async ({ showBackButton }) => {
+    const docusign = new DocuSignEnvelopes(supabase);
+    const envelopes = await docusign.listStatusChanges(session.user.id);
+    
+    // Group envelopes by priority
+    const prioritizedEnvelopes = categorizePriorities(envelopes);
+    
+    return {
+      showBackButton: showBackButton ?? false,
+      prioritizedEnvelopes
+    };
+  }
+})
+```
+
+#### Component Usage
+
+```tsx
+import { PriorityDashboard } from '@/components/priority-dashboard';
+
+// In your page component:
+{message.toolInvocations?.map(toolInvocation => {
+  const { toolName, toolCallId, state } = toolInvocation;
+
+  if (state === 'result' && toolName === 'displayPriorityDashboard') {
+    const { result } = toolInvocation;
+    return (
+      <div key={toolCallId}>
+        <PriorityDashboard {...result} />
+      </div>
+    );
+  }
+})}
+```
+
+**Features:**
+- Three priority sections: Urgent, Today, and This Week
+- Quick actions for each agreement (view, sign, remind)
+- Real-time status updates
+- Efficient envelope fetching using DocuSign API
+- Mobile responsive design
+- Error handling and loading states
+
+**Use Cases:**
+- Morning document review
+- Identifying urgent agreements
+- Quick access to pending tasks
+- Prioritized workflow management
+
+**Technical Details:**
+- Uses DocuSign's `listStatusChanges` endpoint
+- Integrates with existing DocuSign envelope handling
+- Requires authentication context
+- TypeScript support with proper type definitions
+
+**Example Chat Interactions:**
+```
+User: What needs my attention?
+Assistant: Here are your priorities:
+[PriorityDashboard displays with categorized agreements]
+
+User: Show me my urgent documents
+Assistant: Here are your urgent agreements:
+[PriorityDashboard displays focused on urgent section]
+```
+
 ## Database Schema Dependencies
 
 Components may depend on specific database tables and schemas. Here are the current dependencies:

@@ -360,7 +360,7 @@ export async function POST(req: Request) {
                 
                 // If recipients is already an array
                 if (Array.isArray(envelope.recipients)) {
-                  return envelope.recipients.map(r => ({
+                  return envelope.recipients.map((r: { email: string; name: string; status: string }) => ({
                     email: r.email,
                     name: r.name,
                     status: r.status
