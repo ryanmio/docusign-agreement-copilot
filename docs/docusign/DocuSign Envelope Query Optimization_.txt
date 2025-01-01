@@ -1,0 +1,56 @@
+﻿DocuSign Priority Dashboard: Efficient Envelope Queries
+This document addresses the technical aspects of building a Priority Dashboard in DocuSign, focusing on efficient envelope queries via the DocuSign API. The dashboard aims to display urgent agreements requiring attention by fetching and categorizing envelopes based on status, expiration dates, and other metadata within the last 30 days. This data will be integrated into an existing chat interface using the DocuSignEnvelopes class (as per the project requirements).
+Efficient API Calls for Envelope Retrieval
+The most efficient API call to retrieve envelopes with the required information, including expiration dates and status, is envelopes.listStatusChanges. This endpoint allows for filtering by date range and status, crucial for identifying urgent agreements1.
+To effectively utilize this endpoint for the Priority Dashboard, consider these parameters:
+
+
+Parameter
+	Description
+	from_date
+	Set this to 30 days in the past to retrieve envelopes from the last 30 days2.
+	status
+	Specify the desired envelope statuses. To filter for active envelopes, include statuses like sent, delivered, signed. A complete list of possible statuses is provided in the next section2.
+	include
+	Use this parameter to include additional envelope details in a single API call, such as expiration to retrieve expiration date information3.
+	Leveraging the include parameter minimizes the number of API calls required to gather all necessary information, thereby improving efficiency and reducing latency3. For instance, to retrieve expiration dates, include expiration in the include parameter of your envelopes.listStatusChanges call.
+In addition to filtering and retrieving specific data points, the API also offers ways to download documents associated with an envelope. The documentsCombinedUri endpoint allows retrieving all documents in an envelope as a single, combined PDF file4. Alternatively, the archive endpoint can be used to retrieve all documents as a ZIP archive4. These options can be useful for various use cases within the Priority Dashboard, such as providing quick access to all documents related to an urgent agreement.
+When dealing with a large number of envelopes, pagination is essential for efficient retrieval. The envelopes.listStatusChanges API response includes a nextUri attribute, which provides the URL for the next page of results5. By iteratively calling the URLs in nextUri, you can effectively retrieve and process large datasets without exceeding API limits or encountering performance issues.
+DocuSign Envelope Statuses
+DocuSign provides various envelope statuses to track the progress of agreements. For the Priority Dashboard, focusing on "active" statuses is key. Here's a breakdown of the possible statuses: 1
+
+
+
+
+
+
+
+
+Envelope Status
+	Description
+	completed
+	The envelope has been completed by all recipients.
+	correct
+	The envelope has been opened by the sender for correction. The signing process is stopped...source
+	Rate Limits and Best Practices
+When fetching large numbers of envelopes, it's crucial to be aware of DocuSign API rate limits to avoid exceeding them and ensure smooth integration7. These limits include:
+* Hourly Limits: Accounts have a maximum number of requests allowed per hour. This limit applies to all integrations associated with an account. You can find the specific limit for your account in the X-RateLimit-Limit response header of any API request.
+* Burst Limits: In addition to hourly limits, there are also burst limits that restrict the number of requests within a short period (e.g., 30 seconds). Exceeding these limits can result in errors such as Burst_Envelope_Polling_Limit_Exceeded.
+To avoid exceeding these limits, consider the following best practices:
+* Efficient API Calls: Utilize the include parameter to retrieve multiple data points in a single call, reducing the overall number of requests.
+* Pagination: Use the nextUri attribute in API responses to efficiently handle large datasets and avoid making excessive requests.
+* Caching: Implement caching mechanisms to store frequently accessed data and reduce the need for repeated API calls.
+* Monitoring: Monitor your API usage to identify potential bottlenecks and optimize your integration accordingly.
+In the context of a priority dashboard that might handle a high volume of agreements, bulk sending capabilities become relevant. DocuSign offers features for bulk sending envelopes, which can significantly improve efficiency when sending the same document to many recipients8. When using bulk send, ensure your documents are prepared correctly and your recipient lists are accurate to avoid errors and delays.
+Conclusion
+Efficiently querying envelopes is crucial for building a performant and responsive DocuSign Priority Dashboard. By utilizing the envelopes.listStatusChanges API endpoint with appropriate parameters like from_date, status, and include, developers can retrieve the necessary data with minimal API calls. Understanding the various envelope statuses and leveraging features like documentsCombinedUri, archive, and nextUri further enhances efficiency and functionality.
+Furthermore, it's essential to be mindful of API rate limits and implement best practices such as efficient API calls, pagination, caching, and monitoring to ensure smooth integration and optimal performance. By following these guidelines, developers can create a robust and effective Priority Dashboard that meets the needs of users and provides timely access to critical agreement information.
+Works cited
+1. listStatusChanges | REST API - Docusign Developer Center, accessed January 1, 2025, https://developers.docusign.com/docs/esign-rest-api/reference/envelopes/envelopes/liststatuschanges/
+2. How-To List Envelope Status Changes | REST API - Docusign Developer Center, accessed January 1, 2025, https://developers.docusign.com/docs/esign-rest-api/how-to/list-envelope-status-changes/
+3. getEnvelope | REST API - Docusign Developer Center, accessed January 1, 2025, https://developers.docusign.com/docs/esign-rest-api/reference/envelopes/envelopes/get/
+4. getDocument | REST API - Docusign Developer Center, accessed January 1, 2025, https://developers.docusign.com/docs/esign-rest-api/reference/envelopes/envelopedocuments/get/
+5. From the Trenches: API pagination - DocuSign, accessed January 1, 2025, https://www.docusign.com/blog/developers/the-trenches-api-pagination
+6. Envelope status codes - Docusign Developer Center, accessed January 1, 2025, https://developers.docusign.com/docs/esign-rest-api/esign101/concepts/envelopes/status-codes/
+7. eSignature API rules and resource limits - Docusign Developer Center, accessed January 1, 2025, https://developers.docusign.com/docs/esign-rest-api/esign101/rules-and-limits/
+8. Bulk Send Best Practice - Docusign Community, accessed January 1, 2025, https://community.docusign.com/esignature-111/bulk-send-best-practice-1349
