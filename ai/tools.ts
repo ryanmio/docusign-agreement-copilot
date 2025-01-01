@@ -2,6 +2,26 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 import { z } from 'zod';
 
+// Add types for priority dashboard
+interface PriorityEnvelope {
+  envelopeId: string;
+  subject: string;
+  status: string;
+  expirationDate?: string;
+  recipients: Array<{
+    email: string;
+    name: string;
+    status: string;
+  }>;
+  urgencyReason: string;
+}
+
+interface PrioritySection {
+  title: string;
+  envelopes: PriorityEnvelope[];
+  type: 'urgent' | 'today' | 'thisWeek';
+}
+
 export const tools = {
   displayBulkOperation: {
     name: 'displayBulkOperation',
@@ -239,6 +259,106 @@ export const tools = {
         success: true,
         envelopeId: envelope.id,
         status: 'sent'
+      };
+    }
+  },
+  displayPriorityDashboard: {
+    name: 'displayPriorityDashboard',
+    description: 'Display a dashboard of priority agreements requiring attention',
+    parameters: z.object({
+      showBackButton: z.boolean().optional().describe('Whether to show a back button')
+    }),
+    execute: async ({ showBackButton }: { showBackButton?: boolean }) => {
+      const supabase = createClientComponentClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get envelopes from DocuSign
+      const docusign = new DocuSignEnvelopes(supabase);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { envelopes } = await docusign.listStatusChanges(user.id, {
+        from_date: thirtyDaysAgo.toISOString(),
+        include: ['recipients', 'expiration'],
+        status: ['sent', 'delivered', 'declined', 'voided']
+      });
+
+      // Helper to determine urgency reason
+      const getUrgencyReason = (envelope: any) => {
+        if (envelope.status === 'declined') return 'Document was declined';
+        if (envelope.status === 'voided') return 'Document was voided';
+        
+        const expiration = envelope.expirationDate ? new Date(envelope.expirationDate) : null;
+        if (expiration) {
+          const hoursUntilExpiration = Math.floor((expiration.getTime() - new Date().getTime()) / (1000 * 60 * 60));
+          if (hoursUntilExpiration <= 48) return `Expires in ${hoursUntilExpiration} hours`;
+        }
+
+        return 'Awaiting action';
+      };
+
+      // Categorize envelopes
+      const urgentEnvelopes: PriorityEnvelope[] = [];
+      const todayEnvelopes: PriorityEnvelope[] = [];
+      const thisWeekEnvelopes: PriorityEnvelope[] = [];
+
+      envelopes.forEach(envelope => {
+        const priorityEnvelope: PriorityEnvelope = {
+          envelopeId: envelope.envelopeId,
+          subject: envelope.emailSubject,
+          status: envelope.status,
+          expirationDate: envelope.expirationDateTime,
+          recipients: envelope.recipients.map(r => ({
+            email: r.email,
+            name: r.name,
+            status: r.status
+          })),
+          urgencyReason: getUrgencyReason(envelope)
+        };
+
+        // Categorize based on status and expiration
+        if (
+          envelope.status === 'declined' ||
+          envelope.status === 'voided' ||
+          (envelope.expirationDateTime && new Date(envelope.expirationDateTime).getTime() - new Date().getTime() <= 48 * 60 * 60 * 1000)
+        ) {
+          urgentEnvelopes.push(priorityEnvelope);
+        } else if (
+          envelope.expirationDateTime && 
+          new Date(envelope.expirationDateTime).getTime() - new Date().getTime() <= 7 * 24 * 60 * 60 * 1000
+        ) {
+          todayEnvelopes.push(priorityEnvelope);
+        } else {
+          thisWeekEnvelopes.push(priorityEnvelope);
+        }
+      });
+
+      // Limit to 5 items per section for demo
+      const sections: PrioritySection[] = [
+        {
+          title: 'Urgent',
+          type: 'urgent',
+          envelopes: urgentEnvelopes.slice(0, 5)
+        },
+        {
+          title: 'Today',
+          type: 'today',
+          envelopes: todayEnvelopes.slice(0, 5)
+        },
+        {
+          title: 'This Week',
+          type: 'thisWeek',
+          envelopes: thisWeekEnvelopes.slice(0, 5)
+        }
+      ];
+
+      return {
+        sections,
+        showBackButton: showBackButton ?? false
       };
     }
   }

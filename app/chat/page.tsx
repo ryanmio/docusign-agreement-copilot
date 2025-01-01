@@ -10,6 +10,7 @@ import { EnvelopeList } from '@/components/envelope-list';
 import { TemplatePreview } from '@/components/template-preview';
 import { RecipientForm } from '@/components/recipient-form';
 import { EnvelopeSuccess } from '@/components/envelope-success';
+import { PriorityDashboard } from '@/components/priority-dashboard';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -169,6 +170,51 @@ export default function ChatPage() {
           return result?.success ? (
             <EnvelopeSuccess envelopeId={result.envelopeId} />
           ) : null;
+
+        case 'displayPriorityDashboard':
+          return (
+            <PriorityDashboard
+              sections={result.sections}
+              toolCallId={toolCallId}
+              onAction={async (envelopeId, action) => {
+                try {
+                  if (action === 'view') {
+                    await handleToolResult(toolCallId, {
+                      ...result,
+                      completed: true
+                    });
+                    await append({
+                      role: 'user',
+                      content: `Show me details for envelope ${envelopeId}`
+                    });
+                  } else if (action === 'sign') {
+                    await handleToolResult(toolCallId, {
+                      ...result,
+                      completed: true
+                    });
+                    await append({
+                      role: 'user',
+                      content: `I need to sign envelope ${envelopeId}`
+                    });
+                  } else if (action === 'remind') {
+                    await handleToolResult(toolCallId, {
+                      ...result,
+                      completed: true
+                    });
+                    await append({
+                      role: 'user',
+                      content: `Send reminder for envelope ${envelopeId}`
+                    });
+                  }
+                } catch (error) {
+                  console.error('Failed to handle priority dashboard action:', error);
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to process action'
+                  });
+                }
+              }}
+            />
+          );
 
         default:
           return null;

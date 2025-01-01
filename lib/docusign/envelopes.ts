@@ -154,6 +154,30 @@ interface TemplateTab {
   pageNumber: string;
 }
 
+interface ListStatusChangesOptions {
+  from_date: string;
+  include?: string[];
+  status?: string[];
+}
+
+interface EnvelopeRecipient {
+  email: string;
+  name: string;
+  status: string;
+}
+
+interface Envelope {
+  envelopeId: string;
+  status: string;
+  emailSubject: string;
+  expirationDateTime?: string;
+  recipients: EnvelopeRecipient[];
+}
+
+interface ListStatusChangesResponse {
+  envelopes: Envelope[];
+}
+
 export class DocuSignEnvelopes {
   private client: DocuSignClient;
 
@@ -647,5 +671,43 @@ export class DocuSignEnvelopes {
 
     console.log('Final processed tabs:', tabs);
     return tabs;
+  }
+
+  async listStatusChanges(
+    userId: string,
+    options: ListStatusChangesOptions
+  ): Promise<ListStatusChangesResponse> {
+    const client = await this.client.getClient(userId);
+
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    if (options.from_date) {
+      queryParams.append('from_date', options.from_date);
+    }
+    if (options.include?.length) {
+      queryParams.append('include', options.include.join(','));
+    }
+    if (options.status?.length) {
+      queryParams.append('status', options.status.join(','));
+    }
+
+    const response = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes?${queryParams.toString()}`,
+      {
+        headers: client.headers,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('DocuSign API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
+      throw new Error(`Failed to list envelope status changes: ${errorData}`);
+    }
+
+    return response.json();
   }
 } 

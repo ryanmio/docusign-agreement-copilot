@@ -41,54 +41,43 @@ const config = {
 };
 ```
 
-5. **Existing Examples**
-- Check `ai/tools.ts` for tool definition examples
-- See `components/recipient-form.tsx` for form tool example
-- See `components/template-selector.tsx` for selector tool example
+## Adding a New Tool: Two Required Steps
 
-## Step 1: Define Tool Types
-**File**: `types/tools.ts`
+### Step 1: Add Tool to System Prompt
+In `app/api/chat/route.ts`, add instructions for when the AI should use your tool:
 ```typescript
-import { z } from 'zod';
+content: `You are a helpful assistant that helps users manage their DocuSign documents and agreements.
+// Existing tool instructions...
+When users ask about [specific use case], use the [yourNewTool] tool to [action].
 
-// 1. Tool Name
-export type ToolName = 
-  | 'collectRecipients'
-  | 'displayTemplateSelector'
-  | 'yourNewTool';  // Add your tool name here
+// Example:
+When users ask about priorities, urgent items, or what needs attention, 
+use the displayPriorityDashboard tool to show them a prioritized view 
+of their agreements.`
+```
 
-// 2. Tool Parameters Schema
-export const YourNewToolParams = z.object({
-  requiredParam: z.string().describe('Description of the parameter'),
-  optionalParam: z.string().optional().describe('Optional parameter description'),
-});
-
-// 3. Tool Result Type
-export interface YourNewToolResult {
-  // Required base properties
-  completed?: boolean;
-  error?: string;
-  
-  // Tool-specific properties
-  yourProperty: string;
-  // ... other properties
-}
-
-// 4. Combined Tool Result Type
-export type ToolResult = 
-  | RecipientFormResult
-  | TemplateSelectorResult
-  | YourNewToolResult;  // Add your result type
-
-// 5. Tool State Type (if using form)
-export interface YourToolState {
-  status: 'initial' | 'input' | 'validating' | 'submitting' | 'complete' | 'error';
-  data: any;
-  error?: string;
+### Step 2: Register Tool Implementation
+In `app/api/chat/route.ts`, add your tool to the tools object:
+```typescript
+tools: {
+  // Existing tools...
+  yourNewTool: tool({
+    name: 'yourNewTool',
+    description: 'Clear description of what your tool does',
+    parameters: z.object({
+      // Your tool's parameters
+    }),
+    execute: async (args) => {
+      // Your tool's logic
+    }
+  })
 }
 ```
 
-## Step 2: Create Tool Component
+IMPORTANT: Both steps are required! The system prompt tells the AI when to use the tool, 
+and the tool registration makes it available for use.
+
+## Step 3: Create Tool Component
 **File**: `components/your-new-tool.tsx`
 
 1. **For Form-based Tools**:
@@ -207,7 +196,7 @@ export function YourNewTool({ toolCallId, data, onSelect, onBack }: YourNewToolP
 }
 ```
 
-## Step 3: Add Tool Definition
+## Step 4: Add Tool Definition
 **File**: `ai/tools.ts`
 ```typescript
 import { tool } from 'ai/rsc';
@@ -264,7 +253,7 @@ export const tools = [
 ] as const;
 ```
 
-## Step 4: Add Tool Handler
+## Step 5: Add Tool Handler
 **File**: `app/chat/page.tsx`
 ```typescript
 import { useCallback } from 'react';
