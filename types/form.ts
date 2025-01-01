@@ -6,6 +6,15 @@ export interface FormInstance {
   version: number;          // For optimistic concurrency
 }
 
+// Tool invocation type
+export interface ToolInvocation {
+  toolName: string;
+  toolCallId: string;
+  state: 'partial-call' | 'result' | 'error';
+  result?: any;
+  error?: string;
+}
+
 // Form state type
 export interface FormState {
   status: FormStatus;

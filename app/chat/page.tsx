@@ -50,105 +50,132 @@ export default function ChatPage() {
       });
     } catch (error) {
       console.error('Failed to process tool result:', error);
-      // Show error UI
+      // Basic error handling
+      await addToolResult({
+        toolCallId,
+        result: {
+          error: error instanceof Error ? error.message : 'Failed to process result'
+        }
+      });
     }
   };
 
   const handleToolInvocation = useCallback((toolInvocation: any) => {
-    const { toolName, toolCallId, state } = toolInvocation;
+    const { toolName, toolCallId, state, result, error } = toolInvocation;
 
-    // Handle loading states
-    if (state !== 'result') {
+    // Handle error state
+    if (state === 'error' || error) {
       return (
-        <div className="p-4 text-gray-500">
-          Loading...
+        <div className="p-4 text-red-500">
+          {error || 'An error occurred while processing your request'}
         </div>
       );
     }
 
-    const { result } = toolInvocation;
+    // Minimal loading state
+    if (state === 'partial-call') {
+      return <div className="p-4 text-gray-500">Loading...</div>;
+    }
 
     // Handle completed tools
     if (result?.completed) {
       return null;
     }
 
-    switch (toolName) {
-      case 'displayTemplateSelector':
-        return (
-          <TemplateSelector 
-            value={result?.selectedTemplateId} 
-            onChange={async (templateId) => {
-              try {
-                await handleToolResult(toolCallId, {
-                  selectedTemplateId: templateId
-                });
-                await append({
-                  role: 'user',
-                  content: `I've selected template ${templateId}. Please continue.`
-                });
-              } catch (error) {
-                console.error('Failed to handle template selection:', error);
-                // Show error UI
-              }
-            }}
-          />
-        );
+    // Handle result state
+    if (state === 'result') {
+      switch (toolName) {
+        case 'collectRecipients':
+          return (
+            <RecipientForm 
+              roles={result.roles}
+              toolCallId={toolCallId}
+              onSubmit={async (recipients) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    recipients,
+                    completed: true
+                  });
+                  await append({
+                    role: 'user',
+                    content: `I've added the recipients: ${recipients.map(r => 
+                      `${r.roleName}: ${r.name} (${r.email})`).join(', ')}. Please continue.`
+                  });
+                } catch (error) {
+                  console.error('Failed to handle recipient submission:', error);
+                  // Basic error handling
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to submit recipients'
+                  });
+                }
+              }}
+              onBack={async () => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    goBack: true,
+                    completed: true
+                  });
+                  await append({
+                    role: 'user',
+                    content: 'go back'
+                  });
+                } catch (error) {
+                  console.error('Failed to handle back action:', error);
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to go back'
+                  });
+                }
+              }}
+            />
+          );
 
-      case 'previewTemplate':
-        return <TemplatePreview {...result} />;
+        case 'displayTemplateSelector':
+          return (
+            <TemplateSelector 
+              value={result?.selectedTemplateId} 
+              onChange={async (templateId) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    selectedTemplateId: templateId
+                  });
+                  await append({
+                    role: 'user',
+                    content: `I've selected template ${templateId}. Please continue.`
+                  });
+                } catch (error) {
+                  console.error('Failed to handle template selection:', error);
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to select template'
+                  });
+                }
+              }}
+            />
+          );
 
-      case 'collectRecipients':
-        return (
-          <RecipientForm 
-            roles={result.roles}
-            toolCallId={toolCallId}
-            onSubmit={async (recipients) => {
-              try {
-                console.log('Form submitted with recipients:', recipients);
-                await handleToolResult(toolCallId, {
-                  ...result,
-                  recipients
-                });
-                await append({
-                  role: 'user',
-                  content: `I've added the recipients: ${recipients.map(r => 
-                    `${r.roleName}: ${r.name} (${r.email})`).join(', ')}. Please continue.`
-                });
-              } catch (error) {
-                console.error('Failed to handle recipient submission:', error);
-                // Show error UI
-              }
-            }}
-            onBack={async () => {
-              try {
-                await handleToolResult(toolCallId, {
-                  ...result,
-                  goBack: true
-                });
-                await append({
-                  role: 'user',
-                  content: 'go back'
-                });
-              } catch (error) {
-                console.error('Failed to handle back action:', error);
-                // Show error UI
-              }
-            }}
-          />
-        );
+        case 'previewTemplate':
+          // Ensure we have all required props before rendering
+          if (!result?.templateId || !result?.templateName || !result?.roles) {
+            console.error('Missing required props for template preview:', result);
+            return <div className="p-4 text-red-500">Error: Invalid template data</div>;
+          }
+          return <TemplatePreview {...result} />;
 
-      case 'displayDocumentDetails':
-        return <DocumentView {...result} />;
+        case 'displayDocumentDetails':
+          return <DocumentView {...result} />;
 
-      case 'sendTemplate':
-        return result?.success ? (
-          <EnvelopeSuccess envelopeId={result.envelopeId} />
-        ) : null;
+        case 'sendTemplate':
+          return result?.success ? (
+            <EnvelopeSuccess envelopeId={result.envelopeId} />
+          ) : null;
 
-      default:
-        return null;
+        default:
+          return null;
+      }
     }
+
+    return null;
   }, [addToolResult, append]);
 
   return (

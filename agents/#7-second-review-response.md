@@ -113,31 +113,9 @@ Update the tool invocation handling to better manage loading and error states:
 const handleToolInvocation = useCallback((toolInvocation: ToolInvocation) => {
   const { toolName, toolCallId, state, result } = toolInvocation;
 
-  // Handle loading states
-  if (state === 'streaming') {
-    return (
-      <div className="p-4 space-y-2">
-        <div className="animate-pulse bg-gray-100 h-8 w-full rounded" />
-        <div className="text-sm text-gray-500">Loading form...</div>
-      </div>
-    );
-  }
-
-  // Handle error states
-  if (state === 'error') {
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-        <div className="text-red-700 font-medium">Error</div>
-        <div className="text-sm text-red-600">{toolInvocation.error}</div>
-        <Button
-          variant="outline"
-          className="mt-2"
-          onClick={() => handleRetry(toolCallId)}
-        >
-          Retry
-        </Button>
-      </div>
-    );
+  // Minimal loading state
+  if (state !== 'result') {
+    return <div className="p-4 text-gray-500">Loading...</div>;
   }
 
   // Handle completed tools
@@ -165,7 +143,7 @@ const handleToolInvocation = useCallback((toolInvocation: ToolInvocation) => {
               });
             } catch (error) {
               console.error('Failed to handle recipient submission:', error);
-              // Show error UI
+              // Basic error handling
               await handleToolResult(toolCallId, {
                 error: error instanceof Error ? error.message : 'Failed to submit recipients'
               });
@@ -184,9 +162,6 @@ const handleToolInvocation = useCallback((toolInvocation: ToolInvocation) => {
               });
             } catch (error) {
               console.error('Failed to handle back action:', error);
-              await handleToolResult(toolCallId, {
-                error: error instanceof Error ? error.message : 'Failed to go back'
-              });
             }
           }}
         />
@@ -196,7 +171,7 @@ const handleToolInvocation = useCallback((toolInvocation: ToolInvocation) => {
 }, [addToolResult, append]);
 ```
 
-Commit this change with the message: "feat: improve tool state handling and error UI"
+Commit this change with the message: "feat: implement core tool state handling for MVP"
 
 ## 3. Add Performance Optimizations
 **Reference**: See `20-streaming-data.mdx` for performance patterns.
@@ -293,3 +268,128 @@ After each commit:
 4. Test edge cases (e.g., rapid form updates, network issues)
 
 Let us know if you need any clarification on these changes. Once these are implemented, we'll have a more robust foundation for building additional features. 
+
+## Response to MVP Timeline Question
+
+You raise a good point about MVP priorities. Let's split step 2 into critical vs. enhancement features:
+
+### Critical for MVP (Implement Now):
+```typescript
+// app/chat/page.tsx
+
+const handleToolInvocation = useCallback((toolInvocation: ToolInvocation) => {
+  const { toolName, toolCallId, state, result } = toolInvocation;
+
+  // Minimal loading state
+  if (state !== 'result') {
+    return <div className="p-4 text-gray-500">Loading...</div>;
+  }
+
+  // Handle completed tools
+  if (result?.completed) {
+    return null;
+  }
+
+  switch (toolName) {
+    case 'collectRecipients':
+      return (
+        <RecipientForm 
+          roles={result.roles}
+          toolCallId={toolCallId}
+          onSubmit={async (recipients) => {
+            try {
+              await handleToolResult(toolCallId, {
+                ...result,
+                recipients,
+                completed: true
+              });
+              await append({
+                role: 'user',
+                content: `I've added the recipients: ${recipients.map(r => 
+                  `${r.roleName}: ${r.name} (${r.email})`).join(', ')}. Please continue.`
+              });
+            } catch (error) {
+              console.error('Failed to handle recipient submission:', error);
+              // Basic error handling
+              await handleToolResult(toolCallId, {
+                error: error instanceof Error ? error.message : 'Failed to submit recipients'
+              });
+            }
+          }}
+          onBack={async () => {
+            try {
+              await handleToolResult(toolCallId, {
+                ...result,
+                goBack: true,
+                completed: true
+              });
+              await append({
+                role: 'user',
+                content: 'go back'
+              });
+            } catch (error) {
+              console.error('Failed to handle back action:', error);
+            }
+          }}
+        />
+      );
+    // ... rest of the cases
+  }
+}, [addToolResult, append]);
+```
+
+### Defer to Post-MVP:
+1. Animated loading states
+2. Retry functionality
+3. Enhanced error UI components
+4. Progressive loading indicators
+
+This approach makes sense because:
+1. ✅ Core functionality remains solid
+2. ✅ Error handling is still present, just simpler
+3. ✅ Maintains development momentum
+4. ✅ Follows MVP best practices
+
+Commit the MVP version with: "feat: implement core tool state handling for MVP"
+
+Then create a tracking issue for post-MVP enhancements:
+```markdown
+# Post-MVP UI Enhancements
+
+To be implemented after MVP:
+- [ ] Add animated loading states
+- [ ] Implement retry functionality
+- [ ] Enhance error UI components
+- [ ] Add progressive loading indicators
+
+Reference: See `21-error-handling.mdx` for patterns
+```
+
+This gives us a solid foundation while keeping track of future improvements. Proceed with step 3 (performance optimizations) after this MVP implementation is stable. 
+
+## Priority Clarification for Step 3
+
+Unlike the UI enhancements in step 2, the performance optimizations in step 3 should remain part of the MVP because:
+
+1. **Critical for AI Integration**
+   - Form state cleanup prevents memory issues during long AI interactions
+   - Debouncing is essential when dealing with AI response latency
+   - State version tracking prevents race conditions with async AI operations
+
+2. **Low Implementation Cost**
+   - The changes are mostly contained to `use-form-instance.ts`
+   - No UI changes required
+   - Minimal testing overhead
+
+3. **Technical Debt Prevention**
+   - Much harder to add these optimizations later
+   - Could cause hard-to-debug issues if deferred
+   - Directly impacts AI functionality reliability
+
+Therefore, please proceed with:
+1. ✅ Step 1: Remove duplicate state (done)
+2. ✅ Step 2: Basic tool state handling (MVP version)
+3. ✅ Step 3: Performance optimizations (keep in MVP)
+4. ⏳ Post-MVP: Enhanced UI features
+
+This ensures we have a performant and reliable foundation before building out the rest of the AI functionality. 
