@@ -1,26 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Mail, User } from 'lucide-react';
+import { useFormInstance } from '../hooks/use-form-instance';
+import { FormState, RecipientData } from '../types/form';
 
 interface RecipientFormProps {
   roles: Array<{ roleName: string }>;
-  onSubmit: (recipients: Array<{ email: string; name: string; roleName: string }>) => void;
+  toolCallId: string;
+  onSubmit: (recipients: Array<{ email: string; name: string; roleName: string }>) => Promise<void>;
   onBack?: () => void;
 }
 
-export function RecipientForm({ roles, onSubmit, onBack }: RecipientFormProps) {
-  const [recipients, setRecipients] = useState(
-    roles.map(role => ({ 
-      email: '', 
-      name: '', 
-      roleName: role.roleName,
-      error: { email: '', name: '' }
-    }))
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: RecipientFormProps) {
+  const { instance, isRestored, updateState } = useFormInstance(toolCallId, roles);
+
+  if (!isRestored || !instance) {
+    return <div className="p-4 text-gray-500">Loading...</div>;
+  }
+
+  // Use instance state directly
+  const { state } = instance;
+  const { recipients } = state.data;
 
   const validateEmail = (email: string) => {
     if (!email) return 'Email is required';
@@ -33,8 +36,22 @@ export function RecipientForm({ roles, onSubmit, onBack }: RecipientFormProps) {
     return '';
   };
 
+  const updateRecipient = (index: number, field: 'email' | 'name', value: string) => {
+    updateState({
+      data: {
+        ...state.data,
+        recipients: state.data.recipients.map((r, i) => 
+          i === index ? {
+            ...r,
+            [field]: value,
+            error: { ...r.error, [field]: '' }
+          } : r
+        )
+      }
+    });
+  };
+
   const handleSubmit = async () => {
-    console.log('RecipientForm handleSubmit called');
     // Validate all recipients
     const newRecipients = recipients.map(recipient => ({
       ...recipient,
@@ -44,120 +61,103 @@ export function RecipientForm({ roles, onSubmit, onBack }: RecipientFormProps) {
       }
     }));
 
-    console.log('Validation results:', newRecipients);
-    setRecipients(newRecipients);
+    const hasErrors = newRecipients.some(r => r.error.email || r.error.name);
+    
+    updateState({
+      data: {
+        ...state.data,
+        recipients: newRecipients
+      },
+      validation: {
+        isValid: !hasErrors,
+        errors: {},
+        lastValidated: Date.now()
+      }
+    });
 
-    // Check if there are any errors
-    if (newRecipients.some(r => r.error.email || r.error.name)) {
-      console.log('Validation failed, found errors');
-      return;
-    }
+    if (hasErrors) return;
 
-    console.log('Starting submission...');
-    setIsSubmitting(true);
     try {
+      updateState({ status: 'submitting' });
+      
       const recipientData = recipients.map(({ email, name, roleName }) => ({ 
         email, 
         name, 
         roleName 
       }));
-      console.log('Submitting recipient data:', recipientData);
+      
       await onSubmit(recipientData);
-      console.log('Submission complete');
+      
+      updateState({ 
+        status: 'complete',
+        isComplete: true
+      });
     } catch (error) {
-      console.error('Error during submission:', error);
-    } finally {
-      setIsSubmitting(false);
+      updateState({ 
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Submission failed'
+      });
     }
   };
 
-  const updateRecipient = (index: number, field: 'email' | 'name', value: string) => {
-    const newRecipients = [...recipients];
-    newRecipients[index] = {
-      ...newRecipients[index],
-      [field]: value,
-      error: {
-        ...newRecipients[index].error,
-        [field]: '' // Clear error on change
-      }
-    };
-    setRecipients(newRecipients);
-  };
-
   return (
-    <Card className="p-6">
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-semibold">Add Recipients</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Enter the details for each required signer
-          </p>
+    <div className="space-y-4 p-4">
+      <h2 className="text-lg font-semibold">Add Recipients</h2>
+      
+      {recipients.map((recipient, index) => (
+        <div key={index} className="space-y-2">
+          <h3 className="font-medium">{recipient.roleName}</h3>
+          
+          <div className="space-y-1">
+            <input
+              type="text"
+              placeholder="Name"
+              value={recipient.name}
+              onChange={(e) => updateRecipient(index, 'name', e.target.value)}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {recipient.error?.name && (
+              <div className="text-sm text-red-500">{recipient.error.name}</div>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <input
+              type="email"
+              placeholder="Email"
+              value={recipient.email}
+              onChange={(e) => updateRecipient(index, 'email', e.target.value)}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {recipient.error?.email && (
+              <div className="text-sm text-red-500">{recipient.error.email}</div>
+            )}
+          </div>
         </div>
+      ))}
 
-        <div className="space-y-6">
-          {recipients.map((recipient, index) => (
-            <div key={index} className="space-y-4 p-4 border rounded-lg">
-              <div className="font-medium text-sm text-gray-700">
-                {recipient.roleName}
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </Label>
-                  <Input
-                    type="email"
-                    value={recipient.email}
-                    onChange={(e) => updateRecipient(index, 'email', e.target.value)}
-                    placeholder="Enter recipient's email"
-                    className={recipient.error.email ? 'border-red-500' : ''}
-                  />
-                  {recipient.error.email && (
-                    <div className="text-sm text-red-500">{recipient.error.email}</div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Name
-                  </Label>
-                  <Input
-                    type="text"
-                    value={recipient.name}
-                    onChange={(e) => updateRecipient(index, 'name', e.target.value)}
-                    placeholder="Enter recipient's name"
-                    className={recipient.error.name ? 'border-red-500' : ''}
-                  />
-                  {recipient.error.name && (
-                    <div className="text-sm text-red-500">{recipient.error.name}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex justify-end gap-3 pt-2">
-          {onBack && (
-            <Button
-              variant="outline"
-              onClick={onBack}
-              disabled={isSubmitting}
-            >
-              Back
-            </Button>
-          )}
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Saving...' : 'Review & Send'}
-          </Button>
-        </div>
+      <div className="flex justify-between pt-4">
+        <button
+          onClick={onBack}
+          className="px-4 py-2 text-gray-600 hover:text-gray-800"
+        >
+          Back
+        </button>
+        
+        <button
+          onClick={handleSubmit}
+          disabled={state.status === 'submitting'}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+        >
+          {state.status === 'submitting' ? 'Sending...' : 'Continue'}
+        </button>
       </div>
-    </Card>
+
+      {state.error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="text-sm text-red-600">{state.error}</div>
+        </div>
+      )}
+    </div>
   );
 } 

@@ -11,10 +11,18 @@ import { TemplatePreview } from '@/components/template-preview';
 import { RecipientForm } from '@/components/recipient-form';
 import { EnvelopeSuccess } from '@/components/envelope-success';
 
+// Define the extended options type to include experimental features
+interface ExtendedChatOptions {
+  maxSteps?: number;
+  experimental_toolCallStreaming?: boolean;
+  onFinish?: (message: Message) => void;
+  onResponse?: (response: Response) => void;
+  onToolCall?: (params: { toolCall: any }) => React.ReactNode;
+}
+
 export default function ChatPage() {
   const { messages, input, handleInputChange, handleSubmit, append, addToolResult } = useChat({
     maxSteps: 5,
-    // @ts-ignore - experimental feature
     experimental_toolCallStreaming: true,
     onFinish: (message: Message) => {
       console.log('Chat finished with message:', message);
@@ -29,7 +37,7 @@ export default function ChatPage() {
         return <div className="p-4 text-gray-500">Loading...</div>;
       }
     }
-  } as UseChatHelpers);
+  } as ExtendedChatOptions);
 
   const handleToolResult = async (toolCallId: string, result: any) => {
     try {
@@ -94,6 +102,7 @@ export default function ChatPage() {
         return (
           <RecipientForm 
             roles={result.roles}
+            toolCallId={toolCallId}
             onSubmit={async (recipients) => {
               try {
                 console.log('Form submitted with recipients:', recipients);
