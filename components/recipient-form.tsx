@@ -15,7 +15,7 @@ interface RecipientFormProps {
 }
 
 export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: RecipientFormProps) {
-  const { instance, isRestored, updateState } = useFormInstance(toolCallId, roles);
+  const { instance, isRestored, updateState, validateForm } = useFormInstance(toolCallId, roles);
 
   if (!isRestored || !instance) {
     return <div className="p-4 text-gray-500">Loading...</div>;
@@ -24,17 +24,6 @@ export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: Recipient
   // Use instance state directly
   const { state } = instance;
   const { recipients } = state.data;
-
-  const validateEmail = (email: string) => {
-    if (!email) return 'Email is required';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Invalid email format';
-    return '';
-  };
-
-  const validateName = (name: string) => {
-    if (!name) return 'Name is required';
-    return '';
-  };
 
   const updateRecipient = (index: number, field: 'email' | 'name', value: string) => {
     updateState({
@@ -52,21 +41,14 @@ export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: Recipient
   };
 
   const handleSubmit = async () => {
-    // Validate all recipients
-    const newRecipients = recipients.map(recipient => ({
-      ...recipient,
-      error: {
-        email: validateEmail(recipient.email),
-        name: validateName(recipient.name)
-      }
-    }));
-
-    const hasErrors = newRecipients.some(r => r.error.email || r.error.name);
+    // Use memoized validation
+    const validatedRecipients = validateForm(recipients);
+    const hasErrors = validatedRecipients.some(r => r.error.email || r.error.name);
     
     updateState({
       data: {
         ...state.data,
-        recipients: newRecipients
+        recipients: validatedRecipients
       },
       validation: {
         isValid: !hasErrors,

@@ -1,13 +1,42 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { FormInstance, FormState } from '../types/form';
 import { createInitialState } from '../utils/form-state';
 import { loadFormState, saveFormState } from '../utils/form-persistence';
+import { validateEmail, validateName } from '../utils/validation';
 
 export function useFormInstance(toolCallId: string, roles: Array<{ roleName: string }>) {
   const formRef = useRef<FormInstance>();
   const [isRestored, setIsRestored] = useState(false);
   const [version, setVersion] = useState(0);
 
+  // Add cleanup of old states
+  useEffect(() => {
+    const cleanup = () => {
+      const keys = Object.keys(sessionStorage);
+      const now = Date.now();
+      keys.forEach(key => {
+        if (key.startsWith('form-')) {
+          try {
+            const saved = sessionStorage.getItem(key);
+            if (saved) {
+              const { timestamp } = JSON.parse(saved);
+              if (now - timestamp > 30 * 60 * 1000) { // 30 minutes
+                sessionStorage.removeItem(key);
+              }
+            }
+          } catch (error) {
+            console.error('Failed to cleanup form state:', error);
+          }
+        }
+      });
+    };
+
+    cleanup();
+    const interval = setInterval(cleanup, 5 * 60 * 1000); // Cleanup every 5 minutes
+    return () => clearInterval(interval);
+  }, []);
+
+  // Initialize form instance
   useEffect(() => {
     if (!formRef.current) {
       // Try to load saved state
@@ -30,6 +59,7 @@ export function useFormInstance(toolCallId: string, roles: Array<{ roleName: str
     };
   }, [toolCallId, roles]);
 
+  // Direct state updates (no debouncing)
   const updateState = (newState: Partial<FormState>) => {
     if (!formRef.current) return;
 
@@ -44,7 +74,6 @@ export function useFormInstance(toolCallId: string, roles: Array<{ roleName: str
       version: formRef.current.version + 1
     };
     
-    // Increment version to trigger re-render
     setVersion(v => v + 1);
     
     // Save state if it's complete or has an error
@@ -53,9 +82,21 @@ export function useFormInstance(toolCallId: string, roles: Array<{ roleName: str
     }
   };
 
+  // Memoize validation function
+  const validateForm = useCallback((recipients: FormState['data']['recipients']) => {
+    return recipients.map(recipient => ({
+      ...recipient,
+      error: {
+        email: validateEmail(recipient.email),
+        name: validateName(recipient.name)
+      }
+    }));
+  }, []);
+
   return {
     instance: formRef.current,
     isRestored,
-    updateState
+    updateState,
+    validateForm
   };
 } 
