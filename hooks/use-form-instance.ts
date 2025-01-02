@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { FormInstance, FormState } from '../types/form';
-import { createInitialState } from '../utils/form-state';
-import { loadFormState, saveFormState } from '../utils/form-persistence';
-import { validateEmail, validateName } from '../utils/validation';
+import { createInitialState } from '@/utils/form-state';
+import { loadFormState, saveFormState } from '@/utils/form-persistence';
+import { validateEmail, validateName } from '@/utils/validation';
 
 export function useFormInstance(toolCallId: string, roles: Array<{ roleName: string }>) {
   const formRef = useRef<FormInstance>();
