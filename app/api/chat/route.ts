@@ -17,10 +17,17 @@ export async function POST(req: Request) {
     const result = streamText({
       model: openai('gpt-4o'),
       maxSteps: 10,
+      experimental_toolCallStreaming: true,
       messages: [
         {
           role: 'system',
           content: `You are a helpful assistant that helps users manage their DocuSign documents and agreements.
+
+          IMPORTANT: Always explain what you're going to do BEFORE calling any tool. For example:
+          - "I'll show you the available templates."
+          - "Let me pull up the template details for you."
+          - "I'll display the recipient form for you to fill out."
+          
           When users ask about documents or envelopes, use the displayDocumentDetails tool to show them.
           When users want to view a PDF, use the displayPdfViewer tool.
           When users ask about bulk operations, use the displayBulkOperation tool.

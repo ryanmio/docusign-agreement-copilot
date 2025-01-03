@@ -22,7 +22,7 @@ interface ExtendedChatOptions {
 }
 
 export default function ChatPage() {
-  const { messages, input, handleInputChange, handleSubmit, append, addToolResult } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, append, addToolResult, isLoading } = useChat({
     maxSteps: 5,
     experimental_toolCallStreaming: true,
     onFinish: (message: Message) => {
@@ -229,13 +229,15 @@ export default function ChatPage() {
       <div className="max-w-4xl mx-auto space-y-4">
         {messages.map(message => (
           <div key={message.id} className="space-y-4">
-            <div className={`p-4 rounded-lg ${
-              message.role === 'user' 
-                ? 'bg-blue-100' 
-                : 'bg-gray-100'
-            }`}>
-              {message.content}
-            </div>
+            {message.content && (
+              <div className={`p-4 rounded-lg ${
+                message.role === 'user' 
+                  ? 'bg-blue-100' 
+                  : 'bg-gray-100'
+              }`}>
+                {message.content}
+              </div>
+            )}
 
             {message.toolInvocations?.map(toolInvocation => (
               <div key={toolInvocation.toolCallId}>
@@ -244,6 +246,16 @@ export default function ChatPage() {
             ))}
           </div>
         ))}
+
+        {isLoading && (
+          <div className="p-4 rounded-lg bg-gray-100">
+            <div className="flex items-center space-x-2">
+              <div className="animate-pulse">●</div>
+              <div className="animate-pulse">●</div>
+              <div className="animate-pulse">●</div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="flex gap-4">
           <input
