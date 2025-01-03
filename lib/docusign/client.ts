@@ -113,6 +113,7 @@ export class DocuSignClient {
       'signature',
       'extended',
       'impersonation',
+      'navigator.read',
     ].join('+');
 
     const url = `${this.basePath}/oauth/auth?` +
