@@ -119,9 +119,6 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
               {template.description && (
                 <div className="text-sm text-gray-500">{template.description}</div>
               )}
-              <div className="text-sm text-gray-500 mt-2">
-                {template.roles.length} role(s)
-              </div>
             </button>
           ))}
         </div>
