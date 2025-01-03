@@ -2,6 +2,7 @@
 
 import React, { useCallback } from 'react';
 import { useChat, Message, UseChatHelpers } from 'ai/react';
+import ReactMarkdown from 'react-markdown';
 import { DocumentView } from '@/components/document-view';
 import { BulkOperationView } from '@/components/bulk-operation-view';
 import PDFViewer from '@/components/pdf-viewer';
@@ -87,6 +88,9 @@ export default function ChatPage() {
     if (state === 'result') {
       switch (toolName) {
         case 'collectRecipients':
+          if (!result?.roles) {
+            return <div className="p-4 text-red-500">Error: Invalid form configuration</div>;
+          }
           return (
             <RecipientForm 
               roles={result.roles}
@@ -235,7 +239,9 @@ export default function ChatPage() {
                   ? 'bg-blue-100' 
                   : 'bg-gray-100'
               }`}>
-                {message.content}
+                <div className="prose prose-sm max-w-none prose-pre:bg-transparent prose-pre:p-0 prose-p:leading-normal prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                </div>
               </div>
             )}
 

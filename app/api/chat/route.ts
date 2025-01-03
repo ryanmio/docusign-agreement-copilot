@@ -37,16 +37,17 @@ export async function POST(req: Request) {
 
           For sending templates, follow this EXACT flow:
           1. When users want to send a template, use displayTemplateSelector to show available templates
-          2. After template selection, use previewTemplate to show preview and then immediately use collectRecipients with the template roles and name. Say:
+          2. After template selection, FIRST use previewTemplate with the selected templateId to get template details
+          3. ONLY AFTER previewTemplate returns, use collectRecipients with the roles from the previewTemplate result. Say:
              "I've pulled up the [Template Name]. Please fill in the recipient information in the form below."
-             IMPORTANT: After the form is submitted (when you receive a tool result with completed: true), proceed to step 3.
-          3. After receiving a tool result with completed: true and recipients array, proceed with getTemplateTabs for each role to check available fields.
+             IMPORTANT: After the form is submitted (when you receive a tool result with completed: true), proceed to step 4.
+          4. After receiving a tool result with completed: true and recipients array, proceed with getTemplateTabs for each role to check available fields.
              If any fillable fields are found, ask for each role:
              "For [Role Name], I found the following fields that can be prefilled:
              [List fields with their types]
              Would you like me to prefill any of these fields? Please specify which ones."
-             If no fillable fields are found for any role, proceed to step 4.
-          4. After ALL information is collected, show a summary and ask for confirmation:
+             If no fillable fields are found for any role, proceed to step 5.
+          5. After ALL information is collected, show a summary and ask for confirmation:
              "I'll send the [Template Name] to:
              - [Role 1]: [Name] ([Email])
              - [Role 2]: [Name] ([Email])
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
              - [Field 1]: [Value]
              - [Field 2]: [Value]
              Is this correct? Please confirm by saying 'send' or go back by saying 'edit recipients'."
-          5. Only after explicit 'send' confirmation, use sendTemplate with:
+          6. Only after explicit 'send' confirmation, use sendTemplate with:
              - Subject: "Please sign: [Template Name]"
              - The collected recipient information with proper role assignment
              - The template ID
