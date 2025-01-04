@@ -18,75 +18,28 @@ const PDF_DIR = path.join(DEMO_DIR, 'pdf');
 const ENVELOPE_LOG = path.join(DEMO_DIR, 'envelope-log.json');
 
 // DocuSign configuration
-const DOCUSIGN_BASE_PATH = process.env.NEXT_PUBLIC_DOCUSIGN_OAUTH_BASE_PATH;
+const DOCUSIGN_BASE_PATH = process.env.NEXT_PUBLIC_DOCUSIGN_AUTHORIZATION_SERVER || 'https://account-d.docusign.com';
 const DOCUSIGN_CLIENT_ID = process.env.NEXT_PUBLIC_DOCUSIGN_CLIENT_ID;
+const DOCUSIGN_CLIENT_SECRET = process.env.DOCUSIGN_CLIENT_SECRET;
 const DOCUSIGN_ADMIN_EMAIL = process.env.DOCUSIGN_ADMIN_EMAIL;
+const DOCUSIGN_ACCOUNT_ID = process.env.DOCUSIGN_ACCOUNT_ID || '31665779';
 
-// Track created envelopes for potential rollback
+// Track created envelopes for potential rollback and completion
 const createdEnvelopes = [];
 
-// Create DocuSign API client
-function createDocuSignClient() {
-  if (!DOCUSIGN_BASE_PATH || !DOCUSIGN_CLIENT_ID || !DOCUSIGN_ADMIN_EMAIL) {
-    throw new Error('Missing required DocuSign configuration');
+// Initialize DocuSign client
+async function initializeDocuSignClient() {
+  const DOCUSIGN_ACCESS_TOKEN = process.env.DOCUSIGN_ACCESS_TOKEN;
+  
+  if (!DOCUSIGN_ACCESS_TOKEN) {
+    throw new Error('DOCUSIGN_ACCESS_TOKEN is missing from .env.local file');
   }
 
-  const apiClient = new docusign.ApiClient({
-    basePath: DOCUSIGN_BASE_PATH,
-    oAuthBasePath: DOCUSIGN_BASE_PATH
-  });
+  const apiClient = new docusign.ApiClient();
+  apiClient.setBasePath('https://demo.docusign.net/restapi');
+  apiClient.addDefaultHeader('Authorization', `Bearer ${DOCUSIGN_ACCESS_TOKEN}`);
 
-  return {
-    async createEnvelope({ emailSubject, documents, recipients }) {
-      console.log('Creating envelope:', { emailSubject, recipients });
-      
-      if (process.env.NODE_ENV !== 'production') {
-        return 'TEST-ENVELOPE-ID';
-      }
-
-      const envelopeDefinition = new docusign.EnvelopeDefinition();
-      envelopeDefinition.emailSubject = emailSubject;
-      
-      // Add documents
-      envelopeDefinition.documents = documents.map((doc, i) => ({
-        documentBase64: doc.documentBase64,
-        name: doc.name,
-        fileExtension: doc.fileExtension,
-        documentId: (i + 1).toString()
-      }));
-
-      // Add recipients
-      const signers = recipients.map((recipient, i) => {
-        const signer = docusign.Signer.constructFromObject({
-          email: recipient.email,
-          name: recipient.name,
-          recipientId: recipient.recipientId,
-          routingOrder: recipient.routingOrder
-        });
-        return signer;
-      });
-
-      envelopeDefinition.recipients = { signers };
-      envelopeDefinition.status = 'sent';
-
-      // For dry run, return fake ID
-      if (!process.argv.includes('--execute')) {
-        return `DRY-RUN-${Date.now()}`;
-      }
-
-      try {
-        const envelopesApi = new docusign.EnvelopesApi(apiClient);
-        const results = await envelopesApi.createEnvelope(
-          process.env.DOCUSIGN_ACCOUNT_ID,
-          { envelopeDefinition }
-        );
-        return results.envelopeId;
-      } catch (error) {
-        console.error('Error creating envelope:', error);
-        throw error;
-      }
-    }
-  };
+  return apiClient;
 }
 
 // Demo recipients
@@ -145,7 +98,7 @@ async function validateDocument(documentPath) {
 }
 
 // Process weekly review documents
-async function processWeeklyReviews(client, isDryRun) {
+async function processWeeklyReviews(apiClient, isDryRun) {
   console.log('\nProcessing Weekly Review documents...');
   const pattern = /WEEKLY-REVIEW-(\d{4}-\d{2}-\d{2})\.pdf$/;
   const files = await fs.readdir(PDF_DIR);
@@ -155,18 +108,56 @@ async function processWeeklyReviews(client, isDryRun) {
   for (const file of weeklyReviews) {
     const documentPath = path.join(PDF_DIR, file);
     const [, date] = pattern.exec(file);
-    await sendEnvelope(
-      client,
-      documentPath,
-      `Weekly Team Review - ${date}`,
-      [recipients.manager],
-      isDryRun
-    );
+    const envelopeId = isDryRun ? 'TEST-ENVELOPE-ID' : await createEnvelope(apiClient, {
+      emailSubject: `Weekly Team Review - ${date}`,
+      documents: [{
+        documentBase64: Buffer.from(await fs.readFile(documentPath)).toString('base64'),
+        name: file,
+        fileExtension: 'pdf'
+      }],
+      recipients: [{
+        name: 'John Smith',
+        email: 'ryan+manager@mioduski.us',
+        role: 'manager'
+      }],
+      metadata: {
+        documentType: 'WEEKLY',
+        category: 'Review',
+        effectiveDate: date,
+        parties: 'John Smith',
+        autoRenew: file.includes('FastComm'),
+        expirationDate: getExpirationDate(file),
+        completionOrder: 1,
+        expectedStatus: 'completed',
+        completionDate: date
+      }
+    });
+    if (!isDryRun && !envelopeId.startsWith('DRY-RUN-')) {
+      createdEnvelopes.push({
+        envelopeId,
+        documentName: file,
+        emailSubject: `Weekly Team Review - ${date}`,
+        recipients: [{ name: 'John Smith', email: 'ryan+manager@mioduski.us' }],
+        metadata: {
+          documentType: 'WEEKLY',
+          category: 'Review',
+          effectiveDate: date,
+          parties: 'John Smith',
+          autoRenew: file.includes('FastComm'),
+          expirationDate: getExpirationDate(file),
+          completionOrder: 1,
+          expectedStatus: 'completed',
+          completionDate: date
+        },
+        timestamp: new Date().toISOString()
+      });
+    }
+    console.log(`✅ Envelope ${isDryRun ? 'would be' : 'sent'} successfully. Envelope ID: ${envelopeId}`);
   }
 }
 
 // Process vendor documents
-async function processVendorDocuments(client, isDryRun) {
+async function processVendorDocuments(apiClient, isDryRun) {
   console.log('\nProcessing Vendor documents...');
   const pattern = /VENDOR-(CHECK-IN|RENEWAL)-([A-Za-z]+)-(\d{4}-\d{2}-\d{2})\.pdf$/;
   const files = await fs.readdir(PDF_DIR);
@@ -176,18 +167,66 @@ async function processVendorDocuments(client, isDryRun) {
   for (const file of vendorDocs) {
     const documentPath = path.join(PDF_DIR, file);
     const [, type, company, date] = pattern.exec(file);
-    await sendEnvelope(
-      client,
-      documentPath,
-      `${company} - ${type === 'CHECK-IN' ? 'Check-in' : 'Renewal'} - ${date}`,
-      [recipients.vendor, recipients.manager],
-      isDryRun
-    );
+    const envelopeId = isDryRun ? 'TEST-ENVELOPE-ID' : await createEnvelope(apiClient, {
+      emailSubject: `${company} - ${type === 'CHECK-IN' ? 'Check-in' : 'Renewal'} - ${date}`,
+      documents: [{
+        documentBase64: Buffer.from(await fs.readFile(documentPath)).toString('base64'),
+        name: file,
+        fileExtension: 'pdf'
+      }],
+      recipients: [
+        {
+          name: 'Alice Johnson',
+          email: 'ryanamio@gmail.com',
+          role: 'vendor'
+        },
+        {
+          name: 'John Smith',
+          email: 'ryan+manager@mioduski.us',
+          role: 'manager'
+        }
+      ],
+      metadata: {
+        documentType: 'VENDOR',
+        category: 'Agreement',
+        effectiveDate: date,
+        parties: 'Alice Johnson;John Smith',
+        autoRenew: file.includes('FastComm'),
+        expirationDate: getExpirationDate(file),
+        completionOrder: type === 'CHECK-IN' ? 3 : 2,
+        expectedStatus: type === 'CHECK-IN' ? 'sent' : 'completed',
+        completionDate: type === 'CHECK-IN' ? '' : new Date(date).toISOString().split('T')[0]
+      }
+    });
+    if (!isDryRun && !envelopeId.startsWith('DRY-RUN-')) {
+      createdEnvelopes.push({
+        envelopeId,
+        documentName: file,
+        emailSubject: `${company} - ${type === 'CHECK-IN' ? 'Check-in' : 'Renewal'} - ${date}`,
+        recipients: [
+          { name: 'Alice Johnson', email: 'ryanamio@gmail.com' },
+          { name: 'John Smith', email: 'ryan+manager@mioduski.us' }
+        ],
+        metadata: {
+          documentType: 'VENDOR',
+          category: 'Agreement',
+          effectiveDate: date,
+          parties: 'Alice Johnson;John Smith',
+          autoRenew: file.includes('FastComm'),
+          expirationDate: getExpirationDate(file),
+          completionOrder: type === 'CHECK-IN' ? 3 : 2,
+          expectedStatus: type === 'CHECK-IN' ? 'sent' : 'completed',
+          completionDate: type === 'CHECK-IN' ? '' : new Date(date).toISOString().split('T')[0]
+        },
+        timestamp: new Date().toISOString()
+      });
+    }
+    console.log(`✅ Envelope ${isDryRun ? 'would be' : 'sent'} successfully. Envelope ID: ${envelopeId}`);
   }
 }
 
 // Process Sarah's documents
-async function processSarahDocuments(client, isDryRun) {
+async function processSarahDocuments(apiClient, isDryRun) {
   console.log('\nProcessing Sarah\'s documents...');
   const pattern = /SARAH-OFFBOARDING-([A-Z]+)-(\d{4}-\d{2}-\d{2})\.pdf$/;
   const files = await fs.readdir(PDF_DIR);
@@ -197,13 +236,61 @@ async function processSarahDocuments(client, isDryRun) {
   for (const file of sarahDocs) {
     const documentPath = path.join(PDF_DIR, file);
     const [, type, date] = pattern.exec(file);
-    await sendEnvelope(
-      client,
-      documentPath,
-      `Sarah's Offboarding Documents - ${date}`,
-      [recipients.sarah, recipients.manager],
-      isDryRun
-    );
+    const envelopeId = isDryRun ? 'TEST-ENVELOPE-ID' : await createEnvelope(apiClient, {
+      emailSubject: `Sarah's Offboarding Documents - ${date}`,
+      documents: [{
+        documentBase64: Buffer.from(await fs.readFile(documentPath)).toString('base64'),
+        name: file,
+        fileExtension: 'pdf'
+      }],
+      recipients: [
+        {
+          name: 'Sarah Johnson',
+          email: 'ryan+sarah@mioduski.us',
+          role: 'signer'
+        },
+        {
+          name: 'John Smith',
+          email: 'ryan+manager@mioduski.us',
+          role: 'manager'
+        }
+      ],
+      metadata: {
+        documentType: 'SARAH',
+        category: 'HR',
+        effectiveDate: date,
+        parties: 'Sarah Johnson;John Smith',
+        autoRenew: file.includes('FastComm'),
+        expirationDate: getExpirationDate(file),
+        completionOrder: 4,
+        expectedStatus: 'sent',
+        completionDate: ''
+      }
+    });
+    if (!isDryRun && !envelopeId.startsWith('DRY-RUN-')) {
+      createdEnvelopes.push({
+        envelopeId,
+        documentName: file,
+        emailSubject: `Sarah's Offboarding Documents - ${date}`,
+        recipients: [
+          { name: 'Sarah Johnson', email: 'ryan+sarah@mioduski.us' },
+          { name: 'John Smith', email: 'ryan+manager@mioduski.us' }
+        ],
+        metadata: {
+          documentType: 'SARAH',
+          category: 'HR',
+          effectiveDate: date,
+          parties: 'Sarah Johnson;John Smith',
+          autoRenew: file.includes('FastComm'),
+          expirationDate: getExpirationDate(file),
+          completionOrder: 4,
+          expectedStatus: 'sent',
+          completionDate: ''
+        },
+        timestamp: new Date().toISOString()
+      });
+    }
+    console.log(`✅ Envelope ${isDryRun ? 'would be' : 'sent'} successfully. Envelope ID: ${envelopeId}`);
   }
 }
 
@@ -232,6 +319,24 @@ async function sendEnvelope(client, documentPath, emailSubject, signers, isDryRu
     const documentContent = await fs.readFile(documentPath);
     const documentBase64 = Buffer.from(documentContent).toString('base64');
     
+    // Extract metadata from filename
+    const fileName = path.basename(documentPath);
+    const docType = fileName.split('-')[0];
+    const effectiveDate = extractDate(fileName);
+    
+    // Calculate completion metadata
+    const completionMetadata = calculateCompletionMetadata(docType, effectiveDate);
+    
+    const metadata = {
+      documentType: docType,
+      category: getDocumentCategory(docType),
+      effectiveDate,
+      parties: signers.map(s => s.name).join(';'),
+      autoRenew: fileName.includes('FastComm'),
+      expirationDate: getExpirationDate(fileName),
+      ...completionMetadata
+    };
+    
     // Create envelope with our client
     const envelopeId = await client.createEnvelope({
       emailSubject,
@@ -247,7 +352,8 @@ async function sendEnvelope(client, documentPath, emailSubject, signers, isDryRu
         recipientId: (i + 1).toString(),
         routingOrder: (i + 1).toString(),
         roleName: signer.role
-      }))
+      })),
+      metadata
     });
     
     // Track created envelope
@@ -257,6 +363,7 @@ async function sendEnvelope(client, documentPath, emailSubject, signers, isDryRu
         documentName: path.basename(documentPath),
         emailSubject,
         recipients: signers.map(s => ({ name: s.name, email: s.email })),
+        metadata,
         timestamp: new Date().toISOString()
       });
     }
@@ -269,9 +376,187 @@ async function sendEnvelope(client, documentPath, emailSubject, signers, isDryRu
   }
 }
 
-// Main execution
+// Calculate completion metadata based on document type and date
+function calculateCompletionMetadata(docType, effectiveDate) {
+  const date = new Date(effectiveDate);
+  
+  switch (docType) {
+    case 'WEEKLY':
+      // Weekly reviews should be completed same day
+      return {
+        completionOrder: 1,
+        expectedStatus: 'completed',
+        completionDate: effectiveDate
+      };
+    
+    case 'VENDOR':
+      if (effectiveDate.includes('2023-12')) {
+        // Recent vendor docs should be pending
+        return {
+          completionOrder: 3,
+          expectedStatus: 'sent',
+          completionDate: ''
+        };
+      } else {
+        // Older vendor docs should be completed
+        const completionDate = new Date(date);
+        completionDate.setDate(date.getDate() + 2);
+        return {
+          completionOrder: 2,
+          expectedStatus: 'completed',
+          completionDate: completionDate.toISOString().split('T')[0]
+        };
+      }
+    
+    case 'SARAH':
+      // Sarah's docs should be pending
+      return {
+        completionOrder: 4,
+        expectedStatus: 'sent',
+        completionDate: ''
+      };
+    
+    default:
+      return {
+        completionOrder: 99,
+        expectedStatus: 'sent',
+        completionDate: ''
+      };
+  }
+}
+
+// Helper functions for metadata
+function getDocumentCategory(docType) {
+  switch (docType) {
+    case 'WEEKLY':
+      return 'Review';
+    case 'VENDOR':
+      return 'Agreement';
+    case 'SARAH':
+      return 'HR';
+    case 'INTERNAL':
+      return 'Review';
+    default:
+      return 'Other';
+  }
+}
+
+function extractDate(fileName) {
+  const match = fileName.match(/\d{4}-\d{2}-\d{2}/);
+  return match ? match[0] : '';
+}
+
+function getExpirationDate(fileName) {
+  // Only vendor renewals have expiration dates
+  if (!fileName.includes('VENDOR-RENEWAL-')) {
+    return '';
+  }
+  
+  const effectiveDate = extractDate(fileName);
+  if (!effectiveDate) {
+    return '';
+  }
+  
+  // Add one year to effective date
+  const date = new Date(effectiveDate);
+  date.setFullYear(date.getFullYear() + 1);
+  return date.toISOString().split('T')[0];
+}
+
+async function createEnvelope(apiClient, { emailSubject, documents, recipients, metadata }) {
+  console.log('Creating envelope:', { emailSubject, recipients, metadata });
+  
+  const envelopeDefinition = new docusign.EnvelopeDefinition();
+  envelopeDefinition.emailSubject = emailSubject;
+  
+  // Add documents
+  envelopeDefinition.documents = documents.map((doc, i) => ({
+    documentBase64: doc.documentBase64,
+    name: doc.name,
+    fileExtension: doc.fileExtension,
+    documentId: (i + 1).toString()
+  }));
+
+  // Add recipients
+  const signers = recipients.map((recipient, i) => {
+    const signer = docusign.Signer.constructFromObject({
+      email: recipient.email,
+      name: recipient.name,
+      recipientId: (i + 1).toString(),
+      routingOrder: (i + 1).toString(),
+      roleName: recipient.role,
+      tabs: {
+        signHereTabs: [{
+          documentId: '1',
+          pageNumber: '1',
+          xPosition: '100',
+          yPosition: '100'
+        }]
+      }
+    });
+    return signer;
+  });
+
+  envelopeDefinition.recipients = { signers };
+  envelopeDefinition.status = "sent";
+
+  try {
+    console.log('Making API call to DocuSign...');
+    const envelopesApi = new docusign.EnvelopesApi(apiClient);
+    console.log('Using account ID:', DOCUSIGN_ACCOUNT_ID);
+    
+    const results = await envelopesApi.createEnvelope(
+      DOCUSIGN_ACCOUNT_ID,
+      { envelopeDefinition }
+    );
+    
+    console.log('DocuSign API Response:', JSON.stringify(results, null, 2));
+    
+    if (!results || !results.envelopeId) {
+      throw new Error('Failed to get envelope ID from DocuSign response');
+    }
+    
+    return results.envelopeId;
+  } catch (error) {
+    console.error('Error creating envelope:', error);
+    if (error.response) {
+      console.error('API Response:', error.response.body);
+    }
+    throw error;
+  }
+}
+
+// Validate environment variables
+function validateEnvironment() {
+  const required = {
+    'NEXT_PUBLIC_DOCUSIGN_AUTHORIZATION_SERVER': DOCUSIGN_BASE_PATH,
+    'NEXT_PUBLIC_DOCUSIGN_CLIENT_ID': DOCUSIGN_CLIENT_ID,
+    'DOCUSIGN_CLIENT_SECRET': DOCUSIGN_CLIENT_SECRET,
+    'DOCUSIGN_ADMIN_EMAIL': DOCUSIGN_ADMIN_EMAIL,
+    'DOCUSIGN_ACCOUNT_ID': DOCUSIGN_ACCOUNT_ID
+  };
+
+  const missing = Object.entries(required)
+    .filter(([key, value]) => !value)
+    .map(([key]) => key);
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables:\n${missing.join('\n')}\n` +
+      'Please check your .env.local file and ensure all variables are set.'
+    );
+  }
+}
+
+// Main function to create envelopes
 async function main() {
   try {
+    console.log('Validating environment...');
+    validateEnvironment();
+
+    console.log('Initializing DocuSign client...');
+    const apiClient = await initializeDocuSignClient();
+    
     console.log('🔍 Analyzing documents...');
     const counts = await countDocuments();
     const totalDocs = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -283,9 +568,11 @@ async function main() {
     console.log(`\nTotal documents: ${totalDocs}`);
     
     const isDryRun = !process.argv.includes('--execute');
+    const skipConfirm = process.argv.includes('--no-confirm');
+    
     if (isDryRun) {
       console.log('\n🏃 DRY RUN MODE - No envelopes will be created');
-    } else {
+    } else if (!skipConfirm) {
       const confirmed = await confirmAction(
         '\n⚠️  This will create real DocuSign envelopes and send emails to recipients. Proceed?'
       );
@@ -297,13 +584,10 @@ async function main() {
     
     console.log('\n🚀 Starting envelope creation...');
     
-    // Initialize our DocuSign client
-    const client = createDocuSignClient();
-    
     // Process all document types
-    await processWeeklyReviews(client, isDryRun);
-    await processVendorDocuments(client, isDryRun);
-    await processSarahDocuments(client, isDryRun);
+    await processWeeklyReviews(apiClient, isDryRun);
+    await processVendorDocuments(apiClient, isDryRun);
+    await processSarahDocuments(apiClient, isDryRun);
     
     if (!isDryRun) {
       await saveEnvelopeLog();
@@ -318,9 +602,8 @@ async function main() {
     }
   } catch (error) {
     console.error('\n❌ Error:', error.message);
-    if (createdEnvelopes.length > 0) {
-      console.log('\n⚠️  Some envelopes were created before the error occurred');
-      await saveEnvelopeLog();
+    if (error.response?.body) {
+      console.error('API Error Details:', JSON.stringify(error.response.body, null, 2));
     }
     process.exit(1);
   }

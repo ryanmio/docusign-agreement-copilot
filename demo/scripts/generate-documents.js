@@ -1,7 +1,18 @@
-const fs = require('fs').promises;
-const path = require('path');
-const markdownpdf = require('markdown-pdf');
-const { promisify } = require('util');
+import dotenv from 'dotenv';
+import { promises as fs } from 'fs';
+import path from 'path';
+import markdownpdf from 'markdown-pdf';
+import { fileURLToPath } from 'url';
+import { promisify } from 'util';
+
+// Setup __dirname equivalent for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../../.env.local') });
+
+// Promisify markdown-pdf
 const markdownToPdf = promisify(markdownpdf);
 
 // Configuration
