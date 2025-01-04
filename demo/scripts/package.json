@@ -2,11 +2,16 @@
   "name": "docusign-demo-generator",
   "version": "1.0.0",
   "description": "Generate demo documents for DocuSign Agreement Copilot",
-  "main": "generate-documents.js",
+  "type": "module",
   "scripts": {
-    "generate": "node generate-documents.js"
+    "generate": "node generate-documents.js",
+    "create-envelopes": "node --loader ts-node/esm create-envelopes.js"
   },
   "dependencies": {
-    "markdown-pdf": "^11.0.0"
+    "docusign-esign": "^6.5.1",
+    "dotenv": "^16.3.1",
+    "markdown-pdf": "^11.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 } 
