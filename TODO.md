@@ -70,8 +70,11 @@
 - [ ] Implement "Send Reminder" tool
 - [ ] Implement embedded signing tool
 
-
 ## Phase 4: Polish & Submission (Week 4) ✨
+- [ ] Make the design more beautiful
+  - [ ] Improve Chat UI
+    - [ ] Auto-Scroll to bottom
+  - [ ] Style like Docusign
 - [ ] Testing & Optimization
   - [ ] Perform security audit
   - [ ] Optimize performance
