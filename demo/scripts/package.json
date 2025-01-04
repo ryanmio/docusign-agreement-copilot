@@ -1,0 +1,12 @@
+{
+  "name": "docusign-demo-generator",
+  "version": "1.0.0",
+  "description": "Generate demo documents for DocuSign Agreement Copilot",
+  "main": "generate-documents.js",
+  "scripts": {
+    "generate": "node generate-documents.js"
+  },
+  "dependencies": {
+    "markdown-pdf": "^11.0.0"
+  }
+} 
