@@ -39,7 +39,9 @@ export default function DocuSignConnect() {
     if (isConnected) {
       setIsProcessing(true);
       try {
-        const response = await fetch('/api/auth/docusign/disconnect');
+        const response = await fetch('/api/auth/docusign/disconnect', {
+          method: 'POST'
+        });
         if (!response.ok) throw new Error('Failed to disconnect');
         const data = await response.json();
         

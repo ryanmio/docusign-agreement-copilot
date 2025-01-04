@@ -113,7 +113,8 @@ export class DocuSignClient {
       'signature',
       'extended',
       'impersonation',
-      'navigator.read',
+      'adm_store_unified_repo_read',
+      'models_read',
     ].join('+');
 
     const url = `${this.basePath}/oauth/auth?` +

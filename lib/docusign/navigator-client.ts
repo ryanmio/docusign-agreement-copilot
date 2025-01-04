@@ -1,6 +1,16 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { DocuSignClient } from './client';
 
+/**
+ * Navigator Agreement Interface
+ * Note: Agreements must be uploaded to Navigator through the UI first.
+ * They don't automatically sync from DocuSign eSignature.
+ * 
+ * Steps to get agreements into Navigator:
+ * 1. Upload agreements through Navigator UI
+ * 2. Wait for AI analysis to complete
+ * 3. Access through Navigator API
+ */
 interface NavigatorAgreement {
   id: string;
   type: string;
@@ -30,7 +40,21 @@ export class NavigatorClient {
 
   constructor(supabase: SupabaseClient) {
     this.docuSignClient = new DocuSignClient(supabase);
-    this.navigatorBasePath = process.env.NEXT_PUBLIC_DOCUSIGN_NAVIGATOR_BASE_PATH || 'https://navigator-d.docusign.com';
+    this.navigatorBasePath = process.env.NEXT_PUBLIC_DOCUSIGN_NAVIGATOR_BASE_PATH || 'https://api-d.docusign.com';
+  }
+
+  /**
+   * Check if Navigator has any agreements uploaded
+   * Returns true if agreements exist, false if empty
+   */
+  async hasAgreements(userId: string): Promise<boolean> {
+    const agreements = await this.getAgreements(userId, {
+      from_date: new Date(0).toISOString(), // From beginning of time
+      to_date: new Date().toISOString()     // To now
+    });
+    
+    const items = Array.isArray(agreements) ? agreements : agreements.items || [];
+    return items.length > 0;
   }
 
   async getAgreements(userId: string, options?: {
@@ -46,7 +70,7 @@ export class NavigatorClient {
     if (options?.agreement_type) queryParams.append('agreement_type', options.agreement_type);
 
     const response = await fetch(
-      `${this.navigatorBasePath}/v1/agreements?${queryParams}`,
+      `${this.navigatorBasePath}/v1/accounts/${client.accountId}/agreements?${queryParams}`,
       {
         headers: {
           ...client.headers,
@@ -56,17 +80,30 @@ export class NavigatorClient {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to get agreements from Navigator API');
+      const errorText = await response.text();
+      console.error('Navigator API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      throw new Error(`Failed to get agreements from Navigator API: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    
+    // Add warning log if no agreements found
+    if (!data.items?.length) {
+      console.warn('No agreements found in Navigator. Agreements must be uploaded through Navigator UI first.');
+    }
+
+    return data;
   }
 
   async getAgreement(userId: string, agreementId: string) {
     const client = await this.docuSignClient.getClient(userId);
 
     const response = await fetch(
-      `${this.navigatorBasePath}/v1/agreements/${agreementId}`,
+      `${this.navigatorBasePath}/v1/accounts/${client.accountId}/agreements/${agreementId}`,
       {
         headers: {
           ...client.headers,
@@ -76,7 +113,13 @@ export class NavigatorClient {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to get agreement from Navigator API');
+      const errorText = await response.text();
+      console.error('Navigator API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      throw new Error(`Failed to get agreement from Navigator API: ${response.status} ${response.statusText}`);
     }
 
     return response.json();
@@ -100,7 +143,10 @@ export class NavigatorClient {
       byCategory: {} as Record<string, number>,
     };
 
-    for (const agreement of agreements.items) {
+    // Handle both single agreement and array responses
+    const items = Array.isArray(agreements) ? agreements : agreements.items || [];
+
+    for (const agreement of items) {
       analysis.totalAgreements++;
 
       // Analyze day of week
@@ -109,10 +155,14 @@ export class NavigatorClient {
       analysis.byDayOfWeek[dayOfWeek] = (analysis.byDayOfWeek[dayOfWeek] || 0) + 1;
 
       // Analyze agreement type
-      analysis.byType[agreement.type] = (analysis.byType[agreement.type] || 0) + 1;
+      if (agreement.type) {
+        analysis.byType[agreement.type] = (analysis.byType[agreement.type] || 0) + 1;
+      }
 
       // Analyze category
-      analysis.byCategory[agreement.category] = (analysis.byCategory[agreement.category] || 0) + 1;
+      if (agreement.category) {
+        analysis.byCategory[agreement.category] = (analysis.byCategory[agreement.category] || 0) + 1;
+      }
     }
 
     return analysis;
