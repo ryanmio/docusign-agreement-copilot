@@ -914,7 +914,47 @@ export class DocuSignEnvelopes {
       throw new Error('No pending recipients to remind');
     }
 
-    // Resend to pending recipients using the correct endpoint
+    // First get envelope details to update subject
+    console.log('Fetching envelope details...');
+    const envelopeResponse = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}`,
+      {
+        headers: client.headers
+      }
+    );
+
+    if (!envelopeResponse.ok) {
+      const error = await envelopeResponse.json();
+      console.error('Failed to get envelope details:', error);
+      throw new Error(error.message || 'Failed to get envelope details');
+    }
+
+    const envelopeData = await envelopeResponse.json();
+    
+    // Update envelope subject
+    console.log('Updating envelope subject...');
+    const updateResponse = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}`,
+      {
+        method: 'PUT',
+        headers: {
+          ...client.headers,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          emailSubject: `REMINDER: ${envelopeData.emailSubject.replace(/^REMINDER: /, '')}`,
+          emailBlurb: message || 'This is a reminder to sign the document at your earliest convenience.'
+        })
+      }
+    );
+
+    if (!updateResponse.ok) {
+      const error = await updateResponse.json();
+      console.error('Update envelope error:', error);
+      throw new Error(error.message || 'Failed to update envelope');
+    }
+
+    // Now resend to pending recipients
     console.log('Resending to pending recipients...');
     const response = await fetch(
       `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}/recipients?resend_envelope=true`,
