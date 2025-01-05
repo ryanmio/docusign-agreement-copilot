@@ -256,7 +256,7 @@ export default function ChatPage() {
                   });
                 }
               }}
-              onError={async (error) => {
+              onError={async (error: Error) => {
                 try {
                   await handleToolResult(toolCallId, {
                     error: error.message,

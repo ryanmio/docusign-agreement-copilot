@@ -8,6 +8,9 @@ interface SigningViewProps {
   signingUrl: string;
   onComplete?: () => void;
   onCancel?: () => void;
+  mode?: 'embedded' | 'modal';
+  toolCallId?: string;
+  onError?: (error: Error) => void;
 }
 
 declare global {
