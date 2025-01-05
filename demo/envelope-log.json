@@ -1,0 +1,282 @@
+{
+  "timestamp": "2025-01-04T21:17:39.996Z",
+  "envelopes": [
+    {
+      "envelopeId": "e2404b5e-1916-4d31-aea0-01eb0ec3411f",
+      "documentName": "WEEKLY-REVIEW-2024-12-17.pdf",
+      "emailSubject": "Weekly Team Review - 2024-12-17",
+      "recipients": [
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "WEEKLY",
+        "category": "Review",
+        "effectiveDate": "2024-12-17",
+        "parties": "John Smith",
+        "autoRenew": false,
+        "expirationDate": "",
+        "completionOrder": 1,
+        "expectedStatus": "completed",
+        "completionDate": "2024-12-17"
+      },
+      "timestamp": "2025-01-04T21:17:17.621Z"
+    },
+    {
+      "envelopeId": "2b278026-825e-42b5-a9bc-ccd20bc3d9c9",
+      "documentName": "WEEKLY-REVIEW-2024-12-24.pdf",
+      "emailSubject": "Weekly Team Review - 2024-12-24",
+      "recipients": [
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "WEEKLY",
+        "category": "Review",
+        "effectiveDate": "2024-12-24",
+        "parties": "John Smith",
+        "autoRenew": false,
+        "expirationDate": "",
+        "completionOrder": 1,
+        "expectedStatus": "completed",
+        "completionDate": "2024-12-24"
+      },
+      "timestamp": "2025-01-04T21:17:20.069Z"
+    },
+    {
+      "envelopeId": "0babdd54-a989-4dca-b80f-47fb080b0b67",
+      "documentName": "WEEKLY-REVIEW-2024-12-31.pdf",
+      "emailSubject": "Weekly Team Review - 2024-12-31",
+      "recipients": [
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "WEEKLY",
+        "category": "Review",
+        "effectiveDate": "2024-12-31",
+        "parties": "John Smith",
+        "autoRenew": false,
+        "expirationDate": "",
+        "completionOrder": 1,
+        "expectedStatus": "completed",
+        "completionDate": "2024-12-31"
+      },
+      "timestamp": "2025-01-04T21:17:22.191Z"
+    },
+    {
+      "envelopeId": "83902087-5e56-411c-885f-acaccc604079",
+      "documentName": "WEEKLY-REVIEW-2025-01-07.pdf",
+      "emailSubject": "Weekly Team Review - 2025-01-07",
+      "recipients": [
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "WEEKLY",
+        "category": "Review",
+        "effectiveDate": "2025-01-07",
+        "parties": "John Smith",
+        "autoRenew": false,
+        "expirationDate": "",
+        "completionOrder": 1,
+        "expectedStatus": "completed",
+        "completionDate": "2025-01-07"
+      },
+      "timestamp": "2025-01-04T21:17:24.144Z"
+    },
+    {
+      "envelopeId": "412956ce-dfc7-4e4f-ae10-6fa6ad2a8e05",
+      "documentName": "WEEKLY-REVIEW-2025-01-14.pdf",
+      "emailSubject": "Weekly Team Review - 2025-01-14",
+      "recipients": [
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "WEEKLY",
+        "category": "Review",
+        "effectiveDate": "2025-01-14",
+        "parties": "John Smith",
+        "autoRenew": false,
+        "expirationDate": "",
+        "completionOrder": 1,
+        "expectedStatus": "completed",
+        "completionDate": "2025-01-14"
+      },
+      "timestamp": "2025-01-04T21:17:26.240Z"
+    },
+    {
+      "envelopeId": "e89a3a0c-5d97-4ceb-b993-c996d65f4a7d",
+      "documentName": "VENDOR-RENEWAL-AcmeCorp-2025-01-15.pdf",
+      "emailSubject": "AcmeCorp - Renewal - 2025-01-15",
+      "recipients": [
+        {
+          "name": "Alice Johnson",
+          "email": "ryanamio@gmail.com"
+        },
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "VENDOR",
+        "category": "Agreement",
+        "effectiveDate": "2025-01-15",
+        "parties": "Alice Johnson;John Smith",
+        "autoRenew": false,
+        "expirationDate": "2026-01-15",
+        "completionOrder": 2,
+        "expectedStatus": "completed",
+        "completionDate": "2025-01-15"
+      },
+      "timestamp": "2025-01-04T21:17:28.734Z"
+    },
+    {
+      "envelopeId": "e42dc763-3242-4605-bb09-424177d7155c",
+      "documentName": "VENDOR-RENEWAL-FastComm-2025-02-01.pdf",
+      "emailSubject": "FastComm - Renewal - 2025-02-01",
+      "recipients": [
+        {
+          "name": "Alice Johnson",
+          "email": "ryanamio@gmail.com"
+        },
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "VENDOR",
+        "category": "Agreement",
+        "effectiveDate": "2025-02-01",
+        "parties": "Alice Johnson;John Smith",
+        "autoRenew": true,
+        "expirationDate": "2026-02-01",
+        "completionOrder": 2,
+        "expectedStatus": "completed",
+        "completionDate": "2025-02-01"
+      },
+      "timestamp": "2025-01-04T21:17:30.839Z"
+    },
+    {
+      "envelopeId": "bb11516d-8c0c-408c-8f1f-eee4dc92809a",
+      "documentName": "VENDOR-RENEWAL-GlobalTech-2025-01-07.pdf",
+      "emailSubject": "GlobalTech - Renewal - 2025-01-07",
+      "recipients": [
+        {
+          "name": "Alice Johnson",
+          "email": "ryanamio@gmail.com"
+        },
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "VENDOR",
+        "category": "Agreement",
+        "effectiveDate": "2025-01-07",
+        "parties": "Alice Johnson;John Smith",
+        "autoRenew": false,
+        "expirationDate": "2026-01-07",
+        "completionOrder": 2,
+        "expectedStatus": "completed",
+        "completionDate": "2025-01-07"
+      },
+      "timestamp": "2025-01-04T21:17:32.791Z"
+    },
+    {
+      "envelopeId": "753ee7ec-ea48-46ff-832b-b4ba8f6ed843",
+      "documentName": "MICHAEL-OFFBOARDING-ACCOUNTS-2025-01-02.pdf",
+      "emailSubject": "Sarah's Offboarding Documents - ACCOUNTS",
+      "recipients": [
+        {
+          "name": "Sarah Johnson",
+          "email": "ryan+sarah@mioduski.us"
+        },
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "SARAH",
+        "category": "HR",
+        "effectiveDate": "ACCOUNTS",
+        "parties": "Sarah Johnson;John Smith",
+        "autoRenew": false,
+        "expirationDate": "",
+        "completionOrder": 4,
+        "expectedStatus": "sent",
+        "completionDate": ""
+      },
+      "timestamp": "2025-01-04T21:17:34.714Z"
+    },
+    {
+      "envelopeId": "a697a2ab-9542-4947-bce2-7f2d8ae7937e",
+      "documentName": "MICHAEL-OFFBOARDING-IP-2025-01-02.pdf",
+      "emailSubject": "Sarah's Offboarding Documents - IP",
+      "recipients": [
+        {
+          "name": "Sarah Johnson",
+          "email": "ryan+sarah@mioduski.us"
+        },
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "SARAH",
+        "category": "HR",
+        "effectiveDate": "IP",
+        "parties": "Sarah Johnson;John Smith",
+        "autoRenew": false,
+        "expirationDate": "",
+        "completionOrder": 4,
+        "expectedStatus": "sent",
+        "completionDate": ""
+      },
+      "timestamp": "2025-01-04T21:17:37.122Z"
+    },
+    {
+      "envelopeId": "4fe83637-5379-46c0-a952-1ee8717659ef",
+      "documentName": "MICHAEL-OFFBOARDING-NDA-2025-01-02.pdf",
+      "emailSubject": "Sarah's Offboarding Documents - NDA",
+      "recipients": [
+        {
+          "name": "Sarah Johnson",
+          "email": "ryan+sarah@mioduski.us"
+        },
+        {
+          "name": "John Smith",
+          "email": "ryan+manager@mioduski.us"
+        }
+      ],
+      "metadata": {
+        "documentType": "SARAH",
+        "category": "HR",
+        "effectiveDate": "NDA",
+        "parties": "Sarah Johnson;John Smith",
+        "autoRenew": false,
+        "expirationDate": "",
+        "completionOrder": 4,
+        "expectedStatus": "sent",
+        "completionDate": ""
+      },
+      "timestamp": "2025-01-04T21:17:39.996Z"
+    }
+  ]
+}

@@ -24,40 +24,75 @@ const PDF_OUTPUT_DIR = path.join(DEMO_DIR, 'pdf');
 // Document dates configuration
 const dates = {
   tuesdayReviews: [
-    '2023-12-05',
-    '2023-12-12',
-    '2023-12-19',
-    '2023-12-26',
-    '2024-01-02'
+    '2024-12-17',
+    '2024-12-24',
+    '2024-12-31',
+    '2025-01-07',
+    '2025-01-14'
   ],
   vendorRenewals: [
     {
       vendor: 'GlobalTech',
-      effectiveDate: '2023-01-07',
-      expirationDate: '2024-01-07'
+      effectiveDate: '2025-01-07',
+      expirationDate: '2026-01-07'
     },
     {
       vendor: 'AcmeCorp',
-      effectiveDate: '2023-01-15',
-      expirationDate: '2024-01-15'
+      effectiveDate: '2025-01-15',
+      expirationDate: '2026-01-15'
     },
     {
       vendor: 'FastComm',
-      effectiveDate: '2023-02-01',
-      expirationDate: '2024-02-01',
+      effectiveDate: '2025-02-01',
+      expirationDate: '2026-02-01',
       autoRenew: true
+    }
+  ],
+  vendorCheckIns: [
+    {
+      vendor: 'FastComm',
+      date: '2025-01-02'
     },
     {
-      vendor: 'TechServ',
-      effectiveDate: '2023-03-01',
-      expirationDate: '2024-03-01'
+      vendor: 'GlobalTech',
+      date: '2025-01-09'
     }
   ],
   sarahOffboarding: {
     startDate: '2023-12-15',
     assignmentDate: '2023-12-20'
+  },
+  michaelOffboarding: {
+    startDate: '2025-01-02',
+    documents: [
+      { type: 'NDA', date: '2025-01-02' },
+      { type: 'IP', date: '2025-01-02' },
+      { type: 'ACCOUNTS', date: '2025-01-02' }
+    ]
   }
 };
+
+// Additional documents to generate
+const additionalDocs = [
+  // Recent Weekly Reviews (Tuesdays)
+  { type: 'WEEKLY-REVIEW', date: '2024-12-17' },
+  { type: 'WEEKLY-REVIEW', date: '2024-12-24' },
+  { type: 'WEEKLY-REVIEW', date: '2024-12-31' },
+  { type: 'WEEKLY-REVIEW', date: '2025-01-07' },
+  { type: 'WEEKLY-REVIEW', date: '2025-01-14' },
+  
+  // Sarah's additional docs
+  { type: 'SARAH-OFFBOARDING-IP', date: '2025-01-02' },
+  { type: 'SARAH-OFFBOARDING-ACCOUNTS', date: '2025-01-02' },
+  
+  // New vendor renewals
+  { type: 'VENDOR-RENEWAL-FastComm', date: '2025-02-01', autoRenew: true },
+  { type: 'VENDOR-RENEWAL-GlobalTech', date: '2025-01-07', autoRenew: false },
+  
+  // New vendor check-ins
+  { type: 'VENDOR-CHECK-IN-FastComm', date: '2025-01-02' },
+  { type: 'VENDOR-CHECK-IN-GlobalTech', date: '2025-01-09' }
+];
 
 // Validate template exists
 async function validateTemplate(templatePath) {
@@ -159,7 +194,7 @@ async function generateVendorRenewals() {
   }
 }
 
-// Generate Sarah's offboarding documents
+// Generate offboarding documents
 async function generateOffboardingDocs() {
   const templatePath = path.join(TEMPLATES_DIR, 'employee', 'EMPLOYEE-OFFBOARDING-AGREEMENT.md');
   
@@ -168,7 +203,8 @@ async function generateOffboardingDocs() {
   }
   
   try {
-    const content = await processTemplate(templatePath, {
+    // Generate Sarah's historical docs
+    const sarahContent = await processTemplate(templatePath, {
       date: dates.sarahOffboarding.startDate,
       name: 'Sarah Johnson',
       department: 'Engineering',
@@ -176,9 +212,25 @@ async function generateOffboardingDocs() {
     });
     
     await generateDocument(
-      content,
+      sarahContent,
       `SARAH-OFFBOARDING-NDA-${dates.sarahOffboarding.startDate}`
     );
+
+    // Generate Michael's new docs
+    for (const doc of dates.michaelOffboarding.documents) {
+      const content = await processTemplate(templatePath, {
+        date: doc.date,
+        name: 'Michael Chen',
+        department: 'Product',
+        position: 'Product Manager'
+      });
+      
+      await generateDocument(
+        content,
+        `MICHAEL-OFFBOARDING-${doc.type}-${doc.date}`
+      );
+    }
+    
     console.log('Completed offboarding document generation');
   } catch (error) {
     console.error('Failed to generate offboarding documents:', error);
@@ -233,12 +285,12 @@ async function generateInternalSummaries() {
   
   try {
     // Generate for specific dates (Dec 19 and Jan 2)
-    const summaryDates = ['2023-12-19', '2024-01-02'];
+    const summaryDates = ['2024-12-19', '2025-01-02'];
     
     for (const date of summaryDates) {
       const content = await processTemplate(templatePath, {
         'Report Date': date,
-        'Period Covered': 'Q4 2023',
+        'Period Covered': date.startsWith('2024') ? 'Q4 2024' : 'Q1 2025',
         department: 'Engineering',
         'Prepared By': 'John Smith',
         revenue: '$2.5M',
@@ -264,37 +316,22 @@ async function generateInternalSummaries() {
 
 // Generate vendor check-in documents
 async function generateVendorCheckIns() {
-  const templatePath = path.join(TEMPLATES_DIR, 'reviews', 'VENDOR-CHECK-IN-TEMPLATE.md');
+  const templatePath = path.join(TEMPLATES_DIR, 'vendor', 'VENDOR-CHECK-IN-TEMPLATE.md');
   
   if (!await validateTemplate(templatePath)) {
     return;
   }
   
   try {
-    // Generate for Dec 12 and Dec 26
-    const checkInDates = ['2023-12-12', '2023-12-26'];
-    const vendors = ['GlobalTech', 'FastComm'];
-    
-    for (let i = 0; i < checkInDates.length; i++) {
+    for (const checkIn of dates.vendorCheckIns) {
       const content = await processTemplate(templatePath, {
-        'Meeting Date': checkInDates[i],
-        'Vendor Name': vendors[i],
-        'Account Manager': 'Alice Johnson',
-        'Meeting Participants': 'Alice Johnson, Bob Smith, Carol White',
-        uptime: '99.99%',
-        'Response Time': '< 2 hours',
-        'Resolution Time': '< 24 hours',
-        'Quality Metrics': '98% satisfaction',
-        'Licensed Users': '500/1000',
-        'Storage Used': '75%',
-        'API Calls': '850K/1M',
-        'Budget Used': '65%',
-        'Remaining Budget': '35%'
+        date: checkIn.date,
+        vendor: checkIn.vendor
       });
       
       await generateDocument(
         content,
-        `VENDOR-CHECK-IN-${vendors[i]}-${checkInDates[i]}`
+        `VENDOR-CHECK-IN-${checkIn.vendor}-${checkIn.date}`
       );
     }
     console.log('Completed vendor check-in generation');
@@ -304,19 +341,21 @@ async function generateVendorCheckIns() {
   }
 }
 
-// Main execution
+// Main function
 async function main() {
   try {
-    console.log('Starting document generation...');
     await ensureDirectories();
-    await generateVendorRenewals();
-    await generateOffboardingDocs();
+    
+    // Generate all document types
     await generateWeeklyReviews();
-    await generateInternalSummaries();
+    await generateVendorRenewals();
     await generateVendorCheckIns();
-    console.log('Document generation completed successfully!');
+    await generateOffboardingDocs();
+    await generateInternalSummaries();
+    
+    console.log('\n✨ Document generation completed successfully!');
   } catch (error) {
-    console.error('Error in document generation:', error);
+    console.error('\n❌ Document generation failed:', error);
     process.exit(1);
   }
 }

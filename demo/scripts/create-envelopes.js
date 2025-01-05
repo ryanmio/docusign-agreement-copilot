@@ -97,12 +97,23 @@ async function validateDocument(documentPath) {
   }
 }
 
+// Filter function to check if a document should be processed
+function shouldProcessDocument(filename) {
+  const dateMatch = filename.match(/\d{4}-\d{2}-\d{2}/);
+  if (!dateMatch) return false;
+  
+  const docDate = new Date(dateMatch[0]);
+  const cutoffDate = new Date('2024-12-17'); // Only process docs from Dec 17, 2024 onwards
+  
+  return docDate >= cutoffDate;
+}
+
 // Process weekly review documents
 async function processWeeklyReviews(apiClient, isDryRun) {
   console.log('\nProcessing Weekly Review documents...');
   const pattern = /WEEKLY-REVIEW-(\d{4}-\d{2}-\d{2})\.pdf$/;
   const files = await fs.readdir(PDF_DIR);
-  const weeklyReviews = files.filter(f => pattern.test(f));
+  const weeklyReviews = files.filter(f => pattern.test(f) && shouldProcessDocument(f));
   console.log(`Found ${weeklyReviews.length} weekly review documents`);
 
   for (const file of weeklyReviews) {
@@ -161,7 +172,7 @@ async function processVendorDocuments(apiClient, isDryRun) {
   console.log('\nProcessing Vendor documents...');
   const pattern = /VENDOR-(CHECK-IN|RENEWAL)-([A-Za-z]+)-(\d{4}-\d{2}-\d{2})\.pdf$/;
   const files = await fs.readdir(PDF_DIR);
-  const vendorDocs = files.filter(f => pattern.test(f));
+  const vendorDocs = files.filter(f => pattern.test(f) && shouldProcessDocument(f));
   console.log(`Found ${vendorDocs.length} vendor documents`);
 
   for (const file of vendorDocs) {
@@ -227,13 +238,13 @@ async function processVendorDocuments(apiClient, isDryRun) {
 
 // Process Sarah's documents
 async function processSarahDocuments(apiClient, isDryRun) {
-  console.log('\nProcessing Sarah\'s documents...');
-  const pattern = /SARAH-OFFBOARDING-([A-Z]+)-(\d{4}-\d{2}-\d{2})\.pdf$/;
+  console.log('\nProcessing offboarding documents...');
+  const pattern = /(SARAH|MICHAEL)-OFFBOARDING-([A-Z]+)-(\d{4}-\d{2}-\d{2})\.pdf$/;
   const files = await fs.readdir(PDF_DIR);
-  const sarahDocs = files.filter(f => pattern.test(f));
-  console.log(`Found ${sarahDocs.length} offboarding documents`);
+  const offboardingDocs = files.filter(f => pattern.test(f) && shouldProcessDocument(f));
+  console.log(`Found ${offboardingDocs.length} offboarding documents`);
 
-  for (const file of sarahDocs) {
+  for (const file of offboardingDocs) {
     const documentPath = path.join(PDF_DIR, file);
     const [, type, date] = pattern.exec(file);
     const envelopeId = isDryRun ? 'TEST-ENVELOPE-ID' : await createEnvelope(apiClient, {
@@ -463,60 +474,53 @@ function getExpirationDate(fileName) {
   return date.toISOString().split('T')[0];
 }
 
-async function createEnvelope(apiClient, { emailSubject, documents, recipients, metadata }) {
-  console.log('Creating envelope:', { emailSubject, recipients, metadata });
-  
-  const envelopeDefinition = new docusign.EnvelopeDefinition();
-  envelopeDefinition.emailSubject = emailSubject;
-  
-  // Add documents
-  envelopeDefinition.documents = documents.map((doc, i) => ({
-    documentBase64: doc.documentBase64,
-    name: doc.name,
-    fileExtension: doc.fileExtension,
-    documentId: (i + 1).toString()
-  }));
-
-  // Add recipients
-  const signers = recipients.map((recipient, i) => {
-    const signer = docusign.Signer.constructFromObject({
-      email: recipient.email,
-      name: recipient.name,
-      recipientId: (i + 1).toString(),
-      routingOrder: (i + 1).toString(),
-      roleName: recipient.role,
-      tabs: {
-        signHereTabs: [{
-          documentId: '1',
-          pageNumber: '1',
-          xPosition: '100',
-          yPosition: '100'
-        }]
-      }
-    });
-    return signer;
-  });
-
-  envelopeDefinition.recipients = { signers };
-  envelopeDefinition.status = "sent";
-
+async function createEnvelope(apiClient, envelopeData) {
   try {
-    console.log('Making API call to DocuSign...');
     const envelopesApi = new docusign.EnvelopesApi(apiClient);
-    console.log('Using account ID:', DOCUSIGN_ACCOUNT_ID);
     
-    const results = await envelopesApi.createEnvelope(
-      DOCUSIGN_ACCOUNT_ID,
-      { envelopeDefinition }
-    );
+    const envelope = new docusign.EnvelopeDefinition();
+    envelope.templateId = envelopeData.templateId;
+    envelope.templateRoles = envelopeData.templateRoles;
+    envelope.status = envelopeData.status;
+    envelope.emailSubject = envelopeData.emailSubject;
     
-    console.log('DocuSign API Response:', JSON.stringify(results, null, 2));
+    // Add metadata as custom fields
+    const customFields = {
+      textCustomFields: Object.entries(envelopeData.metadata).map(([key, value]) => ({
+        name: key,
+        value: value.toString(),
+        required: 'false',
+        show: 'true'
+      }))
+    };
+    envelope.customFields = customFields;
+
+    console.log(`Creating envelope for ${envelopeData.emailSubject}...`);
+    const results = await envelopesApi.createEnvelope(DOCUSIGN_ACCOUNT_ID, { envelopeDefinition: envelope });
+    console.log(`Envelope created with ID: ${results.envelopeId}`);
     
-    if (!results || !results.envelopeId) {
-      throw new Error('Failed to get envelope ID from DocuSign response');
+    // Log the envelope details
+    const envelopeLog = {
+      envelopeId: results.envelopeId,
+      templateId: envelopeData.templateId,
+      emailSubject: envelopeData.emailSubject,
+      status: results.status,
+      metadata: envelopeData.metadata,
+      created: new Date().toISOString()
+    };
+    
+    // Append to envelope log file
+    const logPath = path.resolve(__dirname, 'envelope-log.json');
+    let existingLog = [];
+    try {
+      existingLog = JSON.parse(await fs.readFile(logPath, 'utf8'));
+    } catch (error) {
+      // File doesn't exist or is invalid JSON
     }
+    existingLog.push(envelopeLog);
+    await fs.writeFile(logPath, JSON.stringify(existingLog, null, 2));
     
-    return results.envelopeId;
+    return results;
   } catch (error) {
     console.error('Error creating envelope:', error);
     if (error.response) {
@@ -548,66 +552,595 @@ function validateEnvironment() {
   }
 }
 
-// Main function to create envelopes
+// Template IDs
+const VENDOR_RENEWAL_TEMPLATE_ID = 'f8b28512-7f82-4c22-bcee-1c87b7ba4fe3';
+const EMPLOYEE_OFFBOARDING_TEMPLATE_ID = 'fbe8f291-a700-43a8-a7cb-845f88eb941a';
+
+// Demo data
+const demoEnvelopes = [
+  // FastComm Historical Renewals
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'FastComm Vendor Renewal Agreement - February 2022',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '129575'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'FastComm',
+      effectiveDate: '2022-02-01',
+      expirationDate: '2023-02-01',
+      parties: 'FastComm;GreenLeaf Analytics',
+      annualFee: 129575,
+      autoRenew: true,
+      completionOrder: 2,
+      status: 'completed',
+      completionDate: '2022-02-01'
+    }
+  },
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'FastComm Vendor Renewal Agreement - February 2023',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '136054'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'FastComm',
+      effectiveDate: '2023-02-01',
+      expirationDate: '2024-02-01',
+      parties: 'FastComm;GreenLeaf Analytics',
+      annualFee: 136054,
+      autoRenew: true,
+      completionOrder: 2,
+      status: 'completed',
+      completionDate: '2023-02-01'
+    }
+  },
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'FastComm Vendor Renewal Agreement - February 2024',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '142857'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'FastComm',
+      effectiveDate: '2024-02-01',
+      expirationDate: '2025-02-01',
+      parties: 'FastComm;GreenLeaf Analytics',
+      annualFee: 142857,
+      autoRenew: true,
+      completionOrder: 2,
+      status: 'completed',
+      completionDate: '2024-02-01'
+    }
+  },
+
+  // GlobalTech Historical Renewals
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'GlobalTech Vendor Renewal Agreement - January 2022',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '172768'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'GlobalTech',
+      effectiveDate: '2022-01-07',
+      expirationDate: '2023-01-07',
+      parties: 'GlobalTech;GreenLeaf Analytics',
+      annualFee: 172768,
+      autoRenew: false,
+      completionOrder: 2,
+      status: 'completed',
+      completionDate: '2022-01-07'
+    }
+  },
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'GlobalTech Vendor Renewal Agreement - January 2023',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '181406'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'GlobalTech',
+      effectiveDate: '2023-01-07',
+      expirationDate: '2024-01-07',
+      parties: 'GlobalTech;GreenLeaf Analytics',
+      annualFee: 181406,
+      autoRenew: false,
+      completionOrder: 2,
+      status: 'completed',
+      completionDate: '2023-01-07'
+    }
+  },
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'GlobalTech Vendor Renewal Agreement - January 2024',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '190476'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'GlobalTech',
+      effectiveDate: '2024-01-07',
+      expirationDate: '2025-01-07',
+      parties: 'GlobalTech;GreenLeaf Analytics',
+      annualFee: 190476,
+      autoRenew: false,
+      completionOrder: 2,
+      status: 'completed',
+      completionDate: '2024-01-07'
+    }
+  },
+
+  // AcmeCorp Historical Renewals
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'AcmeCorp Vendor Renewal Agreement - January 2022',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '151171'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'AcmeCorp',
+      effectiveDate: '2022-01-15',
+      expirationDate: '2023-01-15',
+      parties: 'AcmeCorp;GreenLeaf Analytics',
+      annualFee: 151171,
+      autoRenew: true,
+      completionOrder: 2,
+      status: 'completed',
+      completionDate: '2022-01-15'
+    }
+  },
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'AcmeCorp Vendor Renewal Agreement - January 2023',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '158730'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'AcmeCorp',
+      effectiveDate: '2023-01-15',
+      expirationDate: '2024-01-15',
+      parties: 'AcmeCorp;GreenLeaf Analytics',
+      annualFee: 158730,
+      autoRenew: true,
+      completionOrder: 2,
+      status: 'completed',
+      completionDate: '2023-01-15'
+    }
+  },
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'AcmeCorp Vendor Renewal Agreement - January 2024',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '166667'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'AcmeCorp',
+      effectiveDate: '2024-01-15',
+      expirationDate: '2025-01-15',
+      parties: 'AcmeCorp;GreenLeaf Analytics',
+      annualFee: 166667,
+      autoRenew: true,
+      completionOrder: 2,
+      status: 'completed',
+      completionDate: '2024-01-15'
+    }
+  },
+
+  // Vendor Renewals
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'FastComm Vendor Renewal Agreement - February 2025',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '150000'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'FastComm',
+      effectiveDate: '2025-02-01',
+      expirationDate: '2026-02-01',
+      parties: 'FastComm;GreenLeaf Analytics',
+      annualFee: 150000,
+      autoRenew: true,
+      completionOrder: 2
+    }
+  },
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'GlobalTech Vendor Renewal Agreement - January 2025',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '200000'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'GlobalTech',
+      effectiveDate: '2025-01-07',
+      expirationDate: '2026-01-07',
+      parties: 'GlobalTech;GreenLeaf Analytics',
+      annualFee: 200000,
+      autoRenew: false,
+      completionOrder: 2
+    }
+  },
+  {
+    templateId: VENDOR_RENEWAL_TEMPLATE_ID,
+    emailSubject: 'AcmeCorp Vendor Renewal Agreement - January 2025',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Company Representative',
+        tabs: {
+          textTabs: [
+            {
+              tabLabel: 'Annual Fee',
+              value: '175000'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryanamio@gmail.com',
+        name: 'Alice Johnson',
+        roleName: 'Vendor Representative'
+      }
+    ],
+    metadata: {
+      type: 'vendor_renewal',
+      vendor: 'AcmeCorp',
+      effectiveDate: '2025-01-15',
+      expirationDate: '2026-01-15',
+      parties: 'AcmeCorp;GreenLeaf Analytics',
+      annualFee: 175000,
+      autoRenew: true,
+      completionOrder: 2
+    }
+  },
+
+  // Sarah's Offboarding Documents
+  {
+    templateId: EMPLOYEE_OFFBOARDING_TEMPLATE_ID,
+    emailSubject: 'Sarah Johnson - IP Protection Agreement',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+sarah@mioduski.us',
+        name: 'Sarah Johnson',
+        roleName: 'Employee',
+        tabs: {
+          dateTabs: [
+            {
+              tabLabel: 'Separation Date fe9ffc63-56b3-4eaf-b62f-0230f7c2a253',
+              value: '2025-01-02'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Supervisor'
+      }
+    ],
+    metadata: {
+      type: 'offboarding_ip',
+      employee: 'Sarah Johnson',
+      department: 'Engineering',
+      position: 'Senior Developer',
+      separationDate: '2025-01-02',
+      documentType: 'OFFBOARDING',
+      category: 'HR',
+      effectiveDate: '2025-01-02',
+      parties: 'Sarah Johnson;GreenLeaf Analytics',
+      agreementType: 'IP_PROTECTION',
+      completionOrder: 1
+    }
+  },
+  {
+    templateId: EMPLOYEE_OFFBOARDING_TEMPLATE_ID,
+    emailSubject: 'Sarah Johnson - Account Access Termination',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+sarah@mioduski.us',
+        name: 'Sarah Johnson',
+        roleName: 'Employee',
+        tabs: {
+          dateTabs: [
+            {
+              tabLabel: 'Separation Date fe9ffc63-56b3-4eaf-b62f-0230f7c2a253',
+              value: '2025-01-02'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Supervisor'
+      }
+    ],
+    metadata: {
+      type: 'offboarding_accounts',
+      employee: 'Sarah Johnson',
+      department: 'Engineering',
+      position: 'Senior Developer',
+      separationDate: '2025-01-02',
+      documentType: 'OFFBOARDING',
+      category: 'HR',
+      effectiveDate: '2025-01-02',
+      parties: 'Sarah Johnson;GreenLeaf Analytics',
+      agreementType: 'ACCOUNT_ACCESS',
+      completionOrder: 1
+    }
+  },
+  {
+    templateId: EMPLOYEE_OFFBOARDING_TEMPLATE_ID,
+    emailSubject: 'Sarah Johnson - Non-Disclosure Agreement',
+    status: 'sent',
+    templateRoles: [
+      {
+        email: 'ryan+sarah@mioduski.us',
+        name: 'Sarah Johnson',
+        roleName: 'Employee',
+        tabs: {
+          dateTabs: [
+            {
+              tabLabel: 'Separation Date fe9ffc63-56b3-4eaf-b62f-0230f7c2a253',
+              value: '2025-01-02'
+            }
+          ]
+        }
+      },
+      {
+        email: 'ryan+manager@mioduski.us',
+        name: 'John Smith',
+        roleName: 'Supervisor'
+      }
+    ],
+    metadata: {
+      type: 'offboarding_nda',
+      employee: 'Sarah Johnson',
+      department: 'Engineering',
+      position: 'Senior Developer',
+      separationDate: '2025-01-02',
+      documentType: 'OFFBOARDING',
+      category: 'HR',
+      effectiveDate: '2025-01-02',
+      parties: 'Sarah Johnson;GreenLeaf Analytics',
+      agreementType: 'NDA',
+      completionOrder: 1
+    }
+  }
+];
+
 async function main() {
   try {
-    console.log('Validating environment...');
-    validateEnvironment();
-
-    console.log('Initializing DocuSign client...');
     const apiClient = await initializeDocuSignClient();
     
-    console.log('🔍 Analyzing documents...');
-    const counts = await countDocuments();
-    const totalDocs = Object.values(counts).reduce((a, b) => a + b, 0);
+    console.log('\nCreating demo envelopes...\n');
     
-    console.log('\nDocuments to be processed:');
-    console.log(`- Weekly Reviews: ${counts.weeklyReviews}`);
-    console.log(`- Vendor Documents: ${counts.vendorDocs}`);
-    console.log(`- Sarah's Documents: ${counts.sarahDocs}`);
-    console.log(`\nTotal documents: ${totalDocs}`);
-    
-    const isDryRun = !process.argv.includes('--execute');
-    const skipConfirm = process.argv.includes('--no-confirm');
-    
-    if (isDryRun) {
-      console.log('\n🏃 DRY RUN MODE - No envelopes will be created');
-    } else if (!skipConfirm) {
-      const confirmed = await confirmAction(
-        '\n⚠️  This will create real DocuSign envelopes and send emails to recipients. Proceed?'
-      );
-      if (!confirmed) {
-        console.log('Operation cancelled by user');
-        process.exit(0);
-      }
+    for (const envelopeData of demoEnvelopes) {
+      await createEnvelope(apiClient, envelopeData);
     }
     
-    console.log('\n🚀 Starting envelope creation...');
-    
-    // Process all document types
-    await processWeeklyReviews(apiClient, isDryRun);
-    await processVendorDocuments(apiClient, isDryRun);
-    await processSarahDocuments(apiClient, isDryRun);
-    
-    if (!isDryRun) {
-      await saveEnvelopeLog();
-    }
-    
-    console.log('\n✨ Process completed successfully!');
-    if (isDryRun) {
-      console.log('\nTo create envelopes, run with --execute flag');
-    } else {
-      console.log(`Created ${createdEnvelopes.length} envelopes`);
-      console.log('Envelope details saved to envelope-log.json');
-    }
+    console.log('\nAll demo envelopes created successfully!');
   } catch (error) {
-    console.error('\n❌ Error:', error.message);
-    if (error.response?.body) {
-      console.error('API Error Details:', JSON.stringify(error.response.body, null, 2));
-    }
+    console.error('Error in main:', error);
     process.exit(1);
   }
 }
 
-// Run without --execute for dry run
-main(); 
+// Only run if --execute flag is present
+if (process.argv.includes('--execute')) {
+  main().catch(console.error);
+} else {
+  console.log('Run with --execute flag to create envelopes');
+} 

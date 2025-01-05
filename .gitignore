@@ -38,3 +38,6 @@ next-env.d.ts
 /docs/vercel
 docs/docusign/Docusign Navigator_2025-01-02 19.38.pdf
 /demo/scripts/node_modules
+/demo/pdf
+/demo/markdown
+/demo/pdf

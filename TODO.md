@@ -68,8 +68,9 @@
 - [x] Implement "Display Priority Dashboard" tool
 - [x] Implement "Get Template Tabs" tool
 - [ ] Implement "Send Reminder" tool
-- [ ] Implement embedded signing tool
+- [ ] Implement in-chat/embedded signing tool
 - [ ] Implement pattern recognition tool
+- [ ] Implement math tool
 
 ## Phase 3.5: Navigator Integration 🧭
 - [ ] Core Setup
