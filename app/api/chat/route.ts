@@ -614,6 +614,81 @@ export async function POST(req: Request) {
               templateName
             };
           }
+        }),
+        signDocument: tool({
+          description: 'Generate an embedded signing view for a document that needs to be signed. Use this when a user needs to sign a document or envelope.',
+          parameters: z.object({
+            envelopeId: z.string().describe('The ID of the envelope to sign'),
+            returnUrl: z.string().optional().describe('Optional return URL after signing')
+          }),
+          execute: async ({ envelopeId, returnUrl }, { toolCallId }) => {
+            console.log('Starting signDocument execution:', { envelopeId, toolCallId });
+            try {
+              const cookieStore = cookies();
+              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              console.log('Auth session check:', {
+                hasSession: !!session,
+                userId: session?.user?.id,
+                error: sessionError
+              });
+
+              if (sessionError || !session?.user) {
+                console.error('Authentication error:', sessionError);
+                return {
+                  error: 'User not authenticated',
+                  completed: true
+                };
+              }
+
+              // Verify envelope exists and belongs to user
+              const { data: envelope, error: envelopeError } = await supabase
+                .from('envelopes')
+                .select('*')
+                .eq('docusign_envelope_id', envelopeId)
+                .eq('user_id', session.user.id)
+                .single();
+
+              console.log('Envelope verification:', {
+                envelopeId,
+                found: !!envelope,
+                error: envelopeError,
+                userId: session.user.id
+              });
+
+              if (envelopeError || !envelope) {
+                console.error('Envelope error:', envelopeError);
+                return {
+                  error: 'Envelope not found or access denied',
+                  completed: true
+                };
+              }
+
+              // Get signing URL using existing DocuSign client
+              const docusign = new DocuSignEnvelopes(supabase);
+              const signingUrl = await docusign.getSigningUrl(
+                session.user.id, 
+                envelopeId,
+                returnUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/documents/${envelope.id}`
+              );
+
+              console.log('Generated signing URL for envelope:', envelopeId);
+
+              return {
+                envelopeId,
+                signingUrl,
+                mode: 'focused',
+                completed: false
+              };
+            } catch (error) {
+              console.error('Error in signDocument:', error);
+              return {
+                error: error instanceof Error ? error.message : 'Failed to generate signing URL',
+                completed: true
+              };
+            }
+          }
         })
       }
     });

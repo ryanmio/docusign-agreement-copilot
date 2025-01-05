@@ -710,4 +710,76 @@ export class DocuSignEnvelopes {
 
     return response.json();
   }
+
+  async getSigningUrl(userId: string, envelopeId: string, returnUrl?: string) {
+    console.log('Getting signing URL:', { userId, envelopeId, returnUrl });
+    const client = await this.client.getClient(userId);
+
+    // First get envelope details to verify recipient
+    console.log('Fetching envelope details to verify recipient...');
+    const envelopeResponse = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}/recipients`,
+      {
+        headers: client.headers,
+      }
+    );
+
+    if (!envelopeResponse.ok) {
+      const error = await envelopeResponse.text();
+      console.error('Error fetching envelope recipients:', error);
+      throw new Error(`Failed to fetch envelope recipients: ${error}`);
+    }
+
+    const recipientData = await envelopeResponse.json();
+    console.log('Envelope recipients:', recipientData);
+
+    // Find the recipient that matches the current user
+    const userRecipient = recipientData.signers?.find((signer: any) => 
+      signer.recipientId && signer.status !== 'completed'
+    );
+
+    if (!userRecipient) {
+      throw new Error('No pending recipient found for this envelope');
+    }
+
+    console.log('Found recipient for signing:', userRecipient);
+
+    const response = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}/views/recipient`,
+      {
+        method: 'POST',
+        headers: {
+          ...client.headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          returnUrl: returnUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/documents`,
+          authenticationMethod: 'none',
+          email: userRecipient.email,
+          userName: userRecipient.name,
+          recipientId: userRecipient.recipientId,
+          frameAncestors: [
+            process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+            process.env.NODE_ENV === 'production' 
+              ? 'https://apps.docusign.com'
+              : 'https://apps-d.docusign.com'
+          ],
+          messageOrigins: [
+            process.env.NODE_ENV === 'production'
+              ? 'https://apps.docusign.com'
+              : 'https://apps-d.docusign.com'
+          ]
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Error getting signing URL:', error);
+      throw new Error(`Failed to get signing URL: ${error}`);
+    }
+
+    const data = await response.json();
+    return data.url;
+  }
 } 

@@ -12,6 +12,8 @@ import { TemplatePreview } from '@/components/template-preview';
 import { RecipientForm } from '@/components/recipient-form';
 import { EnvelopeSuccess } from '@/components/envelope-success';
 import { PriorityDashboard } from '@/components/priority-dashboard';
+import { SigningView } from '@/components/signing-view';
+import { useToast } from '@/hooks/use-toast';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -23,6 +25,8 @@ interface ExtendedChatOptions {
 }
 
 export default function ChatPage() {
+  const { toast } = useToast();
+
   const { messages, input, handleInputChange, handleSubmit, append, addToolResult, isLoading } = useChat({
     maxSteps: 5,
     experimental_toolCallStreaming: true,
@@ -214,6 +218,63 @@ export default function ChatPage() {
                   console.error('Failed to handle priority dashboard action:', error);
                   await handleToolResult(toolCallId, {
                     error: error instanceof Error ? error.message : 'Failed to process action'
+                  });
+                }
+              }}
+            />
+          );
+
+        case 'signDocument':
+          if (!result?.signingUrl) {
+            return <div className="p-4 text-red-500">Error: Invalid signing configuration</div>;
+          }
+          return (
+            <SigningView
+              signingUrl={result.signingUrl}
+              mode={result.mode}
+              toolCallId={toolCallId}
+              onComplete={async () => {
+                try {
+                  // Update tool result
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    completed: true,
+                    status: 'signed'
+                  });
+
+                  // Add user message to continue conversation
+                  await append({
+                    role: 'user',
+                    content: 'I have completed signing the document.'
+                  });
+                } catch (error) {
+                  console.error('Error handling signing completion:', error);
+                  toast({
+                    title: 'Error updating signing status',
+                    description: 'The document was signed but there was an error updating the status',
+                    variant: 'destructive'
+                  });
+                }
+              }}
+              onError={async (error) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    error: error.message,
+                    completed: true,
+                    status: 'error'
+                  });
+
+                  // Add user message to allow recovery
+                  await append({
+                    role: 'user',
+                    content: `There was an error while signing: ${error.message}. What should I do?`
+                  });
+                } catch (e) {
+                  console.error('Error handling signing error:', e);
+                  toast({
+                    title: 'Error',
+                    description: 'Failed to process signing error',
+                    variant: 'destructive'
                   });
                 }
               }}
