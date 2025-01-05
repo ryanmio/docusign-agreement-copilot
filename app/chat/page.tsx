@@ -16,6 +16,8 @@ import { SigningView } from '@/components/signing-view';
 import { useToast } from '@/hooks/use-toast';
 import { ReminderConfirmation } from '@/components/reminder-confirmation';
 import { MathResult } from '@/components/math-result';
+import { ConversationStarters } from '@/components/conversation-starters';
+import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -28,6 +30,7 @@ interface ExtendedChatOptions {
 
 export default function ChatPage() {
   const { toast } = useToast();
+  const [messagesContainerRef, messagesEndRef] = useScrollToBottom<HTMLDivElement>();
 
   const { messages, input, handleInputChange, handleSubmit, append, addToolResult, isLoading } = useChat({
     maxSteps: 5,
@@ -308,37 +311,52 @@ export default function ChatPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-4">
-        {messages.map(message => (
-          <div key={message.id} className="space-y-4">
-            {message.content && (
-              <div className={`p-4 rounded-lg ${
-                message.role === 'user' 
-                  ? 'bg-blue-100' 
-                  : 'bg-gray-100'
-              }`}>
-                <div className="prose prose-sm max-w-none prose-pre:bg-transparent prose-pre:p-0 prose-p:leading-normal prose-p:my-1 prose-ul:my-1 prose-li:my-0">
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
-                </div>
-              </div>
-            )}
-
-            {message.toolInvocations?.map(toolInvocation => (
-              <div key={toolInvocation.toolCallId}>
-                {handleToolInvocation(toolInvocation)}
-              </div>
-            ))}
-          </div>
-        ))}
-
-        {isLoading && (
-          <div className="p-4 rounded-lg bg-gray-100">
-            <div className="flex items-center space-x-2">
-              <div className="animate-pulse">●</div>
-              <div className="animate-pulse">●</div>
-              <div className="animate-pulse">●</div>
-            </div>
-          </div>
+        {messages.length === 0 && (
+          <ConversationStarters
+            onSelect={async (prompt) => {
+              await append({
+                role: 'user',
+                content: prompt
+              });
+            }}
+          />
         )}
+        
+        <div ref={messagesContainerRef} className="space-y-4">
+          {messages.map(message => (
+            <div key={message.id} className="space-y-4">
+              {message.content && (
+                <div className={`p-4 rounded-lg ${
+                  message.role === 'user' 
+                    ? 'bg-blue-100' 
+                    : 'bg-gray-100'
+                }`}>
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  </div>
+                </div>
+              )}
+
+              {message.toolInvocations?.map(toolInvocation => (
+                <div key={toolInvocation.toolCallId}>
+                  {handleToolInvocation(toolInvocation)}
+                </div>
+              ))}
+            </div>
+          ))}
+
+          {isLoading && (
+            <div className="p-4 rounded-lg bg-gray-100">
+              <div className="flex items-center space-x-2">
+                <div className="animate-pulse">●</div>
+                <div className="animate-pulse">●</div>
+                <div className="animate-pulse">●</div>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} className="h-1" />
+        </div>
 
         <form onSubmit={handleSubmit} className="flex gap-4">
           <input
@@ -347,7 +365,11 @@ export default function ChatPage() {
             placeholder="Ask about your documents..."
             className="flex-1 p-4 border rounded-lg"
           />
-          <button type="submit" className="px-8 py-4 bg-blue-500 text-white rounded-lg">
+          <button 
+            type="submit" 
+            className="px-8 py-4 bg-blue-500 text-white rounded-lg"
+            disabled={isLoading}
+          >
             Send
           </button>
         </form>
