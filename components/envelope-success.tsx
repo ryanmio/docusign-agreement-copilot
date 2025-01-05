@@ -34,19 +34,19 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
 
     const fetchEnvelope = async () => {
       try {
-        const { data, error } = await supabase
+        const { data: envelope, error } = await supabase
           .from('envelopes')
           .select('*, recipients(*)')
-          .eq('id', envelopeId)
+          .eq('docusign_envelope_id', envelopeId)
           .single();
 
         if (error) throw error;
-        setEnvelope(data);
+        setEnvelope(envelope);
         setError(null);
 
         // Continue polling if the envelope is not in a final state
         const finalStates = ['completed', 'declined', 'voided'];
-        if (!finalStates.includes(data.status)) {
+        if (!finalStates.includes(envelope.status)) {
           timer = setTimeout(fetchEnvelope, 5000); // Poll every 5 seconds
         }
       } catch (err) {

@@ -551,25 +551,10 @@ Whether you're a seasoned developer or just starting your journey in the world o
 
 Thank you for reading, and as always, happy coding!
 
-APIs
-eSignature REST API
-API 101
-Concepts
-Embedding
-Embedded Signing
-Embedded signing
-As an app developer, you can direct users to complete Docusign transactions in either of two ways:
-Remotely, via an email, SMS, or WhatsApp notification that prompts signers to view or sign their documents through the Docusign eSignature web app.
-Directly within your application using embedded signing.
-Embedded signing (also called the envelope recipient view) enables users to view and sign documents directly through your app or website by embedding a Docusign signing session into your application. This is a smoother, more productive flow for signers, compared to leaving your application to receive the signing link via email, SMS, or WhatsApp. Embedded signing should be considered for any web application that generates agreements to be signed and the application is used by the signers themselves. 
-
 To use embedded signing, your app must:
 Authenticate the envelope recipients (the signing session can include additional signer authentication)
 Generate signing URLs
 Present the signing request in the app UI
-Building a partner integration? See guidance and best practices for Envelope signing as an ISV partner.
-
-
 Docusign offers multiple options for embedding the signing experience in your application. Each has its own benefits and cautions:
 Classic signing session. Try it. This signing session works with the most authentication options including Access code, KBA, and ID verification. This signing session can be used with desktop and mobile browsers.
 
@@ -621,42 +606,211 @@ Note: Because signing links expire after 300 seconds (five minutes) and are one-
 Open the signing session. For the classic signing session, either redirect the user’s browser to the recipient signing URL or open it within an iframe.
 
 To use the focused view, focused view/Click to Agree, or classic view with Docusign JS, initialize Docusign JS and pass the signing URL as a parameter. 
+For more information on focused view, see How to request a signature using focused view for a detailed walkthrough of an example focus view implementation or How to request a signature through your app for a code example demonstrating the standard embedded signing flow.
+Next steps
+For details on each step and full code examples that demonstrate how to request signatures using embedded signing, see:
+Embed the Sender and Correct views
+How to request a signature using focused view
+How to request a signature through your app (embedded signing)
+How to request a signature using a composite template (embedded signing)
+How to request a signature through your app (embedded signing) with a CFR Part 11 account
+How to send an envelope via your app (embedded sending)
+For a demo of embedded signing and a walkthrough of the sequence of API calls that implement it, see the Embedded Signing scenario in the MyAPICalls sample app.
 
-DocuSign Signing Options for Chat Interface Integration
-This report analyzes various DocuSign signing options and recommends the most user-friendly solution for seamless document signing directly within our chat interface. The primary focus is on simplicity and "wow-factor" for an upcoming demo, ensuring a smooth and engaging user experience.
+How to request a signature through your app
+This topic demonstrates how to collect signatures directly within your app, without emailing the signer or directing them to an external URL. This process is called embedded signing. This topic also demonstrates how to use AutoPlace to automatically position tabs in a document with a specified string.
 
-DocuSign Signing Options Overview
-DocuSign offers a variety of electronic signature solutions, each with its own set of features and capabilities. We investigated the following options to determine the best fit for our chat interface integration:
+Run this code example from our Quickstart or launcher projects: Bash, C#, Java, Node.js, PHP, PowerShell, Python, or Ruby.
 
-Embedded Signing API: This API allows embedding the DocuSign signing session directly within our chat interface. Users can review and sign documents without leaving the chat window.   
-Click API / Click-wrap: This solution is ideal for capturing consent to standard agreement terms with a single click. It simplifies the signing process for agreements like terms and conditions and privacy policies.   
-PowerForms: PowerForms allow generating on-demand, self-service documents for signature. Users can access and sign documents through a unique URL, eliminating the need for a DocuSign account.   
-SMS Signing: This option enables sending signing requests via SMS. Users can access and sign documents on their mobile devices.   
-Mobile SDK: DocuSign provides Mobile SDKs for iOS and Android, offering a native mobile signing experience within our app.   
-Evaluation of Signing Options
-To select the most suitable option, we evaluated each signing method based on the following criteria: user-friendliness, "wow-factor," simplicity, and flexibility. User-friendliness refers to how intuitive and easy to use the solution is for our users. The "wow-factor" considers the visual appeal and engagement of the signing experience, particularly for the upcoming demo. Simplicity refers to the ease of integration and development, while flexibility considers the solution's adaptability to various document types and signing workflows.
+Required data
+Running the code in this how-to requires this data:
 
-Signing Option	Pros	Cons
-Embedded Signing API	- Provides a smooth and user-friendly signing experience. <br> - Offers high flexibility for different document types and workflows. <br> - Supports various authentication methods for enhanced security. <br> - Offers a minimalist signing experience with "focused view."  <br> - Facilitates easier integration and handling of events with the DocuSign JS library. <br> - Allows branding the signing experience to match our chat interface.	- May require more development effort compared to simpler solutions like Click API.
-Click API / Click-wrap	- Extremely user-friendly, requiring minimal effort from the user. <br> - Simple integration process. <br> - Ideal for standard agreements like terms and conditions.	- Limited to basic agreements and not suitable for complex documents or workflows. <br> - May not offer the desired "wow-factor" for the demo.
-PowerForms	- Convenient for signers as no DocuSign account is required. <br> - Easy to generate and share with users. <br> - Suitable for collecting signatures from a large audience.	- May not be ideal for integrating directly into the chat interface. <br> - Offers limited control over the signing process compared to Embedded Signing API.
-SMS Signing	- Convenient for users who prefer signing on mobile devices. <br> - Can be used in conjunction with email notifications for multi-channel delivery.	- May not be the most visually appealing option for the demo. <br> - Limited to basic signing workflows.
-Mobile SDK	- Offers a fully native mobile signing experience. <br> - Provides access to mobile-specific features and functionalities.	- Requires developing and maintaining separate code for different mobile platforms. <br> - May not be necessary if the Embedded Signing API can provide a satisfactory mobile experience within the chat interface.
+Data element
+Description
+{API_ACCOUNT_ID}	A GUID value that identifies your account. This value is automatically generated by Docusign for any account you create. Copy the value from the API Account ID field on the Apps and Keys page.
+{BASE_PATH}	A string value that forms the root of the URL required to make API calls. The base path value in the example code is set to target the developer environment at
 
-Technical Requirements
-To implement the Embedded Signing API, you will need the following:
+https://<domain>/restapi
 
-API Account ID: A GUID value that identifies your account.   
-Base Path: A string value that forms the root of the URL required to make API calls.   
-Client User ID: A string value that serves as an identifier of an individual signer throughout the signing process.   
-Document to be signed: You must provide at least one document to be signed.   
-Return URL: A URL to which the user will be forwarded after signing is complete.   
-Signer Email: A string value for the email address where the signer will receive a notification of the signing request.   
-Signer Name: A string value for the full name of the signer.   
-SignHere or InitialHere tabs: It is required that each signer in the workflow has a minimum of one tab to be assigned to them.   
-Recommendation
-Based on our evaluation, the Embedded Signing API is the most suitable solution for integrating DocuSign signing into our chat interface. It offers the best combination of user-friendliness, flexibility, and "wow-factor" for the demo.
+Where <domain> is demo.docusign.net for the developer environment and is the result of the GetUserInfo call in production.
+{CLIENT_USER_ID}	A string value that serves as an identifier of an individual signer throughout the signing process. The combination of this value, the signer's name, and the signer's email is used to uniquely identify them.
+Document to be signed	You must provide at least one document to be signed. Document used in this how-to:
+PDF file
+Return URL	A URL to which the user will be forwarded after signing is complete.
+{SIGNER_EMAIL}	A string value for the email address where the signer will receive a notification of the signing request.
+{SIGNER_NAME}	A string value for the full name of the signer.
+Step 1. Obtain your OAuth token
+To make the API calls shown in this how-to, you need a valid OAuth access token. Docusign supports access tokens for three different recommended OAuth grant types: Public Authorization Code Grant, Confidential Authorization Code Grant, and JSON Web Token (JWT) Grant. Choose the OAuth grant type appropriate for your scenario.
 
-The Embedded Signing API allows users to review and sign documents without leaving the chat window, providing a seamless and engaging experience. The ability to sign documents without leaving the chat window provides a "wow-factor" that will impress users during the demo. It supports various document types and signing workflows, making it adaptable to our specific needs. Additionally, the API's support for different authentication methods ensures secure access to documents.
+Wondering which grant type suits your integration? See Authenticate for guidance on your options to get an OAuth token.
 
-While the Embedded Signing API may require more development effort compared to simpler solutions, the enhanced user experience and flexibility it offers make it the ideal choice for our chat interface integration.
+Three icons that represent the three methods a user can use to obtain an OAuth token: JSON Web Token (JWT), Public Authorization Code Grant (ACG), and Confidential Authorization Code grant
+Step 2. Create the envelope definition
+The first step in requesting a signature within your app is to define a method (called makeEnvelope in our example) that creates the envelope definition using the following steps:
+Add a document to the definition by saving it to a variable as a binary-encoded base64 string. If you intend to attach multiple documents, specify the document order using an array. The order of the array sets the order of the documents.
+Set the signer's data, including their name, email address, and a client user ID (any alphanumeric value is suitable). Including a client user ID automatically specifies the signer as embedded (using your app). If there are multiple signers, you must create a signer recipient for each one.
+
+Note: If the client user ID is set and either the SignerMustHaveAccount or SignerMustLoginToSign property of the account settings is set to true, the system throws an error.
+Create and assign signable fields (also known as tabs) for a specific signer within the document using AutoPlace. This how-to uses anchor tabs to generate tabs automatically in your document by searching for each occurrence of a specific string of characters in the document and adding tabs at those locations. This example uses the string "/sn1/" for auto-placing the signature (signHere) tab.
+
+To configure the anchor tabs, specify the number of units from the anchor text to offset the tab, as well as the string to search for and replace with a signHereTab within your document. You can create multiple signHere tabs for different locations and offsets, if needed.
+
+After creating the tabs, assign them to the signer created in the previous step.
+Set the envelope's status property. To save the envelope as a draft, set status to created. To configure the envelope to be sent immediately after it is instantiated, set status to sent instead.
+
+Bash
+
+C#
+
+Java
+
+Node.js
+
+PHP
+
+PowerShell
+
+Python
+
+Ruby
+313233343536373839404142434445464748
+def make_envelope(cls, args):
+    """
+    Creates envelope
+    args -- parameters for the envelope:
+    signer_email, signer_name, signer_client_id
+    returns an envelope definition
+    """
+
+    # document 1 (pdf) has tag /sn1/
+    #
+
+
+
+Step 3. Call Docusign to create the envelope
+With the envelope definition and the attributes defined for the signer, document, and custom fields, you can now use the Envelopes:create endpoint to create an envelope for the transaction.
+First, instantiate a new instance of the API client (if you're using a Docusign SDK).
+Set the following default request header to add your access token to all API calls.
+"Authorization: Bearer ${ACCESS_TOKEN}"
+Initialize the Envelopes API.
+Using your Docusign integration key and the prepared envelope definition, generate and retrieve an envelope ID using the Envelopes:create endpoint.
+
+Bash
+
+C#
+
+Java
+
+Node.js
+
+PHP
+
+PowerShell
+
+Python
+
+Ruby
+123456789101112
+envelope_args = args["envelope_args"]
+# 1. Create the envelope request object
+envelope_definition = cls.make_envelope(envelope_args)
+
+# 2. call Envelopes::create API method
+# Exceptions will be caught by the calling function
+api_client = create_api_client(base_path=args["base_path"], access_token=args["access_token"])
+
+envelope_api = EnvelopesApi(api_client)
+
+
+
+Step 4. Create the recipient view definition
+The recipient view is the screen that Docusign generates and displays in your app to enable your signers to sign documents. To create the definition, you must add the signer's information and the return URL.
+Set the return URL to which the user will be forwarded after signing is complete.
+Add the recipient information to the view, including the signer's email, name, and clientUserID that were set for the recipient who will sign the envelope.
+
+Bash
+
+C#
+
+Java
+
+Node.js
+
+PHP
+
+PowerShell
+
+Python
+
+Ruby
+12345678
+recipient_view_request = RecipientViewRequest(
+    authentication_method=authentication_method,
+    client_user_id=envelope_args["signer_client_id"],
+    recipient_id="1",
+    return_url=envelope_args["ds_return_url"],
+    user_name=envelope_args["signer_name"],
+    email=envelope_args["signer_email"]
+)
+
+
+Step 5. Create the recipient view and initiate embedded signing
+Next, create the recipient view. Use the EnvelopeViews:createRecipient method, passing in your API account ID and the envelopeId and viewRequest objects generated in previous steps.
+
+Finally, extract the URL for embedded signing, which is the value of the Url key from the JSON response. You can redirect your app's internal browser to this URL to begin signing.
+
+View the source code for this how-to on GitHub: Bash, C#, Java, Node.js, PHP, PowerShell, Python, or Ruby.
+
+Bash
+
+C#
+
+Java
+
+Node.js
+
+PHP
+
+PowerShell
+
+Python
+
+Ruby
+1234567
+results = envelope_api.create_recipient_view(
+    account_id=args["account_id"],
+    envelope_id=envelope_id,
+    recipient_view_request=recipient_view_request
+)
+
+return {"envelope_id": envelope_id, "redirect_url": results.url}
+
+
+Expected response
+Use the return URL in the JSON response to start the embedded signing session in your browser.
+
+Sample response
+{
+  "url": "https://demo.docusign.net/Signing/MTRedeem/v1/54984548-xxxx-xxxx-xxxx-cd0772818bbf?slt=eyJ0eX...m87j8w"
+}
+
+For in-app signing, see the embedded signing overview.
+
+Guidelines for embedded signing:
+In embedded signing, your integration’s app controls signer access. Because Docusign is not generating and sending email notifications with a unique link, Docusign is not validating that your specified recipient (name and email) has access to the email address. This means that it is your responsibility to provide some means of identifying the correct recipient for an envelope.
+In addition to your application’s authentication process, you can use Docusign authentication services via an embedded signing ceremony. For example, ask Docusign to request a pre-shared secret (an access code), or to send a code via SMS to the signer. Note that not all Docusign authentication options are available on all types of embedded signing ceremonies.
+You can record integration application authentication into the envelope record using the authenticationMethod, authenticationInstant, assertionId, and securityDomain properties. The provided values will be included in the envelope record and on the envelope’s Certificate of Completion, connecting integration application user authentication with the Docusign embedded signing session.
+authenticationMethod: Specifies how your app authenticated the embedded signing user. The value must be one of an enumerated value list of strings. This is a required element.
+authenticationInstant: Holds the date/time instant when the user was authenticated by the integration application. This is distinct from and should occur earlier than when the signing view methods are invoked.
+assertionId: Provides additional data for retrieving original authentication information.
+securityDomain: Specifies a location for authentication. This can be a URL, a subdomain, an office ID, a kiosk ID, or other identifier.
+Important: Due to potential problems fitting an iframe into limited screen space, do not use iframes for embedded signing with the classic signing ceremony on mobile devices. Instead, use a new browser tab, a WkWebView for iOS devices, or a WebView for Android devices. The new Focused View signing ceremony can be used with a limited amount of GUI chrome provided by your application.
+Example application authentication records
+This record holds data for an in-office visit where the signer’s identity was authenticated via their driver license, the time the ID was entered into the app by an advisor, and includes an office identifier.
+
+Example: Application authentication record, in-office visit
+This record holds data for an online user login, specifying an authentication log archive ID, date-time instant, and sub-domain for archive lookup.
+
+Example application authentication record: Online user login
+
+These four elements enable you to verify the signer entry, indicate how authentication took place, and record details for auditing.

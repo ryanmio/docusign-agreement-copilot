@@ -143,6 +143,7 @@ interface CreateEnvelopeArgs {
   status: string;
   emailSubject: string;
   emailBlurb?: string;
+  enableEmbeddedSigning?: boolean;
 }
 
 interface TemplateTab {
@@ -186,6 +187,7 @@ export class DocuSignEnvelopes {
   }
 
   async createEnvelope(userId: string, args: CreateEnvelopeArgs) {
+    console.log('Creating envelope with args:', JSON.stringify(args, null, 2));
     const client = await this.client.getClient(userId);
 
     const envelopeDefinition: EnvelopeDefinition = {
@@ -196,11 +198,25 @@ export class DocuSignEnvelopes {
 
     if (args.templateId) {
       envelopeDefinition.templateId = args.templateId;
-      envelopeDefinition.templateRoles = args.templateRoles;
+      envelopeDefinition.templateRoles = args.templateRoles?.map(role => ({
+        ...role,
+        clientUserId: role.email,
+        embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN'
+      }));
     } else {
+      if (args.recipients?.signers) {
+        envelopeDefinition.recipients = {
+          signers: args.recipients.signers.map(signer => ({
+            ...signer,
+            clientUserId: signer.email,
+            embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN'
+          }))
+        };
+      }
       envelopeDefinition.documents = args.documents;
-      envelopeDefinition.recipients = args.recipients;
     }
+
+    console.log('Sending envelope definition:', JSON.stringify(envelopeDefinition, null, 2));
 
     const response = await fetch(`${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes`, {
       method: 'POST',
@@ -222,8 +238,29 @@ export class DocuSignEnvelopes {
     }
 
     const data = await response.json();
+    const envelopeId = data.envelopeId;
+
+    // Store the envelope in our database using upsert
+    const { error: dbError } = await this.client.supabase
+      .from('envelopes')
+      .upsert({
+        user_id: userId,
+        docusign_envelope_id: envelopeId,
+        subject: args.emailSubject,
+        message: args.emailBlurb || null,
+        status: 'sent'
+      }, {
+        onConflict: 'docusign_envelope_id',
+        ignoreDuplicates: false
+      });
+
+    if (dbError) {
+      console.error('Failed to store envelope in database:', dbError);
+      throw new Error(`Failed to store envelope: ${dbError.message}`);
+    }
+
     return {
-      envelopeId: data.envelopeId,
+      envelopeId: envelopeId,
     };
   }
 
@@ -466,27 +503,11 @@ export class DocuSignEnvelopes {
       status: 'sent',
       templateId,
       templateRoles: roles.map(role => {
-        console.log('Processing role for envelope:', {
-          roleName: role.roleName,
-          prefillData: prefillData?.[role.roleName]
-        });
-
         const roleTabs = prefillData?.[role.roleName];
         const tabs: TabDefinition = {};
 
         if (roleTabs) {
-          console.log('Processing tabs for role:', {
-            roleName: role.roleName,
-            tabs: roleTabs
-          });
-
           Object.entries(roleTabs).forEach(([tabLabel, { value, type }]) => {
-            console.log('Processing tab:', {
-              tabLabel,
-              value,
-              type
-            });
-
             switch (type) {
               case 'text':
                 if (!tabs.textTabs) tabs.textTabs = [];
@@ -508,11 +529,7 @@ export class DocuSignEnvelopes {
           });
         }
 
-        console.log('Final tabs for role:', {
-          roleName: role.roleName,
-          tabs
-        });
-
+        // Create recipient without embedded signing settings
         return {
           email: role.email,
           name: role.name,
@@ -545,8 +562,29 @@ export class DocuSignEnvelopes {
     }
 
     const data = await response.json();
+    const envelopeId = data.envelopeId;
+
+    // Store the envelope in our database
+    const { error: dbError } = await this.client.supabase
+      .from('envelopes')
+      .upsert({
+        user_id: userId,
+        docusign_envelope_id: envelopeId,
+        subject: emailSubject,
+        message: emailBlurb || null,
+        status: 'sent'
+      }, {
+        onConflict: 'docusign_envelope_id',
+        ignoreDuplicates: false
+      });
+
+    if (dbError) {
+      console.error('Failed to store envelope in database:', dbError);
+      throw new Error(`Failed to store envelope: ${dbError.message}`);
+    }
+
     return {
-      envelopeId: data.envelopeId,
+      envelopeId: envelopeId,
     };
   }
 
@@ -711,6 +749,40 @@ export class DocuSignEnvelopes {
     return response.json();
   }
 
+  async updateRecipientForEmbeddedSigning(userId: string, envelopeId: string, recipientId: string, recipientInfo: any) {
+    console.log('Updating recipient for embedded signing:', { envelopeId, recipientId, recipientInfo });
+    const client = await this.client.getClient(userId);
+
+    const response = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}/recipients`,
+      {
+        method: 'PUT',
+        headers: {
+          ...client.headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          signers: [{
+            recipientId,
+            email: recipientInfo.email,
+            name: recipientInfo.name,
+            clientUserId: recipientInfo.clientUserId,
+            routingOrder: recipientInfo.routingOrder,
+            tabs: recipientInfo.tabs || {}
+          }]
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Error updating recipient:', error);
+      throw new Error(`Failed to update recipient: ${error}`);
+    }
+
+    return response.json();
+  }
+
   async getSigningUrl(userId: string, envelopeId: string, returnUrl?: string) {
     console.log('Getting signing URL:', { userId, envelopeId, returnUrl });
     const client = await this.client.getClient(userId);
@@ -733,16 +805,46 @@ export class DocuSignEnvelopes {
     const recipientData = await envelopeResponse.json();
     console.log('Envelope recipients:', recipientData);
 
-    // Find the recipient that matches the current user
+    // Get the current user's info
+    const userInfo = await this.client.getUserInfo(userId);
+
+    // Find the recipient that matches the current user's email
     const userRecipient = recipientData.signers?.find((signer: any) => 
-      signer.recipientId && signer.status !== 'completed'
+      signer.email === userInfo.email && signer.status !== 'completed'
     );
 
     if (!userRecipient) {
-      throw new Error('No pending recipient found for this envelope');
+      console.error('No matching recipient found:', { userEmail: userInfo.email, recipients: recipientData.signers });
+      throw new Error('You are not a recipient of this envelope or have already completed signing');
     }
 
-    console.log('Found recipient for signing:', userRecipient);
+    console.log('Found recipient:', userRecipient);
+
+    // Update the recipient to enable embedded signing
+    const clientUserId = `${userInfo.email}-${Date.now()}`;
+    await this.updateRecipientForEmbeddedSigning(userId, envelopeId, userRecipient.recipientId, {
+      email: userInfo.email,
+      name: userInfo.name,
+      clientUserId,
+      routingOrder: userRecipient.routingOrder,
+      tabs: userRecipient.tabs
+    });
+
+    const viewRequest = {
+      returnUrl: returnUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/documents`,
+      authenticationMethod: 'none',
+      email: userInfo.email,
+      userName: userInfo.name,
+      clientUserId,
+      frameAncestors: [
+        process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      ],
+      messageOrigins: [
+        process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      ]
+    };
+
+    console.log('Creating recipient view with request:', viewRequest);
 
     const response = await fetch(
       `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}/views/recipient`,
@@ -752,24 +854,7 @@ export class DocuSignEnvelopes {
           ...client.headers,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          returnUrl: returnUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/documents`,
-          authenticationMethod: 'none',
-          email: userRecipient.email,
-          userName: userRecipient.name,
-          recipientId: userRecipient.recipientId,
-          frameAncestors: [
-            process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
-            process.env.NODE_ENV === 'production' 
-              ? 'https://apps.docusign.com'
-              : 'https://apps-d.docusign.com'
-          ],
-          messageOrigins: [
-            process.env.NODE_ENV === 'production'
-              ? 'https://apps.docusign.com'
-              : 'https://apps-d.docusign.com'
-          ]
-        }),
+        body: JSON.stringify(viewRequest),
       }
     );
 
@@ -780,6 +865,7 @@ export class DocuSignEnvelopes {
     }
 
     const data = await response.json();
+    console.log('Got signing URL:', data.url);
     return data.url;
   }
 } 

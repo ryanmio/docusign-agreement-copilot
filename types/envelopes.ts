@@ -77,6 +77,8 @@ export interface TemplateRole {
   name: string;
   roleName: string;
   routingOrder?: number;
+  clientUserId?: string;
+  tabs?: Record<string, any>;
 }
 
 export interface CreateFromTemplatePayload {

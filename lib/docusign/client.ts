@@ -24,7 +24,11 @@ export class DocuSignClient {
   private redirectUri: string;
   private authServer: string;
   private basePath: string;
-  private supabase: SupabaseClient;
+  public supabase: SupabaseClient;
+  private accessToken: string | null = null;
+  private accountId: string | null = null;
+  private baseUrl: string | null = null;
+  private headers: Record<string, string> = {};
 
   constructor(supabase: SupabaseClient) {
     this.supabase = supabase;
