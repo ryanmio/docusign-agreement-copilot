@@ -15,6 +15,7 @@ import { PriorityDashboard } from '@/components/priority-dashboard';
 import { SigningView } from '@/components/signing-view';
 import { useToast } from '@/hooks/use-toast';
 import { ReminderConfirmation } from '@/components/reminder-confirmation';
+import { MathResult } from '@/components/math-result';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -284,6 +285,17 @@ export default function ChatPage() {
 
         case 'sendReminder':
           return <ReminderConfirmation {...result} />;
+
+        case 'calculateMath':
+          return (
+            <MathResult
+              expression={result.expression}
+              result={result.result}
+              steps={result.steps}
+              error={result.error}
+              className="mt-2"
+            />
+          );
 
         default:
           return null;

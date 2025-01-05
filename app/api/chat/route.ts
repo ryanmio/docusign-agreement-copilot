@@ -4,6 +4,10 @@ import { z } from 'zod';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 import { cookies } from 'next/headers';
+import { create, all } from 'mathjs';
+
+// Create a math instance with all functions
+const math = create(all);
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -28,6 +32,16 @@ export async function POST(req: Request) {
           2. After a tool displays information or UI, DO NOT describe what was just shown
           3. Only provide next steps or ask for specific actions
           4. Never repeat information that a tool has displayed
+
+          When users need calculations:
+          1. Use the calculateMath tool for:
+             - Contract value calculations
+             - Percentage calculations (e.g., "5% of $150,000")
+             - Financial computations
+             - Multiple step calculations
+          2. Always show calculation steps for complex operations
+          3. Format results as currency when dealing with money
+          4. Handle percentages and currency symbols automatically
           
           For sending templates, follow this EXACT flow:
           1. When user wants to send a template:
@@ -78,6 +92,55 @@ export async function POST(req: Request) {
         ...messages
       ],
       tools: {
+        calculateMath: tool({
+          description: 'Perform mathematical calculations, especially for contract values and financial computations',
+          parameters: z.object({
+            expression: z.string().describe('The mathematical expression to evaluate'),
+            showSteps: z.boolean().optional().describe('Whether to show calculation steps'),
+            context: z.string().optional().describe('Additional context about the calculation')
+          }),
+          execute: async ({ expression, showSteps, context }) => {
+            console.log('Starting calculateMath execution:', { expression, showSteps, context });
+            try {
+              // Clean up the expression
+              const cleanExpression = expression
+                .replace(/\$|,/g, '') // Remove currency symbols and commas
+                .replace(/(\d+)%/g, '($1/100)'); // Convert percentages to decimals
+              
+              console.log('Cleaned expression:', cleanExpression);
+
+              // Evaluate the expression
+              const result = math.evaluate(cleanExpression);
+              console.log('Calculation result:', result);
+
+              // Generate steps if requested
+              const steps = showSteps ? [
+                context ? `Context: ${context}` : null,
+                `Original expression: ${expression}`,
+                `Cleaned expression: ${cleanExpression}`,
+                `Result: ${result}`
+              ].filter((step): step is string => step !== null) : undefined;
+
+              console.log('Generated steps:', steps);
+
+              const response = {
+                expression,
+                result,
+                steps,
+                completed: true
+              };
+              console.log('Returning response:', response);
+              return response;
+            } catch (error) {
+              console.error('Error in calculateMath:', error);
+              return {
+                expression,
+                error: error instanceof Error ? error.message : 'Failed to calculate expression',
+                completed: true
+              };
+            }
+          }
+        }),
         displayBulkOperation: tool({
           description: 'Display progress and status of a bulk document sending operation',
           parameters: z.object({

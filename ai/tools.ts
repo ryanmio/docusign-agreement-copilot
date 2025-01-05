@@ -1,6 +1,10 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 import { z } from 'zod';
+import { create, all } from 'mathjs';
+
+// Create a math instance with all functions
+const math = create(all);
 
 // Add types for priority dashboard
 interface PriorityEnvelope {
@@ -20,6 +24,20 @@ interface PrioritySection {
   title: string;
   envelopes: PriorityEnvelope[];
   type: 'urgent' | 'today' | 'thisWeek';
+}
+
+interface CalculateMathParams {
+  expression: string;
+  showSteps?: boolean;
+  context?: string;
+}
+
+interface CalculateMathResult {
+  expression: string;
+  result?: number;
+  steps?: string[];
+  error?: string;
+  completed: boolean;
 }
 
 export const tools = {
@@ -393,6 +411,49 @@ export const tools = {
           success: false,
           envelopeId,
           error: error instanceof Error ? error.message : 'Failed to send reminder'
+        };
+      }
+    }
+  },
+  calculateMath: {
+    name: 'calculateMath',
+    description: 'Perform mathematical calculations, especially for contract values and financial computations. Supports basic arithmetic, percentages, and currency calculations.',
+    parameters: z.object({
+      expression: z.string().describe('The mathematical expression to evaluate'),
+      showSteps: z.boolean().optional().describe('Whether to show calculation steps'),
+      context: z.string().optional().describe('Additional context about the calculation')
+    }),
+    execute: async ({ expression, showSteps, context }: CalculateMathParams): Promise<CalculateMathResult> => {
+      console.log('Starting calculateMath execution:', { expression, showSteps, context });
+      try {
+        // Clean up the expression
+        const cleanExpression = expression
+          .replace(/\$|,/g, '') // Remove currency symbols and commas
+          .replace(/(\d+)%/g, '($1/100)'); // Convert percentages to decimals
+
+        // Evaluate the expression
+        const result = math.evaluate(cleanExpression);
+
+        // Generate steps if requested
+        const steps = showSteps ? [
+          context ? `Context: ${context}` : null,
+          `Original expression: ${expression}`,
+          `Cleaned expression: ${cleanExpression}`,
+          `Result: ${result}`
+        ].filter((step): step is string => step !== null) : undefined;
+
+        return {
+          expression,
+          result,
+          steps,
+          completed: true
+        };
+      } catch (error) {
+        console.error('Error in calculateMath:', error);
+        return {
+          expression,
+          error: error instanceof Error ? error.message : 'Failed to calculate expression',
+          completed: true
         };
       }
     }
