@@ -361,5 +361,40 @@ export const tools = {
         showBackButton: showBackButton ?? false
       };
     }
+  },
+  sendReminder: {
+    name: 'sendReminder',
+    description: 'Send a reminder for a DocuSign envelope',
+    parameters: z.object({
+      envelopeId: z.string().describe('The ID of the envelope to send reminder for'),
+      message: z.string().optional().describe('Optional custom reminder message')
+    }),
+    execute: async ({ envelopeId, message }: { envelopeId: string; message?: string }) => {
+      const supabase = createClientComponentClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      try {
+        // Send reminder using DocuSign client
+        const docusign = new DocuSignEnvelopes(supabase);
+        const result = await docusign.sendReminder(user.id, envelopeId, message);
+
+        return {
+          success: true,
+          envelopeId,
+          recipientCount: result.recipientCount || 1
+        };
+      } catch (error) {
+        console.error('Error sending reminder:', error);
+        return {
+          success: false,
+          envelopeId,
+          error: error instanceof Error ? error.message : 'Failed to send reminder'
+        };
+      }
+    }
   }
 }; 

@@ -14,6 +14,7 @@ import { EnvelopeSuccess } from '@/components/envelope-success';
 import { PriorityDashboard } from '@/components/priority-dashboard';
 import { SigningView } from '@/components/signing-view';
 import { useToast } from '@/hooks/use-toast';
+import { ReminderConfirmation } from '@/components/reminder-confirmation';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -280,6 +281,9 @@ export default function ChatPage() {
               }}
             />
           );
+
+        case 'sendReminder':
+          return <ReminderConfirmation {...result} />;
 
         default:
           return null;

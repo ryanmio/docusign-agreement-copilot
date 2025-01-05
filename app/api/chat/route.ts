@@ -69,6 +69,7 @@ export async function POST(req: Request) {
           When users ask about bulk operations, use displayBulkOperation
           When users want to see their envelopes, use displayEnvelopeList
           When users ask about priorities, use displayPriorityDashboard
+          When users want to send a reminder for a document, use sendReminder
 
           IMPORTANT: Never try to collect recipient information through chat messages. Always use the collectRecipients tool.
           
@@ -686,6 +687,42 @@ export async function POST(req: Request) {
               return {
                 error: error instanceof Error ? error.message : 'Failed to generate signing URL',
                 completed: true
+              };
+            }
+          }
+        }),
+        sendReminder: tool({
+          description: 'Send a reminder for a DocuSign envelope',
+          parameters: z.object({
+            envelopeId: z.string().describe('The ID of the envelope to send reminder for'),
+            message: z.string().optional().describe('Optional custom reminder message')
+          }),
+          execute: async ({ envelopeId, message }) => {
+            console.log('Starting sendReminder execution:', { envelopeId, message });
+            try {
+              const cookieStore = cookies();
+              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              if (sessionError || !session?.user) {
+                throw new Error('User not authenticated');
+              }
+
+              // Send reminder using DocuSign client
+              const docusign = new DocuSignEnvelopes(supabase);
+              const result = await docusign.sendReminder(session.user.id, envelopeId, message);
+
+              return {
+                success: true,
+                envelopeId,
+                recipientCount: result.recipientCount || 1
+              };
+            } catch (error) {
+              console.error('Error in sendReminder:', error);
+              return {
+                success: false,
+                envelopeId,
+                error: error instanceof Error ? error.message : 'Failed to send reminder'
               };
             }
           }

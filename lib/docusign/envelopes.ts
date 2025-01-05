@@ -871,4 +871,81 @@ export class DocuSignEnvelopes {
     console.log('Got signing URL:', data.url);
     return data.url;
   }
+
+  async sendReminder(userId: string, envelopeId: string, message?: string) {
+    console.log('Starting sendReminder:', { userId, envelopeId, message });
+    const client = await this.client.getClient(userId);
+    
+    // First check if there are any pending recipients
+    console.log('Fetching recipients...');
+    const recipientsResponse = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}/recipients`,
+      {
+        headers: client.headers
+      }
+    );
+
+    if (!recipientsResponse.ok) {
+      const error = await recipientsResponse.json();
+      console.error('Failed to get recipients:', error);
+      throw new Error(error.message || 'Failed to get recipients');
+    }
+
+    interface DocuSignRecipient {
+      recipientId: string;
+      email: string;
+      name: string;
+      status: string;
+    }
+
+    const recipientsData = await recipientsResponse.json();
+    console.log('Recipients data:', recipientsData);
+    
+    const pendingRecipients = recipientsData.signers?.filter((signer: DocuSignRecipient) => {
+      const isPending = signer.status !== 'completed' && signer.status !== 'declined';
+      console.log('Recipient status check:', { email: signer.email, status: signer.status, isPending });
+      return isPending;
+    }) || [];
+
+    console.log('Pending recipients:', pendingRecipients);
+
+    if (pendingRecipients.length === 0) {
+      console.log('No pending recipients found');
+      throw new Error('No pending recipients to remind');
+    }
+
+    // Resend to pending recipients using the correct endpoint
+    console.log('Resending to pending recipients...');
+    const response = await fetch(
+      `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes/${envelopeId}/recipients?resend_envelope=true`,
+      {
+        method: 'PUT',
+        headers: {
+          ...client.headers,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          signers: pendingRecipients.map((recipient: DocuSignRecipient) => ({
+            recipientId: recipient.recipientId,
+            email: recipient.email,
+            name: recipient.name
+          }))
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Resend error:', error);
+      throw new Error(error.message || 'Failed to send reminder');
+    }
+
+    const result = await response.json();
+    console.log('Resend result:', result);
+
+    return {
+      success: true,
+      recipientCount: pendingRecipients.length
+    };
+  }
 } 
