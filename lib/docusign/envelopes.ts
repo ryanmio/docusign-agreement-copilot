@@ -837,10 +837,13 @@ export class DocuSignEnvelopes {
       userName: userInfo.name,
       clientUserId,
       frameAncestors: [
-        process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+        process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+        'https://apps-d.docusign.com',
+        'https://demo.docusign.net',
+        'https://app-d.docusign.com'
       ],
       messageOrigins: [
-        process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+        'https://apps-d.docusign.com'
       ]
     };
 

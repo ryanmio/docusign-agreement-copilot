@@ -22,6 +22,16 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <script 
+          src="https://js-d.docusign.com/bundle.js" 
+          data-integration-key={process.env.NEXT_PUBLIC_DOCUSIGN_CLIENT_ID}
+          data-allow-silent-authentication="true"
+          data-require-script="true"
+          async
+          defer
+        />
+      </head>
       <body className={inter.className}>
         <div className="min-h-screen flex flex-col">
           <Header session={session} />
