@@ -67,8 +67,8 @@
 - [x] Implement "Display Envelope List" tool
 - [x] Implement "Display Priority Dashboard" tool
 - [x] Implement "Get Template Tabs" tool
+- [x] Implement "Send Reminder" tool
 - [ ] Implement pattern recognition tool
-- [ ] Implement "Send Reminder" tool
 - [ ] Implement in-chat/embedded signing tool
       > ⚠️ ON HOLD: Technical blockers with DocuSign SDK integration in Next.js. See [failure analysis report](agents/#12-failure-report.md) for details and next steps. Consider redirect flow as temporary alternative.
 - [ ] Implement math tool
