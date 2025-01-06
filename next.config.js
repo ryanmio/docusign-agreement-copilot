@@ -5,6 +5,9 @@ const nextConfig = {
     config.resolve.alias.encoding = false;
     return config;
   },
+  distDir: 'build',
+  output: 'standalone',
+  transpilePackages: ['docs'],
   async headers() {
     return [
       {
