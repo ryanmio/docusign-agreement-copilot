@@ -22,34 +22,45 @@ function ComponentSection({
   title,
   description,
   children,
+  props,
 }: {
   title: string;
   description: string;
   children: React.ReactNode;
+  props: { name: string; type: string; description: string; required?: boolean }[];
 }) {
   return (
-    <section className="space-y-4">
+    <section className="space-y-6">
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold text-[#130032]">{title}</h2>
-        <p className="text-gray-600">{description}</p>
+        <p className="text-[#130032]/70">{description}</p>
       </div>
-      <Card className="p-6 bg-white shadow-sm">
+      <Card className="p-6 bg-white shadow-sm border-[#CBC2FF]/20">
         {children}
       </Card>
+      <div className="overflow-hidden rounded-lg border border-[#CBC2FF]/20">
+        <table className="w-full bg-white text-sm">
+          <thead className="bg-[#F8F3F0]">
+            <tr>
+              <th className="px-4 py-3 text-left font-medium text-[#130032]">Prop</th>
+              <th className="px-4 py-3 text-left font-medium text-[#130032]">Type</th>
+              <th className="px-4 py-3 text-left font-medium text-[#130032]">Description</th>
+              <th className="px-4 py-3 text-left font-medium text-[#130032]">Required</th>
+            </tr>
+          </thead>
+          <tbody>
+            {props.map((prop, index) => (
+              <tr key={prop.name} className={index % 2 === 0 ? 'bg-white' : 'bg-[#F8F3F0]/50'}>
+                <td className="px-4 py-3 font-mono text-sm">{prop.name}</td>
+                <td className="px-4 py-3 font-mono text-sm text-[#4C00FF]">{prop.type}</td>
+                <td className="px-4 py-3">{prop.description}</td>
+                <td className="px-4 py-3">{prop.required ? 'Yes' : 'No'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
-  );
-}
-
-function PropsList({ items }: { items: string[] }) {
-  return (
-    <div className="text-sm space-y-2 mt-4 text-gray-600">
-      <p>Props:</p>
-      <ul className="list-disc list-inside">
-        {items.map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
-    </div>
   );
 }
 
@@ -59,125 +70,199 @@ export default function PreviewPage() {
       <ComponentSection
         title="Loading States"
         description="Used during API calls and tool processing"
+        props={[
+          {
+            name: 'label',
+            type: 'string',
+            description: 'Optional loading message',
+            required: false
+          }
+        ]}
       >
-        <div className="space-y-4">
-          <LoadingSpinner label="Processing..." />
-          <PropsList items={[
-            'label?: string - Optional loading message'
-          ]} />
-        </div>
+        <LoadingSpinner label="Processing..." />
       </ComponentSection>
 
       <ComponentSection
         title="Template Selector"
         description="Used to select DocuSign templates"
+        props={[
+          {
+            name: 'value',
+            type: 'string',
+            description: 'Selected template ID',
+            required: true
+          },
+          {
+            name: 'onChange',
+            type: '(value: string) => void',
+            description: 'Selection handler',
+            required: true
+          }
+        ]}
       >
-        <div className="space-y-4">
-          <TemplateSelector
-            value={mockTemplates[0].templateId}
-            onChange={(value) => console.log('Selected template:', value)}
-          />
-          <PropsList items={[
-            'value: string - Selected template ID',
-            'onChange: (value: string) => void - Selection handler'
-          ]} />
-        </div>
+        <TemplateSelector
+          value={mockTemplates[0].templateId}
+          onChange={(value) => console.log('Selected template:', value)}
+        />
       </ComponentSection>
 
       <ComponentSection
         title="Priority Dashboard"
         description="Shows urgent items needing attention"
+        props={[
+          {
+            name: 'sections',
+            type: 'PrioritySection[]',
+            description: 'Dashboard sections with envelopes',
+            required: true
+          },
+          {
+            name: 'onAction',
+            type: '(envelopeId: string, action: string) => Promise<void>',
+            description: 'Action handler',
+            required: true
+          }
+        ]}
       >
-        <div className="space-y-4">
-          <PriorityDashboard
-            sections={mockPriorityDashboard.sections}
-            toolCallId="preview"
-            onAction={async (envelopeId, action) => {
-              console.log('Action:', action, 'on envelope:', envelopeId);
-            }}
-          />
-          <PropsList items={[
-            'sections: PrioritySection[] - Dashboard sections with envelopes',
-            'onAction: (envelopeId: string, action: string) => Promise<void> - Action handler'
-          ]} />
-        </div>
+        <PriorityDashboard
+          sections={mockPriorityDashboard.sections}
+          toolCallId="preview"
+          onAction={async (envelopeId, action) => {
+            console.log('Action:', action, 'on envelope:', envelopeId);
+          }}
+        />
       </ComponentSection>
 
       <ComponentSection
         title="Template Preview"
         description="Displays template details and roles"
+        props={[
+          {
+            name: 'templateId',
+            type: 'string',
+            description: 'Template identifier',
+            required: true
+          },
+          {
+            name: 'templateName',
+            type: 'string',
+            description: 'Template name',
+            required: true
+          },
+          {
+            name: 'description',
+            type: 'string',
+            description: 'Template description',
+            required: true
+          },
+          {
+            name: 'roles',
+            type: 'Array<{ roleName: string, roleId: string }>',
+            description: 'Template roles',
+            required: true
+          }
+        ]}
       >
-        <div className="space-y-4">
-          <TemplatePreview {...mockTemplatePreview} />
-          <PropsList items={[
-            'templateId: string - Template identifier',
-            'templateName: string - Template name',
-            'description: string - Template description',
-            'roles: Array<{ roleName: string, roleId: string }> - Template roles'
-          ]} />
-        </div>
+        <TemplatePreview {...mockTemplatePreview} />
       </ComponentSection>
 
       <ComponentSection
         title="Recipient Form"
         description="Collects recipient information"
+        props={[
+          {
+            name: 'roles',
+            type: 'Array<{ roleName: string }>',
+            description: 'Required roles',
+            required: true
+          },
+          {
+            name: 'onSubmit',
+            type: '(recipients: RecipientData[]) => Promise<void>',
+            description: 'Submit handler',
+            required: true
+          },
+          {
+            name: 'onBack',
+            type: '() => void',
+            description: 'Optional back handler',
+            required: false
+          }
+        ]}
       >
-        <div className="space-y-4">
-          <RecipientForm
-            roles={mockRecipientRoles}
-            toolCallId="preview"
-            onSubmit={async (recipients) => {
-              console.log('Recipients:', recipients);
-            }}
-            onBack={() => console.log('Back clicked')}
-          />
-          <PropsList items={[
-            'roles: Array<{ roleName: string }> - Required roles',
-            'onSubmit: (recipients: RecipientData[]) => Promise<void> - Submit handler',
-            'onBack?: () => void - Optional back handler'
-          ]} />
-        </div>
+        <RecipientForm
+          roles={mockRecipientRoles}
+          toolCallId="preview"
+          onSubmit={async (recipients) => {
+            console.log('Recipients:', recipients);
+          }}
+          onBack={() => console.log('Back clicked')}
+        />
       </ComponentSection>
 
       <ComponentSection
         title="PDF Viewer"
         description="Displays PDF documents"
+        props={[
+          {
+            name: 'url',
+            type: 'string',
+            description: 'PDF document URL',
+            required: true
+          }
+        ]}
       >
-        <div className="space-y-4">
-          <div className="w-full h-[800px] border border-gray-200 rounded-lg">
-            <PDFViewer url={mockPdfUrl} />
-          </div>
-          <PropsList items={[
-            'url: string - PDF document URL'
-          ]} />
+        <div className="w-full h-[800px] border border-gray-200 rounded-lg">
+          <PDFViewer url={mockPdfUrl} />
         </div>
       </ComponentSection>
 
       <ComponentSection
         title="Math Result"
         description="Displays calculation results with steps"
+        props={[
+          {
+            name: 'expression',
+            type: 'string',
+            description: 'Math expression',
+            required: true
+          },
+          {
+            name: 'result',
+            type: 'number | string',
+            description: 'Calculation result',
+            required: true
+          },
+          {
+            name: 'steps',
+            type: 'string[]',
+            description: 'Optional calculation steps',
+            required: false
+          },
+          {
+            name: 'error',
+            type: 'string',
+            description: 'Optional error message',
+            required: false
+          }
+        ]}
       >
-        <div className="space-y-4">
-          <MathResult {...mockMathResult} />
-          <PropsList items={[
-            'expression: string - Math expression',
-            'result: number | string - Calculation result',
-            'steps?: string[] - Optional calculation steps',
-            'error?: string - Optional error message'
-          ]} />
-        </div>
+        <MathResult {...mockMathResult} />
       </ComponentSection>
 
       <ComponentSection
         title="Bulk Operations List"
         description="Displays list of bulk operations"
+        props={[
+          {
+            name: '-',
+            type: '-',
+            description: 'No props required - Fetches data internally',
+            required: false
+          }
+        ]}
       >
-        <div className="space-y-4">
-          <BulkOperationsList />
-          <PropsList items={[
-            'No props required - Fetches data internally'
-          ]} />
-        </div>
+        <BulkOperationsList />
       </ComponentSection>
     </div>
   );
