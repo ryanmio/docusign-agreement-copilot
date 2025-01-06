@@ -68,12 +68,14 @@
 - [x] Implement "Display Priority Dashboard" tool
 - [x] Implement "Get Template Tabs" tool
 - [x] Implement "Send Reminder" tool
+- [x] Implement math tool
 - [ ] Implement pattern recognition tool
+      > ⚠️ ON HOLD: Waiting for DocuSign dev support to grant us access to sync with eSignature.
 - [ ] Implement in-chat/embedded signing tool
       > ⚠️ ON HOLD: Technical blockers with DocuSign SDK integration in Next.js. See [failure analysis report](agents/#12-failure-report.md) for details and next steps. Consider redirect flow as temporary alternative.
-- [ ] Implement math tool
 
 ## Phase 3.5: Navigator Integration 🧭
+   > ⚠️ ON HOLD: Waiting for DocuSign dev support to grant us access to sync with eSignature.
 - [ ] Core Setup
   - [ ] Set up Navigator API authentication
   - [ ] Implement NavigatorClient class
