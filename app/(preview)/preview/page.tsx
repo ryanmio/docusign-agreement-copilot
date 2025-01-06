@@ -144,7 +144,7 @@ export default function PreviewPage() {
         description="Displays PDF documents"
       >
         <div className="space-y-4">
-          <div className="h-[400px]">
+          <div className="w-full h-[800px] border border-gray-200 rounded-lg">
             <PDFViewer url={mockPdfUrl} />
           </div>
           <PropsList items={[
