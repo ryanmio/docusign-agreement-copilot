@@ -99,4 +99,4 @@ export const mockBulkOperations = [
   }
 ];
 
-export const mockPdfUrl = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'; 
+export const mockPdfUrl = '/VENDOR-RENEWAL-AcmeCorp-2023-01-15.pdf'; 
