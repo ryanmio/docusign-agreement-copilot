@@ -4,19 +4,17 @@ export default function PreviewLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#F8F3F0]">
-      <div className="container mx-auto py-8">
-        <div className="flex flex-col space-y-8">
-          <div className="flex-1 space-y-4">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight text-[#130032]">Components</h1>
-              <p className="text-[#130032]/70">
-                Preview of all Agreement Copilot agent tools. The model can render each tool independently or in sequence to create complex workflows.
-              </p>
-            </div>
-            <div className="bg-white p-8 rounded-lg">
-              {children}
-            </div>
+    <div className="min-h-screen bg-white">
+      <div className="ds-container py-12">
+        <div className="space-y-12">
+          <div className="space-y-4">
+            <h1>Components</h1>
+            <p className="max-w-3xl">
+              Preview of all Agreement Copilot agent tools. The model can render each tool independently or in sequence to create complex workflows.
+            </p>
+          </div>
+          <div className="ds-card">
+            {children}
           </div>
         </div>
       </div>
