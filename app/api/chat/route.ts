@@ -82,7 +82,7 @@ export async function POST(req: Request) {
           When users want to view a PDF, use displayPdfViewer
           When users ask about bulk operations, use displayBulkOperation
           When users want to see their envelopes, use displayEnvelopeList
-          When users ask about priorities, use displayPriorityDashboard
+          When users ask about priorities, use displayPriorityDashboard (which will list the priorities – do not write them out in the chat!)
           When users want to send a reminder for a document, use sendReminder
 
           IMPORTANT: Never try to collect recipient information through chat messages. Always use the collectRecipients tool.
