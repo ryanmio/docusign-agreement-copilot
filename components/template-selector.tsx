@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { TemplateResponse } from '@/types/envelopes';
 import { useToolTransition } from '@/hooks/use-tool-transition';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface TemplateSelectorProps {
   value: string | undefined;
@@ -89,7 +90,9 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
       </div>
 
       {loading ? (
-        <div className="p-4 text-center">Loading templates...</div>
+        <div className="p-4 flex justify-center">
+          <LoadingSpinner label="Loading templates..." />
+        </div>
       ) : templates.length === 0 ? (
         <div className="space-y-4">
           <div className="p-4 text-center text-gray-500">

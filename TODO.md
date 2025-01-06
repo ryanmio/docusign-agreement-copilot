@@ -111,6 +111,7 @@
   - [ ] Optimize performance
   - [ ] Conduct user testing
   - [ ] Fix bugs and issues
+  - [ ] Check to make sure docusign doesny have cap S ever
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README
