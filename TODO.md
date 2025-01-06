@@ -101,6 +101,7 @@
   - [ ] Build AI insight display
 
 ## Phase 4: Polish & Submission (Week 4) ✨
+- [ ] Optimize conversation starters for productivity
 - [ ] Make the design more beautiful
   - [ ] Improve Chat UI
     - [x] Auto-Scroll to bottom
