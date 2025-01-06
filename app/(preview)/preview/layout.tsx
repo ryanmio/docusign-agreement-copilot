@@ -11,7 +11,7 @@ export default function PreviewLayout({
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tight text-[#130032]">Components</h1>
               <p className="text-[#130032]/70">
-                Preview of all available DocuSign Agreement Copilot components.
+                Preview of all Agreement Copilot agent tools. The model can render each tool independently or in sequence to create complex workflows.
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg">
