@@ -18,6 +18,7 @@ import { ReminderConfirmation } from '@/components/reminder-confirmation';
 import { MathResult } from '@/components/math-result';
 import { ConversationStarters } from '@/components/conversation-starters';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -83,9 +84,13 @@ export default function ChatPage() {
       );
     }
 
-    // Minimal loading state
+    // Loading state
     if (state === 'partial-call') {
-      return <div className="p-4 text-gray-500">Loading...</div>;
+      return (
+        <div className="p-4 flex justify-center">
+          <LoadingSpinner label="Processing..." />
+        </div>
+      );
     }
 
     // Handle completed tools
@@ -346,12 +351,8 @@ export default function ChatPage() {
           ))}
 
           {isLoading && (
-            <div className="p-4 rounded-lg bg-gray-100">
-              <div className="flex items-center space-x-2">
-                <div className="animate-pulse">●</div>
-                <div className="animate-pulse">●</div>
-                <div className="animate-pulse">●</div>
-              </div>
+            <div className="p-4 flex justify-center">
+              <LoadingSpinner label="Thinking..." />
             </div>
           )}
 
