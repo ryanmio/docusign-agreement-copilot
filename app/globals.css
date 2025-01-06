@@ -5,15 +5,20 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 263 100% 10%;
+  }
 
-    /* DocuSign Colors */
-    --ds-cobalt: 252 100% 50%;
-    --ds-inkwell: 261 100% 10%;
-    --ds-mist: 249 100% 88%;
-    --ds-ecru: 24 40% 96%;
-    --ds-deep-violet: 261 88% 19%;
-    --ds-poppy: 0 100% 66%;
+  /* DocuSign Typography */
+  h1 {
+    @apply text-[2.75rem] leading-[1.25] font-light tracking-[-0.02em] text-[#130032];
+  }
+  
+  h2 {
+    @apply text-[1.75rem] leading-[1.25] font-light tracking-[-0.01em] text-[#130032];
+  }
+
+  p {
+    @apply text-[1rem] leading-[1.5] text-[#130032]/80;
   }
 }
 
@@ -37,17 +42,55 @@
   padding: 0;
 }
 
-/* Simple DocuSign Components */
+/* DocuSign Components */
 @layer components {
   .ds-button {
-    @apply h-10 rounded-md px-6 font-medium;
+    @apply inline-flex items-center justify-center;
+    @apply h-10 min-h-[40px] min-w-[80px];
+    @apply px-[15px] py-1;
+    @apply rounded-[2px];
+    @apply font-['DS_Indigo',DSIndigo,Helvetica,Arial,sans-serif];
+    @apply text-base font-medium leading-6;
+    @apply border border-transparent;
+    @apply transition-all duration-100;
+    @apply antialiased;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .ds-button-primary {
+    @apply ds-button;
+    @apply bg-[#5000F7] text-white;
+    @apply hover:bg-[#4000E7];
+  }
+  
+  .ds-button-secondary {
+    @apply ds-button;
+    @apply bg-white text-[#5000F7];
+    @apply border-[#5000F7] border-[1px];
+    @apply hover:bg-[#5000F7]/5;
   }
   
   .ds-input {
-    @apply h-10 rounded-md border px-3 py-2;
+    @apply h-[44px] px-4;
+    @apply rounded-[2px];
+    @apply border border-[#130032]/20;
+    @apply text-base text-[#130032];
+    @apply font-['DS_Indigo',DSIndigo,Helvetica,Arial,sans-serif];
+    @apply placeholder:text-[#130032]/40;
+    @apply focus:outline-none focus:border-[#5000F7] focus:ring-1 focus:ring-[#5000F7];
   }
 
   .ds-card {
-    @apply bg-white rounded-lg shadow-sm border border-[#CBC2FF]/20;
+    @apply bg-white rounded-[2px];
+    @apply border border-[#130032]/10;
+    @apply p-8;
+  }
+
+  .ds-container {
+    @apply max-w-[1200px] mx-auto px-8;
+  }
+
+  .ds-section {
+    @apply py-12 space-y-8;
   }
 }
