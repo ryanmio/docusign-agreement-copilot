@@ -66,7 +66,7 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
           Error: {error}
         </div>
         {/* Debug information */}
-        <div className="p-4 bg-gray-50 rounded-md">
+        <div className="p-4 bg-[#F8F3F0] rounded-md">
           <h3 className="font-medium mb-2">Debug Information:</h3>
           <pre className="text-xs overflow-auto">
             {JSON.stringify(debugInfo, null, 2)}
@@ -84,7 +84,7 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
           placeholder="Search templates..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-4 py-2 border rounded-md"
+          className="ds-input flex-1 border-gray-300"
         />
       </div>
 
@@ -96,7 +96,7 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
             No templates found
           </div>
           {/* Debug information */}
-          <div className="p-4 bg-gray-50 rounded-md">
+          <div className="p-4 bg-[#F8F3F0] rounded-md">
             <h3 className="font-medium mb-2">Debug Information:</h3>
             <pre className="text-xs overflow-auto">
               {JSON.stringify(debugInfo, null, 2)}
@@ -109,15 +109,17 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
             <button
               key={template.templateId}
               onClick={() => handleTemplateClick(template.templateId)}
-              className={`p-4 border rounded-lg text-left transition-colors ${
+              className={`p-4 rounded-lg text-left transition-colors ${
                 value === template.templateId 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'hover:bg-muted'
+                  ? 'bg-[#4C00FF] text-white' 
+                  : 'border border-gray-200 hover:border-[#4C00FF] hover:shadow-sm'
               }`}
             >
               <div className="font-medium">{template.name}</div>
               {template.description && (
-                <div className="text-sm text-gray-500">{template.description}</div>
+                <div className={`text-sm ${value === template.templateId ? 'text-white/90' : 'text-gray-500'}`}>
+                  {template.description}
+                </div>
               )}
             </button>
           ))}
