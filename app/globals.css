@@ -5,28 +5,7 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 263 100% 10%; /* DocuSign inkwell */
-    
-    --primary: 255 100% 50%; /* DocuSign cobalt */
-    --primary-foreground: 0 0% 100%;
-    
-    --secondary: 252 100% 89%; /* DocuSign mist */
-    --secondary-foreground: 263 100% 10%;
-    
-    --muted: 24 47% 95%; /* DocuSign ecru */
-    --muted-foreground: 263 88% 20%;
-    
-    --accent: 0 100% 65%; /* DocuSign poppy */
-    --accent-foreground: 0 0% 100%;
-    
-    --destructive: 0 100% 65%; /* DocuSign poppy */
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 263 100% 10%;
-    --input: 263 100% 10%;
-    --ring: 255 100% 50%;
-
-    --radius: 0.5rem;
+    --foreground: 222.2 84% 4.9%;
   }
 }
 
@@ -50,29 +29,13 @@
   padding: 0;
 }
 
-/* DocuSign Typography Classes */
+/* Simple DocuSign Components */
 @layer components {
-  .ds-heading {
-    @apply text-ds-heading font-light tracking-[-0.02em] text-docusign-inkwell;
-  }
-  
-  .ds-subheading {
-    @apply text-ds-subheading font-normal tracking-[-0.01em] text-docusign-inkwell;
-  }
-  
-  .ds-body {
-    @apply text-ds-body font-medium leading-relaxed text-docusign-inkwell;
-  }
-  
   .ds-button {
-    @apply h-10 rounded-md px-6 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-docusign-cobalt;
+    @apply h-10 rounded-md px-6 font-medium;
   }
   
   .ds-input {
-    @apply h-10 rounded-md border border-docusign-inkwell/20 px-3 py-2 text-ds-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-docusign-cobalt;
-  }
-  
-  .ds-card {
-    @apply rounded-lg bg-white p-6 shadow-[0_2px_4px_rgba(19,0,50,0.1)];
+    @apply h-10 rounded-md border px-3 py-2;
   }
 }

@@ -363,11 +363,11 @@ export default function ChatPage() {
             value={input}
             onChange={handleInputChange}
             placeholder="Ask about your documents..."
-            className="flex-1 p-4 border rounded-lg"
+            className="ds-input flex-1 border-gray-300"
           />
           <button 
             type="submit" 
-            className="px-8 py-4 bg-blue-500 text-white rounded-lg"
+            className="ds-button bg-[#4C00FF] hover:bg-[#4C00FF]/90 text-white"
             disabled={isLoading}
           >
             Send
