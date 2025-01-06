@@ -55,7 +55,7 @@ export function PriorityDashboard({ sections, onAction }: PriorityDashboardProps
                     <h3 className="font-medium text-sm truncate">
                       {envelope.subject}
                     </h3>
-                    <span className={`text-xs px-2 py-0.5 rounded ${
+                    <span className={`text-xs px-2 py-0.5 rounded-[2px] ${
                       envelope.status === 'sent' ? 'bg-blue-50 text-blue-700' :
                       envelope.status === 'voided' ? 'bg-gray-100 text-gray-700' :
                       envelope.status === 'declined' ? 'bg-red-50 text-red-700' :
@@ -71,29 +71,26 @@ export function PriorityDashboard({ sections, onAction }: PriorityDashboardProps
 
                 <div className="flex items-center gap-2 ml-4">
                   {envelope.status === 'sent' && (
-                    <Button
-                      size="sm"
-                      className="bg-[#6B4CF6] hover:bg-[#5A3FD6] text-white"
+                    <button
+                      className="ds-button-primary"
                       onClick={() => onAction(envelope.envelopeId, 'sign')}
                     >
                       Sign
-                    </Button>
+                    </button>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
+                    className="ds-button-secondary"
                     onClick={() => onAction(envelope.envelopeId, 'view')}
                   >
                     View
-                  </Button>
+                  </button>
                   {envelope.status !== 'declined' && envelope.status !== 'voided' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <button
+                      className="ds-button-secondary"
                       onClick={() => onAction(envelope.envelopeId, 'remind')}
                     >
                       Remind
-                    </Button>
+                    </button>
                   )}
                 </div>
               </div>
