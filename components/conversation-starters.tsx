@@ -8,24 +8,24 @@ interface ConversationStartersProps {
 export function ConversationStarters({ onSelect }: ConversationStartersProps) {
   const suggestedActions = [
     {
+      title: "Check agreements",
+      label: "needing attention",
+      action: "Which agreements need my attention today?"
+    },
+    {
+      title: "Check renewals",
+      label: "expiring soon",
+      action: "Show me agreements that need renewal soon"
+    },
+    {
       title: "Send an NDA",
       label: "to a new client",
-      action: "I need to send our standard NDA to a new client"
+      action: "I need to send our standard NDA template to a new client"
     },
     {
-      title: "Check status",
-      label: "of pending documents",
-      action: "What documents are pending my signature?"
-    },
-    {
-      title: "Send reminder",
+      title: "Send reminders",
       label: "for unsigned documents",
-      action: "Send a reminder for unsigned documents"
-    },
-    {
-      title: "View priorities",
-      label: "for today",
-      action: "What are my urgent priorities today?"
+      action: "I want to view documents waiting for signature and send reminders for each one"
     }
   ];
 
