@@ -1,6 +1,5 @@
 # Agreement Copilot Implementation Plan
 
-
 ## Phase 1: Foundation (Week 1) 🏗️
 - [x] Supabase Setup
   - [x] Create new Supabase project at database.new
@@ -68,7 +67,8 @@
 - [x] Implement "Display Priority Dashboard" tool
 - [x] Implement "Get Template Tabs" tool
 - [x] Implement "Send Reminder" tool
-- [x] Implement math tool
+- [/] Implement math tool
+  > ⚠️ BUG: The math tool currently does not render the math result component. Needs fixing.
 - [ ] Implement pattern recognition tool
       > ⚠️ ON HOLD: Waiting for DocuSign dev support to grant us access to sync with eSignature.
 - [ ] Implement in-chat/embedded signing tool
