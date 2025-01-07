@@ -385,7 +385,7 @@ export default function ChatPage() {
           <input
             value={input}
             onChange={handleInputChange}
-            placeholder="Ask about your documents..."
+            placeholder="What would you like to get done today?"
             className="ds-input flex-1 border-gray-300"
           />
           <button 
