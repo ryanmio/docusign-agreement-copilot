@@ -66,7 +66,7 @@ function ComponentSection({
 
 export default function PreviewPage() {
   return (
-    <div className="divide-y divide-[#CBC2FF]/30">
+    <div className="divide-y divide-[#CBC2FF]/30 px-8">
       <div className="py-12">
         <ComponentSection
           title="Loading States"
@@ -80,7 +80,10 @@ export default function PreviewPage() {
             }
           ]}
         >
-          <LoadingSpinner label="Processing..." />
+          <div className="flex justify-center gap-24">
+            <LoadingSpinner label="Processing..." />
+            <LoadingSpinner label="Thinking..." />
+          </div>
         </ComponentSection>
       </div>
 
