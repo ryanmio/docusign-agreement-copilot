@@ -33,15 +33,19 @@ export async function POST(req: Request) {
           3. Only provide next steps or ask for specific actions
           4. Never repeat information that a tool has displayed
 
-          When users need calculations:
-          1. Use the calculateMath tool for:
-             - Contract value calculations
-             - Percentage calculations (e.g., "5% of $150,000")
-             - Financial computations
-             - Multiple step calculations
-          2. Always show calculation steps for complex operations
-          3. Format results as currency when dealing with money
-          4. Handle percentages and currency symbols automatically
+          When users ask any mathematical questions or need calculations:
+          1. Call calculateMath tool with EXACTLY these parameters:
+             - expression: preserve original format with currency symbols (e.g., "$150,000 * 0.05" not "150000 * 0.05")
+             - showSteps: true (ALWAYS set this to true)
+             - context: description of the calculation (ALWAYS include for currency calculations)
+          2. DO NOT send any chat messages with the result. Let the tool's UI handle displaying the result
+          3. Examples:
+             - Input: "(34*10 + 5) / 2"
+               Call: calculateMath({ expression: "(34*10 + 5) / 2", showSteps: true })
+             - Input: "Calculate 5% of $150,000"
+               Call: calculateMath({ expression: "$150,000 * 0.05", showSteps: true, context: "Calculating 5% of $150,000" })
+             - Input: "What's 8% tax on $200"
+               Call: calculateMath({ expression: "$200 * 0.08", showSteps: true, context: "Calculating 8% tax on $200" })
           
           For sending templates, follow this EXACT flow:
           1. When user wants to send a template:
@@ -103,9 +107,10 @@ export async function POST(req: Request) {
             console.log('Starting calculateMath execution:', { expression, showSteps, context });
             try {
               // Clean up the expression
-              const cleanExpression = expression
+              let cleanExpression = expression
                 .replace(/\$|,/g, '') // Remove currency symbols and commas
-                .replace(/(\d+)%/g, '($1/100)'); // Convert percentages to decimals
+                .replace(/(\d+)%/g, '($1/100)') // Convert percentages to decimals
+                .replace(/(\d+)\s+(\d+)/g, '$1 * $2'); // Add multiplication operator for implicit multiplication
               
               console.log('Cleaned expression:', cleanExpression);
 
@@ -123,20 +128,24 @@ export async function POST(req: Request) {
 
               console.log('Generated steps:', steps);
 
-              const response = {
-                expression,
-                result,
-                steps,
-                completed: true
+              return {
+                state: 'result',
+                result: {
+                  expression,
+                  result,
+                  steps,
+                  completed: true
+                }
               };
-              console.log('Returning response:', response);
-              return response;
             } catch (error) {
               console.error('Error in calculateMath:', error);
               return {
-                expression,
-                error: error instanceof Error ? error.message : 'Failed to calculate expression',
-                completed: true
+                state: 'error',
+                result: {
+                  expression,
+                  error: error instanceof Error ? error.message : 'Failed to calculate expression',
+                  completed: true
+                }
               };
             }
           }
