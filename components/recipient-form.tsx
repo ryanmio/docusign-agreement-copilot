@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Mail, User } from 'lucide-react';
 import { useFormInstance } from '../hooks/use-form-instance';
 import { FormState, RecipientData } from '../types/form';
 
@@ -21,7 +17,6 @@ export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: Recipient
     return <div className="p-4 text-gray-500">Loading...</div>;
   }
 
-  // Use instance state directly
   const { state } = instance;
   const { recipients } = state.data;
 
@@ -41,7 +36,6 @@ export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: Recipient
   };
 
   const handleSubmit = async () => {
-    // Use memoized validation
     const validatedRecipients = validateForm(recipients);
     const hasErrors = validatedRecipients.some(r => r.error.email || r.error.name);
     
@@ -83,60 +77,60 @@ export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: Recipient
   };
 
   return (
-    <div className="space-y-4 p-4">
-      <h2 className="text-lg font-semibold">Add Recipients</h2>
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-[1.75rem] font-light text-[#130032] leading-[1.25] tracking-[-0.01em]">Add Recipients</h2>
+        <p className="text-[#130032]/70 mt-1">Enter the name and email for each recipient</p>
+      </div>
       
-      {recipients.map((recipient, index) => (
-        <div key={index} className="space-y-2">
-          <h3 className="font-medium">{recipient.roleName}</h3>
-          
-          <div className="space-y-1">
-            <input
-              type="text"
-              placeholder="Name"
-              value={recipient.name}
-              onChange={(e) => updateRecipient(index, 'name', e.target.value)}
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {recipient.error?.name && (
-              <div className="text-sm text-red-500">{recipient.error.name}</div>
-            )}
-          </div>
+      <div className="space-y-6">
+        {recipients.map((recipient, index) => (
+          <div key={index} className="space-y-3">
+            <h3 className="text-base font-medium text-[#130032]">{recipient.roleName}</h3>
+            
+            <div className="space-y-3">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Name"
+                  value={recipient.name}
+                  onChange={(e) => updateRecipient(index, 'name', e.target.value)}
+                  className="ds-input w-full"
+                />
+                {recipient.error?.name && (
+                  <div className="text-sm text-red-500 mt-1">{recipient.error.name}</div>
+                )}
+              </div>
 
-          <div className="space-y-1">
-            <input
-              type="email"
-              placeholder="Email"
-              value={recipient.email}
-              onChange={(e) => updateRecipient(index, 'email', e.target.value)}
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {recipient.error?.email && (
-              <div className="text-sm text-red-500">{recipient.error.email}</div>
-            )}
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={recipient.email}
+                  onChange={(e) => updateRecipient(index, 'email', e.target.value)}
+                  className="ds-input w-full"
+                />
+                {recipient.error?.email && (
+                  <div className="text-sm text-red-500 mt-1">{recipient.error.email}</div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
-      <div className="flex justify-between pt-4">
-        <button
-          onClick={onBack}
-          className="px-4 py-2 text-gray-600 hover:text-gray-800"
-        >
-          Back
-        </button>
-        
+      <div className="flex justify-end">
         <button
           onClick={handleSubmit}
           disabled={state.status === 'submitting'}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          className="ds-button-primary min-w-[120px]"
         >
           {state.status === 'submitting' ? 'Sending...' : 'Continue'}
         </button>
       </div>
 
       {state.error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-[2px] mt-4">
           <div className="text-sm text-red-600">{state.error}</div>
         </div>
       )}
