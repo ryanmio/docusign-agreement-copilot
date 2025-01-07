@@ -67,6 +67,7 @@
 - [x] Implement "Display Priority Dashboard" tool
 - [x] Implement "Get Template Tabs" tool
 - [x] Implement "Send Reminder" tool
+- [ ] Implement prepopulated search ability for template search tool
 - [/] Implement math tool
   > ⚠️ BUG: The math tool currently does not render the math result component. Needs fixing.
 - [ ] Implement pattern recognition tool
