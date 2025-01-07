@@ -68,6 +68,7 @@
 - [x] Implement "Get Template Tabs" tool
 - [x] Implement "Send Reminder" tool
 - [x] Implement math tool
+- [ ] Explore feasibility of "settings" tool including docusign integration connections and disconnections
 - [ ] Implement prepopulated search ability for template search tool
 - [ ] Implement pattern recognition tool
       > ⚠️ ON HOLD: Waiting for DocuSign dev support to grant us access to sync with eSignature.
@@ -102,10 +103,12 @@
 
 ## Phase 4: Polish & Submission (Week 4) ✨
 - [ ] Optimize conversation starters for productivity
+- [ ] Make the chat page the default view and home page once logged in
 - [ ] Make the design more beautiful
   - [ ] Improve Chat UI
     - [x] Auto-Scroll to bottom
   - [ ] Style like Docusign
+- Restyle header
 - [ ] Testing & Optimization
   - [ ] Perform security audit
   - [ ] Optimize performance
