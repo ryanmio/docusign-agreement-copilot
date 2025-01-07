@@ -8,14 +8,15 @@ interface MathResultProps {
   steps?: string[];
   error?: string;
   className?: string;
+  isCurrency?: boolean;
 }
 
-export function MathResult({ expression, result, steps, error, className }: MathResultProps) {
-  // Format numbers with commas and handle currency
+export function MathResult({ expression, result, steps, error, className, isCurrency = false }: MathResultProps) {
+  // Format numbers with commas and optionally as currency
   const formatNumber = (num: number | string) => {
     if (typeof num === 'string') return num;
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
+      style: isCurrency ? 'currency' : 'decimal',
       currency: 'USD',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -31,12 +32,15 @@ export function MathResult({ expression, result, steps, error, className }: Math
     );
   }
 
+  // Filter out the result step since it will be shown separately
+  const filteredSteps = steps?.filter(step => !step.startsWith('Result:'));
+
   return (
     <Card className={cn("p-4", className)}>
       <div className="space-y-2">
-        {steps && steps.length > 0 && (
+        {filteredSteps && filteredSteps.length > 0 && (
           <div className="space-y-1">
-            {steps.map((step, index) => (
+            {filteredSteps.map((step, index) => (
               <p key={index} className="text-sm text-gray-600">
                 {step}
               </p>

@@ -295,12 +295,34 @@ export default function ChatPage() {
           return <ReminderConfirmation {...result} />;
 
         case 'calculateMath':
+          console.log('Math tool response:', JSON.stringify({ toolInvocation, state, result }, null, 2));
+          // Access the nested result structure
+          const mathResult = result?.result;
+          if (!mathResult) {
+            console.error('Invalid math result:', JSON.stringify(result, null, 2));
+            return <div className="p-4 text-red-500">Error: Invalid calculation result</div>;
+          }
+          // Check multiple sources for currency indicators
+          const isCurrency = 
+            // Check original expression in args
+            toolInvocation.args.expression.includes('$') ||
+            // Check context for currency mentions
+            toolInvocation.args?.context?.toLowerCase().includes('$') ||
+            toolInvocation.args?.context?.toLowerCase().includes('currency') ||
+            toolInvocation.args?.context?.toLowerCase().includes('cost') ||
+            toolInvocation.args?.context?.toLowerCase().includes('price') ||
+            toolInvocation.args?.context?.toLowerCase().includes('tax') ||
+            // Check if context mentions dollar amounts
+            /\$\s*\d+/.test(toolInvocation.args?.context || '') ||
+            // Check steps for currency mentions
+            mathResult.steps?.some((step: string) => step.includes('$'));
           return (
             <MathResult
-              expression={result.expression}
-              result={result.result}
-              steps={result.steps}
-              error={result.error}
+              expression={mathResult.expression}
+              result={mathResult.result}
+              steps={mathResult.steps}
+              error={mathResult.error}
+              isCurrency={isCurrency}
               className="mt-2"
             />
           );
