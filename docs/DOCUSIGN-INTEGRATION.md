@@ -1,7 +1,7 @@
-# DocuSign Integration Documentation
+# Docusign Integration Documentation
 
 ## Overview
-Agreement Copilot integrates with DocuSign to provide document signing capabilities with real-time status updates. This integration uses OAuth 2.0 for authentication and webhooks for real-time event processing.
+Agreement Copilot integrates with Docusign to provide document signing capabilities with real-time status updates. This integration uses OAuth 2.0 for authentication and webhooks for real-time event processing.
 
 ## Authentication Flow
 1. **OAuth 2.0 Implementation**
@@ -12,7 +12,7 @@ Agreement Copilot integrates with DocuSign to provide document signing capabilit
 
 2. **Connection Process**
    ```
-   User -> Settings Page -> Connect DocuSign -> OAuth Flow -> Return to App
+   User -> Settings Page -> Connect Docusign -> OAuth Flow -> Return to App
    ```
 
 ## Core Features

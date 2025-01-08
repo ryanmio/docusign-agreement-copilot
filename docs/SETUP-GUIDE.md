@@ -1,15 +1,15 @@
 # Setup Guide
 
 ## Prerequisites
-1. DocuSign Developer Account
+1. Docusign Developer Account
 2. Supabase Project
 3. Node.js and npm/yarn
 4. Environment variables configured
 
-## DocuSign Configuration
+## Docusign Configuration
 
-### 1. Create DocuSign App
-1. Go to DocuSign Developer Center
+### 1. Create Docusign App
+1. Go to Docusign Developer Center
 2. Create a new Integration
 3. Select "Authorization Code Grant"
 4. Add redirect URI: `{BASE_URL}/api/auth/docusign/callback`
@@ -18,7 +18,7 @@
    - Secret Key
 
 ### 2. Enable Connect (Webhooks)
-1. Go to DocuSign Admin
+1. Go to Docusign Admin
 2. Navigate to Connect
 3. Create new configuration
 4. Set webhook URL: `{BASE_URL}/api/webhooks/docusign`
@@ -32,7 +32,7 @@
 
 ### 1. Required Variables
 ```env
-# DocuSign Configuration
+# Docusign Configuration
 DOCUSIGN_CLIENT_ID=your_integration_key
 DOCUSIGN_CLIENT_SECRET=your_secret_key
 DOCUSIGN_AUTH_SERVER=account-d.docusign.com
@@ -83,7 +83,7 @@ yarn dev
 
 ### 1. Verify OAuth Flow
 1. Visit `/settings`
-2. Click "Connect DocuSign"
+2. Click "Connect Docusign"
 3. Complete OAuth flow
 4. Verify token storage in `api_credentials` table
 
@@ -114,7 +114,7 @@ yarn dev
    - Check Connect configuration
    - Monitor webhook_events table
 
-3. **Database Errors**
+3. **Database Errows**
    - Verify RLS policies
    - Check enum type definitions
    - Validate foreign key relationships
@@ -131,4 +131,4 @@ yarn dev
 - [ ] Webhook endpoint secured
 - [ ] Error logging configured
 - [ ] Token refresh working
-  </rewritten_file> 
+  </rewritten_file>

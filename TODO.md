@@ -23,8 +23,8 @@
   - [x] Create necessary database migrations
   - [x] Set up row level security policies
 
-- [x] DocuSign Authentication
-  - [x] Implement DocuSign OAuth flow
+- [x] Docusign Authentication
+  - [x] Implement Docusign OAuth flow
   - [x] Set up secure token storage
   - [x] Create user session management
   - [x] Test authentication edge cases
@@ -36,7 +36,7 @@
   - [x] Set up monitoring
 
 ## Phase 2: Core Features (Week 2) 🚀
-- [x] DocuSign Integration
+- [x] Docusign Integration
   - [x] Implement envelope management
   - [x] Set up document retrieval system
   - [x] Configure webhook listeners
@@ -68,15 +68,15 @@
 - [x] Implement "Get Template Tabs" tool
 - [x] Implement "Send Reminder" tool
 - [x] Implement math tool
-- [ ] Explore feasibility of "settings" tool including docusign integration connections and disconnections
+- [ ] Explore feasibility of "settings" tool including Docusign integration connections and disconnections
 - [ ] Implement prepopulated search ability for template search tool
 - [ ] Implement pattern recognition tool
-      > ⚠️ ON HOLD: Waiting for DocuSign dev support to grant us access to sync with eSignature.
+      > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync with eSignature.
 - [ ] Implement in-chat/embedded signing tool
-      > ⚠️ ON HOLD: Technical blockers with DocuSign SDK integration in Next.js. See [failure analysis report](agents/#12-failure-report.md) for details and next steps. Consider redirect flow as temporary alternative.
+      > ⚠️ ON HOLD: Technical blockers with Docusign SDK integration in Next.js. See [failure analysis report](agents/#12-failure-report.md) for details and next steps. Consider redirect flow as temporary alternative.
 
 ## Phase 3.5: Navigator Integration 🧭
-   > ⚠️ ON HOLD: Waiting for DocuSign dev support to grant us access to sync with eSignature.
+   > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync with eSignature.
 - [ ] Core Setup
   - [ ] Set up Navigator API authentication
   - [ ] Implement NavigatorClient class
@@ -114,7 +114,7 @@
   - [ ] Optimize performance
   - [ ] Conduct user testing
   - [ ] Fix bugs and issues
-  - [ ] Check to make sure docusign doesny have cap S ever
+  - [ ] Check to make sure docusign doesnt have cap S ever
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README

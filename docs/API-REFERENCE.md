@@ -2,19 +2,19 @@
 
 ## Authentication Endpoints
 
-### Connect DocuSign
+### Connect Docusign
 ```http
 POST /api/auth/docusign
 ```
-Initiates DocuSign OAuth flow.
+Initiates Docusign OAuth flow.
 
-**Response**: Redirects to DocuSign login
+**Response**: Redirects to Docusign login
 
 ### OAuth Callback
 ```http
 GET /api/auth/docusign/callback
 ```
-Handles OAuth callback from DocuSign.
+Handles OAuth callback from Docusign.
 
 **Query Parameters**:
 - `code`: Authorization code
@@ -22,11 +22,11 @@ Handles OAuth callback from DocuSign.
 
 **Response**: Redirects to settings page with success/error message
 
-### Disconnect DocuSign
+### Disconnect Docusign
 ```http
 POST /api/auth/docusign/disconnect
 ```
-Removes DocuSign integration.
+Removes Docusign integration.
 
 **Response**:
 ```json
@@ -35,11 +35,11 @@ Removes DocuSign integration.
 }
 ```
 
-### Check Connection Status
+### Check Connection
 ```http
 GET /api/auth/docusign/status
 ```
-Checks DocuSign connection status.
+Checks Docusign connection status.
 
 **Response**:
 ```json
@@ -144,13 +144,13 @@ GET /api/envelopes/:id/documents/:documentId
 
 ## Webhook Endpoints
 
-### DocuSign Webhook
+### Docusign Webhook
 ```http
 POST /api/webhooks/docusign
 ```
-Handles DocuSign Connect webhook events.
+Handles Docusign Connect webhook events.
 
-**Request Body**: DocuSign Connect XML/JSON payload
+**Request Body**: Docusign Connect XML/JSON payload
 
 **Response**:
 ```json

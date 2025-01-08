@@ -19,7 +19,7 @@ const config = {
     },
     extend: {
       colors: {
-        // DocuSign Brand Colors
+        // Docusign Brand Colors
         docusign: {
           cobalt: '#4C00FF', // Primary Brand Color
           inkwell: '#130032', // Dark Theme
@@ -28,30 +28,30 @@ const config = {
           poppy: '#FF5252', // Accent Color
           ecru: '#F8F3F0', // Neutral
         },
-        // Preserve existing color tokens but map some to DocuSign colors
+        // Preserve existing color tokens but map some to Docusign colors
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
-        ring: '#4C00FF', // Using DocuSign cobalt
+        ring: '#4C00FF', // Using Docusign cobalt
         background: 'hsl(var(--background))',
-        foreground: '#130032', // Using DocuSign inkwell
+        foreground: '#130032', // Using Docusign inkwell
         primary: {
-          DEFAULT: '#4C00FF', // DocuSign cobalt
+          DEFAULT: '#4C00FF', // Docusign cobalt
           foreground: '#FFFFFF'
         },
         secondary: {
-          DEFAULT: '#CBC2FF', // DocuSign mist
-          foreground: '#130032' // DocuSign inkwell
+          DEFAULT: '#CBC2FF', // Docusign mist
+          foreground: '#130032' // Docusign inkwell
         },
         destructive: {
-          DEFAULT: '#FF5252', // DocuSign poppy
+          DEFAULT: '#FF5252', // Docusign poppy
           foreground: '#FFFFFF'
         },
         muted: {
-          DEFAULT: '#F8F3F0', // DocuSign ecru
-          foreground: '#26065D' // DocuSign violet
+          DEFAULT: '#F8F3F0', // Docusign ecru
+          foreground: '#26065D' // Docusign violet
         },
         accent: {
-          DEFAULT: '#FF5252', // DocuSign poppy
+          DEFAULT: '#FF5252', // Docusign poppy
           foreground: '#FFFFFF'
         },
         popover: {
@@ -63,17 +63,17 @@ const config = {
           foreground: 'hsl(var(--card-foreground))'
         },
         chart: {
-          '1': '#4C00FF', // DocuSign cobalt
-          '2': '#CBC2FF', // DocuSign mist
-          '3': '#26065D', // DocuSign violet
-          '4': '#FF5252', // DocuSign poppy
-          '5': '#F8F3F0'  // DocuSign ecru
+          '1': '#4C00FF', // Docusign cobalt
+          '2': '#CBC2FF', // Docusign mist
+          '3': '#26065D', // Docusign violet
+          '4': '#FF5252', // Docusign poppy
+          '5': '#F8F3F0'  // Docusign ecru
         }
       },
       borderRadius: {
-        lg: '8px', // DocuSign card radius
-        md: '4px', // DocuSign button/input radius
-        sm: '3px'  // DocuSign icon radius
+        lg: '8px', // Docusign card radius
+        md: '4px', // Docusign button/input radius
+        sm: '3px'  // Docusign icon radius
       },
       spacing: {
         'ds-1': '4px',   // Base spacing unit
