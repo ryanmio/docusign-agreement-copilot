@@ -21,7 +21,7 @@ export function ReminderConfirmationPreview() {
               <div>
                 <h3 className="font-medium">Reminder Sent Successfully</h3>
                 <p className="text-sm text-gray-600">
-                  {currentState.recipientCount 
+                  {'recipientCount' in currentState 
                     ? `Reminder sent to ${currentState.recipientCount} recipient${currentState.recipientCount > 1 ? 's' : ''}`
                     : 'Reminder sent successfully'}
                 </p>
@@ -32,7 +32,7 @@ export function ReminderConfirmationPreview() {
               <AlertCircle className="h-5 w-5 text-red-500" />
               <div>
                 <h3 className="font-medium">Failed to Send Reminder</h3>
-                <p className="text-sm text-red-600">{currentState.error || 'An error occurred while sending the reminder'}</p>
+                <p className="text-sm text-red-600">{'error' in currentState ? currentState.error : 'An error occurred while sending the reminder'}</p>
               </div>
             </>
           )}
