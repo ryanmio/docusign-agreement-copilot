@@ -188,8 +188,8 @@ export const mockBulkOperationView = {
   operation: {
     id: 'bulk-123',
     name: 'Q1 Contract Renewals',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
     user_id: 'user-123',
     total_count: 50,
     processed_count: 30,
@@ -205,31 +205,31 @@ export const mockBulkOperationView = {
       status: 'sent',
       docusign_envelope_id: 'env-789',
       bulk_operation_id: 'bulk-123',
-      error_message: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      error_message: undefined,
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z'
     },
     {
       id: 'rec-2',
       name: 'Bob Wilson',
       email: 'bob@acme.com',
       status: 'error',
-      docusign_envelope_id: null,
+      docusign_envelope_id: undefined,
       bulk_operation_id: 'bulk-123',
       error_message: 'Invalid email address',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z'
     },
     {
       id: 'rec-3',
       name: 'Carol Smith',
       email: 'carol@acme.com',
       status: 'pending',
-      docusign_envelope_id: null,
+      docusign_envelope_id: undefined,
       bulk_operation_id: 'bulk-123',
-      error_message: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      error_message: undefined,
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z'
     }
   ]
 }; 

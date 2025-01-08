@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { mockBulkOperationView } from '@/lib/preview-data';
 import type { BulkOperation, BulkRecipient } from '@/types/bulk-operations';
+import { Button } from '@/components/ui/button';
 
 interface BulkOperationViewPreviewProps {
   operationId?: string; // Optional in preview
@@ -119,6 +120,17 @@ export function BulkOperationViewPreview({ operationId = 'bulk-123' }: BulkOpera
             </tbody>
           </table>
         </div>
+      </div>
+      <div className="flex justify-end mt-6">
+        <Button
+          variant="outline"
+          onClick={() => {
+            setOperation(mockBulkOperationView.operation);
+            setRecipients(mockBulkOperationView.recipients);
+          }}
+        >
+          Restart Demo
+        </Button>
       </div>
     </div>
   );
