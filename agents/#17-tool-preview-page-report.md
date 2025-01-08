@@ -11,6 +11,7 @@ Successfully implemented a component preview page for the DocuSign Agreement Cop
   - `app/(preview)/preview/page.tsx`: Main preview page (client component)
   - `app/(preview)/preview/layout.tsx`: Layout wrapper (server component)
   - `lib/preview-data.ts`: Mock data for component examples
+  - `components/preview/docusign-connect.tsx`: Preview-specific component implementations
 
 ### Features
 1. **Layout**
@@ -35,6 +36,7 @@ Successfully implemented a component preview page for the DocuSign Agreement Cop
    - PDF Viewer
    - Math Result
    - Bulk Operations List
+   - DocuSign Connect (with preview-specific implementation)
 
 ### UI/UX Improvements
 - Added proper spacing between loading state examples
@@ -42,6 +44,17 @@ Successfully implemented a component preview page for the DocuSign Agreement Cop
 - Implemented consistent padding and spacing throughout
 - Used DocuSign's brand colors for visual consistency
 - Added horizontal dividers for clear section separation
+
+### Preview-Specific Implementations
+To ensure components work correctly in the preview context without requiring backend services, we created preview-specific versions of certain components:
+
+1. **DocuSign Connect Component**
+   - Created a separate preview version that simulates authentication flow
+   - Uses local state management instead of API calls
+   - Maintains identical UI and behavior to the production component
+   - Simulates connection/disconnection with realistic delays
+   - Shows success/error alerts to demonstrate all possible states
+   - Mock data stored in `preview-data.ts` for consistent state management
 
 ### Brand Consistency
 - Used DocuSign's color palette:
@@ -56,4 +69,6 @@ Successfully implemented a component preview page for the DocuSign Agreement Cop
 2. Include interactive examples with state management
 3. Add copy-to-clipboard functionality for code snippets
 4. Consider adding a search/filter functionality for components
-5. Add responsive design considerations for mobile views 
+5. Add responsive design considerations for mobile views
+6. Create preview-specific versions of other components that require backend services
+7. Add error state demonstrations for components 
