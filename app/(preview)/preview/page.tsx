@@ -19,6 +19,7 @@ import {
 } from '@/lib/preview-data';
 import DocuSignConnectPreview from '@/components/preview/docusign-connect';
 import { EnvelopeSuccessPreview } from '@/components/preview/envelope-success';
+import { ReminderConfirmationPreview } from '@/components/preview/reminder-confirmation';
 
 function ComponentSection({
   title,
@@ -302,6 +303,41 @@ export default function PreviewPage() {
           <div className="max-w-2xl">
             <DocuSignConnectPreview />
           </div>
+        </ComponentSection>
+      </div>
+
+      <div className="py-12">
+        <ComponentSection
+          title="Reminder Confirmation"
+          description="Shows success or error state after sending a reminder"
+          props={[
+            {
+              name: 'success',
+              type: 'boolean',
+              description: 'Whether the reminder was sent successfully',
+              required: true
+            },
+            {
+              name: 'envelopeId',
+              type: 'string',
+              description: 'ID of the envelope the reminder was sent for',
+              required: true
+            },
+            {
+              name: 'error',
+              type: 'string',
+              description: 'Error message if the reminder failed',
+              required: false
+            },
+            {
+              name: 'recipientCount',
+              type: 'number',
+              description: 'Number of recipients the reminder was sent to',
+              required: false
+            }
+          ]}
+        >
+          <ReminderConfirmationPreview />
         </ComponentSection>
       </div>
 

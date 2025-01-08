@@ -169,4 +169,17 @@ export const mockEnvelopeStates = {
       }
     ]
   }
+};
+
+export const mockReminderStates = {
+  success: {
+    success: true,
+    envelopeId: 'env-123',
+    recipientCount: 2
+  },
+  error: {
+    success: false,
+    envelopeId: 'env-123',
+    error: 'Failed to send reminder: Recipients not found'
+  }
 }; 
