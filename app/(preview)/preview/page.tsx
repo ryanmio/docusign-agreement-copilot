@@ -20,6 +20,7 @@ import {
 import DocuSignConnectPreview from '@/components/preview/docusign-connect';
 import { EnvelopeSuccessPreview } from '@/components/preview/envelope-success';
 import { ReminderConfirmationPreview } from '@/components/preview/reminder-confirmation';
+import { BulkOperationViewPreview } from '@/components/preview/bulk-operation-view';
 
 function ComponentSection({
   title,
@@ -338,6 +339,29 @@ export default function PreviewPage() {
           ]}
         >
           <ReminderConfirmationPreview />
+        </ComponentSection>
+      </div>
+
+      <div className="py-12">
+        <ComponentSection
+          title="Bulk Operation View"
+          description="Shows progress and recipient status for bulk operations"
+          props={[
+            {
+              name: 'operationId',
+              type: 'string',
+              description: 'ID of the bulk operation to display',
+              required: true
+            },
+            {
+              name: 'showBackButton',
+              type: 'boolean',
+              description: 'Whether to show the back button',
+              required: false
+            }
+          ]}
+        >
+          <BulkOperationViewPreview />
         </ComponentSection>
       </div>
 

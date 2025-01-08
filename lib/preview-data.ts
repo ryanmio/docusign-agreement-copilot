@@ -182,4 +182,54 @@ export const mockReminderStates = {
     envelopeId: 'env-123',
     error: 'Failed to send reminder: Recipients not found'
   }
+};
+
+export const mockBulkOperationView = {
+  operation: {
+    id: 'bulk-123',
+    name: 'Q1 Contract Renewals',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    user_id: 'user-123',
+    total_count: 50,
+    processed_count: 30,
+    success_count: 25,
+    error_count: 5,
+    status: 'processing' as const
+  },
+  recipients: [
+    {
+      id: 'rec-1',
+      name: 'Alice Johnson',
+      email: 'alice@acme.com',
+      status: 'sent',
+      docusign_envelope_id: 'env-789',
+      bulk_operation_id: 'bulk-123',
+      error_message: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'rec-2',
+      name: 'Bob Wilson',
+      email: 'bob@acme.com',
+      status: 'error',
+      docusign_envelope_id: null,
+      bulk_operation_id: 'bulk-123',
+      error_message: 'Invalid email address',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'rec-3',
+      name: 'Carol Smith',
+      email: 'carol@acme.com',
+      status: 'pending',
+      docusign_envelope_id: null,
+      bulk_operation_id: 'bulk-123',
+      error_message: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ]
 }; 

@@ -8,7 +8,7 @@ export default function PreviewLayout({
       <div className="ds-container py-12">
         <div className="space-y-12">
           <div className="space-y-4">
-            <h1>Components</h1>
+            <h1>Tools / Components</h1>
             <p className="max-w-3xl">
               Preview of all Agreement Copilot agent tools. The model can render each tool independently or in sequence to create complex workflows.
             </p>
