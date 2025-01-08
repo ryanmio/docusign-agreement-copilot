@@ -17,6 +17,7 @@ import {
   mockMathResult,
   mockPdfUrl
 } from '@/lib/preview-data';
+import DocuSignConnectPreview from '@/components/preview/docusign-connect';
 
 function ComponentSection({
   title,
@@ -264,6 +265,25 @@ export default function PreviewPage() {
           ]}
         >
           <MathResult {...mockMathResult} />
+        </ComponentSection>
+      </div>
+
+      <div className="py-12">
+        <ComponentSection
+          title="DocuSign Connect"
+          description="Connect and disconnect your DocuSign account"
+          props={[
+            {
+              name: '-',
+              type: '-',
+              description: 'No props required - Handles authentication internally',
+              required: false
+            }
+          ]}
+        >
+          <div className="max-w-2xl">
+            <DocuSignConnectPreview />
+          </div>
         </ComponentSection>
       </div>
 

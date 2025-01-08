@@ -99,4 +99,11 @@ export const mockBulkOperations = [
   }
 ];
 
-export const mockPdfUrl = '/VENDOR-RENEWAL-AcmeCorp-2023-01-15.pdf'; 
+export const mockPdfUrl = '/VENDOR-RENEWAL-AcmeCorp-2023-01-15.pdf';
+
+export const mockDocuSignState = {
+  isConnected: false,
+  isProcessing: false,
+  error: null,
+  success: null
+}; 
