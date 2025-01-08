@@ -106,4 +106,67 @@ export const mockDocuSignState = {
   isProcessing: false,
   error: null,
   success: null
+};
+
+export const mockEnvelopeStates = {
+  initial: {
+    id: 'env-123',
+    docusign_envelope_id: 'ds-456',
+    status: 'sent',
+    subject: 'Sales Agreement - ACME Corp',
+    recipients: [
+      {
+        id: 'rec-1',
+        name: 'John Doe',
+        email: 'john@acme.com',
+        status: 'sent'
+      },
+      {
+        id: 'rec-2',
+        name: 'Jane Smith',
+        email: 'jane@acme.com',
+        status: 'pending'
+      }
+    ]
+  },
+  inProgress: {
+    id: 'env-123',
+    docusign_envelope_id: 'ds-456',
+    status: 'delivered',
+    subject: 'Sales Agreement - ACME Corp',
+    recipients: [
+      {
+        id: 'rec-1',
+        name: 'John Doe',
+        email: 'john@acme.com',
+        status: 'completed'
+      },
+      {
+        id: 'rec-2',
+        name: 'Jane Smith',
+        email: 'jane@acme.com',
+        status: 'delivered'
+      }
+    ]
+  },
+  completed: {
+    id: 'env-123',
+    docusign_envelope_id: 'ds-456',
+    status: 'completed',
+    subject: 'Sales Agreement - ACME Corp',
+    recipients: [
+      {
+        id: 'rec-1',
+        name: 'John Doe',
+        email: 'john@acme.com',
+        status: 'completed'
+      },
+      {
+        id: 'rec-2',
+        name: 'Jane Smith',
+        email: 'jane@acme.com',
+        status: 'completed'
+      }
+    ]
+  }
 }; 

@@ -18,6 +18,7 @@ import {
   mockPdfUrl
 } from '@/lib/preview-data';
 import DocuSignConnectPreview from '@/components/preview/docusign-connect';
+import { EnvelopeSuccessPreview } from '@/components/preview/envelope-success';
 
 function ComponentSection({
   title,
@@ -265,6 +266,23 @@ export default function PreviewPage() {
           ]}
         >
           <MathResult {...mockMathResult} />
+        </ComponentSection>
+      </div>
+
+      <div className="py-12">
+        <ComponentSection
+          title="Envelope Success"
+          description="Shows envelope status and recipient progress after sending"
+          props={[
+            {
+              name: 'envelopeId',
+              type: 'string',
+              description: 'DocuSign envelope identifier',
+              required: true
+            }
+          ]}
+        >
+          <EnvelopeSuccessPreview />
         </ComponentSection>
       </div>
 
