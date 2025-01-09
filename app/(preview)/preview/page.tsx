@@ -15,12 +15,16 @@ import {
   mockRecipientRoles,
   mockTemplatePreview,
   mockMathResult,
-  mockPdfUrl
+  mockPdfUrl,
+  mockContractMarkdown
 } from '@/lib/preview-data';
 import DocuSignConnectPreview from '@/components/preview/docusign-connect';
 import { EnvelopeSuccessPreview } from '@/components/preview/envelope-success';
 import { ReminderConfirmationPreview } from '@/components/preview/reminder-confirmation';
 import { BulkOperationViewPreview } from '@/components/preview/bulk-operation-view';
+import { ContractPreview } from '@/components/contract-preview';
+import { MarkdownEditor } from '@/components/markdown-editor';
+import { useState } from 'react';
 
 function ComponentSection({
   title,
@@ -69,6 +73,8 @@ function ComponentSection({
 }
 
 export default function PreviewPage() {
+  const [editorMode, setEditorMode] = useState<'preview' | 'edit'>('preview');
+
   return (
     <div className="divide-y divide-[#CBC2FF]/30 px-8">
       <div className="py-12">
@@ -379,6 +385,62 @@ export default function PreviewPage() {
           ]}
         >
           <BulkOperationsList />
+        </ComponentSection>
+      </div>
+
+      <div className="py-12">
+        <ComponentSection
+          title="Markdown Editor"
+          description="Preview and edit markdown with signature anchors"
+          props={[
+            {
+              name: 'markdown',
+              type: 'string',
+              description: 'Text in markdown format',
+              required: true
+            },
+            {
+              name: 'mode',
+              type: "'preview' | 'edit'",
+              description: 'Current display mode',
+              required: true
+            },
+            {
+              name: 'onEdit',
+              type: '(toolCallId: string) => void',
+              description: 'Called when edit button is clicked',
+              required: false
+            },
+            {
+              name: 'onConfirm',
+              type: '(toolCallId: string, markdown: string) => void',
+              description: 'Called when content is confirmed',
+              required: false
+            },
+            {
+              name: 'onBack',
+              type: '(toolCallId: string) => void',
+              description: 'Called when back button is clicked',
+              required: false
+            }
+          ]}
+        >
+          <MarkdownEditor
+            markdown={mockContractMarkdown}
+            mode={editorMode}
+            onEdit={(toolCallId) => {
+              console.log('Edit clicked', toolCallId);
+              setEditorMode('edit');
+            }}
+            onConfirm={(toolCallId, markdown) => {
+              console.log('Confirm clicked', toolCallId, markdown);
+              setEditorMode('preview');
+            }}
+            onBack={(toolCallId) => {
+              console.log('Back clicked', toolCallId);
+              setEditorMode('preview');
+            }}
+          />
         </ComponentSection>
       </div>
     </div>

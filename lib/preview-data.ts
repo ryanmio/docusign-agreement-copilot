@@ -232,4 +232,37 @@ export const mockBulkOperationView = {
       updated_at: '2024-01-01T00:00:00Z'
     }
   ]
-}; 
+};
+
+export const mockContractMarkdown = `# Service Agreement
+
+## 1. Parties
+
+This Service Agreement (the "Agreement") is entered into between:
+
+- **Client**: Acme Corporation, a Delaware corporation with offices at 123 Business Ave, San Francisco, CA 94105
+- **Service Provider**: TechPro Solutions LLC, a California limited liability company with offices at 456 Innovation Drive, San Jose, CA 95110
+
+## 2. Services
+
+The Service Provider agrees to provide the following services:
+1. Custom software development and implementation
+2. Technical support and maintenance
+3. User training and documentation
+
+## 3. Term and Compensation
+
+This Agreement shall commence on the date of execution and continue for a period of 12 months.
+The Client agrees to pay $10,000 per month for the services described herein.
+
+## Signatures
+
+IN WITNESS WHEREOF, the parties have executed this Agreement:
+
+CLIENT:                              PROVIDER:
+<<SIGNER1_HERE>>                    <<SIGNER2_HERE>>
+____________________                ____________________
+Name:                               Name:
+Title:                              Title:
+Date: <<DATE_HERE>>                 Date: <<DATE_HERE>>
+`; 
