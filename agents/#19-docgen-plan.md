@@ -1,106 +1,168 @@
 # AI-Powered Custom Contract Generation with Anchor Tags
 
 ## Overview
-This document describes a plan for integrating an AI-driven contract generation flow using anchor tags for DocuSign signing fields—no pre-created DocuSign template required. The AI will create custom contract text (from user requests), and we’ll embed anchor placeholders (e.g., "<<SIGN_HERE>>") in the text. Then we convert that text into a .docx or PDF, attach it to a DocuSign envelope, and rely on anchor-based field placement for signatures.
+This document describes a plan for integrating an AI-driven contract generation flow using anchor tags for DocuSign signing fields. The AI will create custom contract text in markdown format, which we'll convert to PDF with embedded anchor placeholders (e.g., "<<SIGN_HERE>>"). The PDF will be attached to a DocuSign envelope with anchor-based field placement for signatures.
 
----
+## System Prompt Addition
+Add this section to the existing system message in route.ts:
 
-## Objectives & Motivations
-1. **Flexibility**: Allow fully custom contracts generated on the fly, rather than relying on a pre-stored template.  
-2. **Reliability**: Use anchor tags to eliminate reliance on manual coordinates or complex “docGenFormField” logic in DocuSign.  
-3. **User Control**: Provide a preview and editing step before sending.  
-4. **Hackathon Readiness**: Implement quickly, demonstrate AI capabilities, and minimize friction.
+```typescript
+When users ask to generate a custom contract:
 
----
+1. Generate the contract in markdown format with these anchor tags:
+   • "<<SIGN_HERE>>" - Primary signature field
+   • "<<DATE_HERE>>" - Date field
+   • For multiple signers: "<<SIGNER1_HERE>>", "<<SIGNER2_HERE>>"
 
-## High-Level Architecture
+2. Use this markdown structure:
+   ```markdown
+   # [Contract Title]
+   ## 1. [First Section]
+   [Content...]
+
+   ## Signatures
+   IN WITNESS WHEREOF:
+
+   PARTY A:                    PARTY B:
+   <<SIGNER1_HERE>>           <<SIGNER2_HERE>>
+   ___________________        ___________________
+   Date: <<DATE_HERE>>        Date: <<DATE_HERE>>
+   ```
+
+3. IMPORTANT RULES:
+   - Include at least one signature anchor per signer
+   - Keep anchor tags on their own lines
+   - Use proper markdown headings (# for title, ## for sections)
+   - Place signature block at the bottom
+
+4. After user confirms the contract:
+   - Use collectRecipients to gather signer information
+   - Then use sendCustomEnvelope to create and send the document
+
+Never try to handle document conversion or styling - the app will manage that.
+```
+
+## Implementation Flow
 
 1. **AI Draft Generation**  
-   - The user requests, “Generate a custom contract for [XYZ].”  
-   - The AI (via our existing chat infrastructure) composes contract language, including anchor tags like "<<SIGN_HERE>>" for each signer.  
-   - The final text returns to the client for preview.
+   - User requests contract generation via chat
+   - AI generates markdown-formatted contract with anchor tags
+   - Returns markdown text for preview
 
 2. **Preview & Editing**  
-   - The user sees the draft in a text editor or viewer.  
-   - They can revise or add new anchor tags if they want additional fields.  
-   - A minimal styling approach (e.g., a simple header with a logo) can be included at this stage.
+   - Display markdown-rendered preview
+   - Allow text editing if needed
+   - Show anchor tags in a visually distinct way
 
-3. **Document Conversion**  
-   - Once the user approves, the system sends the contract text (still containing anchor placeholders) to a file-generation library.  
-   - The resulting output (.docx or PDF) is returned, ready to send.
+3. **Document Processing**  
+   - Convert markdown to PDF using a library like react-markdown-to-pdf
+   - Maintain anchor tag text in the conversion
+   - Convert PDF to base64 for DocuSign API
 
-4. **Envelope Creation & Tab Mapping**  
-   - Create a new DocuSign envelope. Attach the newly generated .docx/PDF.  
-   - In the request, specify "anchorString": "<<SIGN_HERE>>" (or "<<SIGNER1_HERE>>" if multiple signers) for each relevant role. This ensures signature tabs appear where specified.
+4. **Envelope Creation**  
+   ```typescript
+   const envelopeDefinition = {
+     emailSubject: subject,
+     documents: [{
+       documentBase64: base64Doc,
+       name: 'Contract.pdf',
+       fileExtension: 'pdf',
+       documentId: '1'
+     }],
+     recipients: {
+       signers: recipients.map((recipient, i) => ({
+         email: recipient.email,
+         name: recipient.name,
+         recipientId: (i + 1).toString(),
+         tabs: {
+           signHereTabs: [{
+             anchorString: `<<SIGNER${i + 1}_HERE>>`,
+             anchorUnits: "pixels",
+             anchorXOffset: "0",
+             anchorYOffset: "0"
+           }],
+           dateSignedTabs: [{
+             anchorString: "<<DATE_HERE>>",
+             anchorUnits: "pixels",
+             anchorXOffset: "0",
+             anchorYOffset: "0"
+           }]
+         }
+       }))
+     },
+     status: "sent"
+   };
+   ```
 
-5. **Signing & Completion**  
-   - The envelope is sent to signers as usual.  
-   - DocuSign replaces each anchor with a signature field, so signers can sign in the correct spots.  
-   - The signed document is stored or returned to the user as a final PDF.
+5. **New Tool: sendCustomEnvelope**
+   ```typescript
+   interface SendCustomEnvelopeParams {
+     markdown: string;          // Contract text in markdown
+     recipients: Array<{       // From collectRecipients
+       email: string;
+       name: string;
+       role: string;
+     }>;
+     subject: string;          // Email subject
+     message?: string;         // Optional email message
+   }
+   ```
 
----
+## Technical Components Needed
 
-## Detailed Steps
+1. **Markdown to PDF Conversion**
+   - Install and configure react-markdown-to-pdf or similar
+   - Ensure anchor tags are preserved during conversion
+   - Handle basic styling (fonts, spacing)
 
-### 1. Generating Contract Text with Anchors
+2. **Preview Component**
+   - Markdown renderer for preview
+   - Edit capability
+   - Visual distinction for anchor tags
 
-1. **Add an AI prompt** in the existing chat flow to instruct the model to include anchor tag placeholders:
-   - "Create a contract with a place for a signature. Use ‘<<SIGN_HERE>>’ for the signature anchor."
-2. **Post-process** the AI’s response to ensure at least one anchor is present. If missing, we can add it automatically or prompt the user to place a signature anchor.
-
-### 2. User Preview & Editing
-
-1. **Display** the generated text in a text area or preview panel.  
-2. **Allow** simple modifications:
-   - If the user wants multiple signers or additional placeholders (like "Date" anchors), they can add “<<DATE_FIELD>>” or “<<SIGNER2_HERE>>.”  
-   - Potentially track which anchor belongs to which role, if there are multiple recipients.
-
-### 3. Conversion to .docx or PDF
-
-1. **Use a library** (like docx, pdfkit, or similar) to convert the final text into a formatted document.  
-2. **Add small branding** (like a header image or color theme) so the output is visually appealing:
-   - Insert a logo if feasible, ensuring the content remains mostly AI-driven.  
-3. **Return** the file in memory or store temporarily on the server.
-
-### 4. Envelope Creation & Anchor Tabs
-
-1. **Collect** recipient details as needed (usually through a recipient form or your “collectRecipients” tool).  
-2. **Construct** the Envelope create request with the following:
-   - Document attachments: the newly generated .docx/PDF as base64.  
-   - For each anchor (like "<<SIGN_HERE>>"):
-     - "anchorString": "<<SIGN_HERE>>"
-     - "documentId": [the ID referencing the doc we attached]
-     - "recipientId": [the signer's ID]
-     - "tabType": "signHere" (or "initialHere", "dateSigned", etc.)
-3. **Send** this envelope to DocuSign using your existing “send” mechanism.
-
-### 5. Final User Experience
-
-1. **Real-Time Chat**: The user converses with the AI about desired contract details.  
-2. **Auto-Generated Draft**: AI returns the draft with placeholders.  
-3. **Preview & Adjust**: The user fine-tunes text or anchor placement.  
-4. **Click “Send for Signature”**: The system merges the text into a doc, sets up anchor fields, and calls DocuSign.  
-5. **Signers** get their usual signing flow; anchors become signature fields.
-
----
+3. **sendCustomEnvelope Tool**
+   - Handle markdown → PDF conversion
+   - Create envelope with anchor tabs
+   - Send via DocuSign API
 
 ## Edge Cases & Mitigation
 
-1. **Missing Anchors**: We must confirm at least one anchor is in the final text for signers.  
-2. **Multiple Signers**: If we have two or more signers, we need separate anchor tags (e.g., “<<SIGNER1_HERE>>,” “<<SIGNER2_HERE>>”).  
-3. **Visibility of Anchor Text**: If we don’t remove or hide them, “<<SIGN_HERE>>” is visible in the final PDF. We might enable "anchorRemoveIfMatched" or use invisible styling.  
-4. **AI-Incorrect Clauses**: The user can fix any questionable text in the editor. This is more a content concern than a technical one.
+1. **Anchor Tag Preservation**
+   - Validate anchor tags exist in PDF after conversion
+   - Ensure proper spacing around anchors
 
----
+2. **PDF Formatting**
+   - Set consistent fonts and spacing
+   - Ensure anchor tags are clearly visible for testing
+   - Consider adding basic header/footer
 
-## Future Enhancements
+3. **Multiple Signers**
+   - Match recipient roles to correct SIGNER[N] anchors
+   - Validate all required anchors present
 
-1. **Conditional Clauses**: If we eventually want advanced logic (e.g., disclaimers for signers in certain states), we could integrate partial Document Generation or custom logic to hide paragraphs.  
-2. **Dynamic Data Fields**: If we want fillable text fields for signers, we could add anchor tags for text fields (“<<TEXT_FIELD>>”) or switch to more advanced tab definitions.  
-3. **Cloud Storage**: Store the final doc after user preview, so it’s available for reference or re-sending.
+## Success Metrics
 
----
+1. Contract Generation
+   - AI consistently produces well-formatted markdown
+   - Anchor tags correctly placed
+   - Preview renders accurately
 
-## Conclusion
+2. Document Processing
+   - Clean PDF conversion
+   - Anchor tags preserved
+   - Professional appearance
 
-By leveraging AI to generate contract text and anchor placeholders, then converting it to a doc or PDF for a new envelope, we achieve a fully custom, from-scratch contract workflow. This approach avoids complex template configuration, remains flexible for user edits, and yields a powerful demonstration of AI + DocuSign integration suitable for hackathon success. 
+3. Signing Experience
+   - Signature fields appear at correct anchors
+   - Multiple signers properly handled
+   - Date fields correctly placed
+
+## Next Steps
+
+1. Implement markdown to PDF conversion
+2. Create sendCustomEnvelope tool
+3. Add preview component
+4. Test with multiple signer scenarios
+5. Add error handling and validation
+
+This approach provides a streamlined way to generate custom contracts while maintaining professional formatting and reliable signature field placement. 
