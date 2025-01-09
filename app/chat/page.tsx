@@ -19,6 +19,7 @@ import { MathResult } from '@/components/math-result';
 import { ConversationStarters } from '@/components/conversation-starters';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { MarkdownEditor } from '@/components/markdown-editor';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -324,6 +325,53 @@ export default function ChatPage() {
               error={mathResult.error}
               isCurrency={isCurrency}
               className="mt-2"
+            />
+          );
+
+        case 'displayContractPreview':
+          if (!result?.markdown) {
+            return <div className="p-4 text-red-500">Error: No contract content generated</div>;
+          }
+          return (
+            <MarkdownEditor
+              markdown={result.markdown}
+              mode={result.mode || 'preview'}
+              toolCallId={toolCallId}
+              onEdit={async (toolCallId) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    mode: 'edit'
+                  });
+                } catch (error) {
+                  console.error('Failed to switch to edit mode:', error);
+                }
+              }}
+              onConfirm={async (toolCallId, markdown) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    markdown,
+                    mode: 'preview',
+                    completed: true
+                  });
+                  await append({
+                    role: 'user',
+                    content: 'The contract looks good. Please proceed with sending it.'
+                  });
+                } catch (error) {
+                  console.error('Failed to confirm contract:', error);
+                }
+              }}
+              onBack={async (toolCallId) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    mode: 'preview'
+                  });
+                } catch (error) {
+                  console.error('Failed to go back:', error);
+                }
+              }}
             />
           );
 

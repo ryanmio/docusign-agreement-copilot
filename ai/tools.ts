@@ -457,5 +457,20 @@ export const tools = {
         };
       }
     }
+  },
+  displayContractPreview: {
+    name: 'displayContractPreview',
+    description: 'Display a contract in markdown format for preview and editing. Use this after generating contract content to show it to the user.',
+    parameters: z.object({
+      markdown: z.string().describe('The contract content in markdown format with DocuSign anchor tags'),
+      mode: z.enum(['preview', 'edit']).default('preview').describe('The initial display mode')
+    }),
+    execute: async ({ markdown, mode }: { markdown: string; mode: 'preview' | 'edit' }) => {
+      return {
+        markdown,
+        mode,
+        completed: false
+      };
+    }
   }
 }; 
