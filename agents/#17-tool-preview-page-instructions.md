@@ -2,8 +2,6 @@
 
 **OBJECTIVE:** Create a documentation/preview page that showcases all AI tool components in a clean, organized manner.
 
-**LOCATION:** Create new route at `app/components/page.tsx`
-
 **COMPONENTS TO SHOWCASE:**
 1. Loading States
    - LoadingSpinner (always spinning)

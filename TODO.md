@@ -69,11 +69,15 @@
 - [x] Implement "Send Reminder" tool
 - [x] Implement math tool
 - [ ] Explore feasibility of "settings" tool including Docusign integration connections and disconnections
+- [ ] Implement "Memory" tool
 - [ ] Implement prepopulated search ability for template search tool
 - [ ] Implement pattern recognition tool
       > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync with eSignature.
 - [ ] Implement in-chat/embedded signing tool
       > ⚠️ ON HOLD: Technical blockers with Docusign SDK integration in Next.js. See [failure analysis report](agents/#12-failure-report.md) for details and next steps. Consider redirect flow as temporary alternative.
+- [ ] Implement document generation tool
+- [ ] Implement memoization for markdown https://sdk.vercel.ai/cookbook/next/markdown-chatbot-with-memoization
+- [ ] Implement homepage like https://x.com/rauchg/status/1876306515285647802
 
 ## Phase 3.5: Navigator Integration 🧭
    > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync with eSignature.
@@ -114,7 +118,8 @@
   - [ ] Optimize performance
   - [ ] Conduct user testing
   - [ ] Fix bugs and issues
-  - [ ] Check to make sure docusign doesnt have cap S ever
+- [ ] Check to make sure docusign doesnt have cap S ever
+- [ ] Create project logo
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README
