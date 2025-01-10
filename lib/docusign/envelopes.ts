@@ -768,7 +768,8 @@ export class DocuSignEnvelopes {
             name: recipientInfo.name,
             clientUserId: recipientInfo.clientUserId,
             routingOrder: recipientInfo.routingOrder,
-            tabs: recipientInfo.tabs || {}
+            tabs: recipientInfo.tabs || {},
+            suppressEmails: true
           }]
         }),
       }
