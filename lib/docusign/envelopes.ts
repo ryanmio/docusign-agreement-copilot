@@ -201,7 +201,8 @@ export class DocuSignEnvelopes {
       envelopeDefinition.templateRoles = args.templateRoles?.map(role => ({
         ...role,
         clientUserId: role.email,
-        embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN'
+        embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN',
+        suppressEmails: true
       }));
     } else {
       if (args.recipients?.signers) {
@@ -209,7 +210,8 @@ export class DocuSignEnvelopes {
           signers: args.recipients.signers.map(signer => ({
             ...signer,
             clientUserId: signer.email,
-            embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN'
+            embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN',
+            suppressEmails: true
           }))
         };
       }
