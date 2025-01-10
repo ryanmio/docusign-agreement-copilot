@@ -55,9 +55,20 @@ export function MarkdownEditor({
               components={{
                 code: ({ children }) => {
                   if (typeof children === 'string' && children.includes('<<')) {
-                    return <span className="bg-blue-100 px-1 rounded">{children}</span>;
+                    return <span className="font-mono">{children}</span>;
                   }
                   return <code>{children}</code>;
+                },
+                pre: ({ children }) => (
+                  <pre className="font-mono whitespace-pre overflow-x-auto text-black">{children}</pre>
+                ),
+                p: ({ children }) => {
+                  // Check if this paragraph contains signature-related content
+                  const text = children?.toString() || '';
+                  if (text.includes('<<') || text.includes('CLIENT:') || text.includes('PROVIDER:')) {
+                    return <pre className="font-mono whitespace-pre overflow-x-auto text-black">{children}</pre>;
+                  }
+                  return <p>{children}</p>;
                 }
               }}
             >
