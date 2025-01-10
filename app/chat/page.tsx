@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { useChat, Message, UseChatHelpers } from 'ai/react';
+import { useChat, Message, UseChatHelpers, CreateMessage } from 'ai/react';
 import ReactMarkdown from 'react-markdown';
 import { DocumentView } from '@/components/document-view';
 import { BulkOperationView } from '@/components/bulk-operation-view';
@@ -28,6 +28,61 @@ interface ExtendedChatOptions {
   onFinish?: (message: Message) => void;
   onResponse?: (response: Response) => void;
   onToolCall?: (params: { toolCall: any }) => React.ReactNode;
+}
+
+function ContractPreviewTool({ 
+  result, 
+  toolCallId, 
+  onToolResult, 
+  onAppend 
+}: { 
+  result: any; 
+  toolCallId: string; 
+  onToolResult: (toolCallId: string, result: any) => Promise<void>;
+  onAppend: (message: Message | CreateMessage) => Promise<string | null | undefined>;
+}) {
+  const [currentMode, setCurrentMode] = React.useState(result.mode || 'preview');
+  const [currentMarkdown, setCurrentMarkdown] = React.useState(result.markdown);
+
+  if (!result?.markdown) {
+    return <div className="p-4 text-red-500">Error: No contract content generated</div>;
+  }
+
+  console.log('Rendering MarkdownEditor with mode:', currentMode);
+
+  return (
+    <MarkdownEditor
+      markdown={currentMarkdown}
+      mode={currentMode}
+      toolCallId={toolCallId}
+      onEdit={async (toolCallId) => {
+        console.log('Edit clicked, switching to edit mode');
+        setCurrentMode('edit');
+      }}
+      onConfirm={async (toolCallId, markdown) => {
+        console.log('Confirm clicked with markdown:', markdown);
+        try {
+          setCurrentMode('preview');
+          setCurrentMarkdown(markdown);
+          await onToolResult(toolCallId, {
+            markdown,
+            mode: 'preview',
+            completed: true
+          });
+          await onAppend({
+            role: 'user',
+            content: 'The contract looks good. Please proceed with sending it.'
+          } as Message);
+        } catch (error) {
+          console.error('Failed to confirm contract:', error);
+        }
+      }}
+      onBack={async (toolCallId) => {
+        console.log('Back clicked, returning to preview mode');
+        setCurrentMode('preview');
+      }}
+    />
+  );
 }
 
 export default function ChatPage() {
@@ -324,49 +379,12 @@ export default function ChatPage() {
           );
 
         case 'displayContractPreview':
-          if (!result?.markdown) {
-            return <div className="p-4 text-red-500">Error: No contract content generated</div>;
-          }
           return (
-            <MarkdownEditor
-              markdown={result.markdown}
-              mode={result.mode || 'preview'}
+            <ContractPreviewTool
+              result={result}
               toolCallId={toolCallId}
-              onEdit={async (toolCallId) => {
-                try {
-                  await handleToolResult(toolCallId, {
-                    ...result,
-                    mode: 'edit'
-                  });
-                } catch (error) {
-                  console.error('Failed to switch to edit mode:', error);
-                }
-              }}
-              onConfirm={async (toolCallId, markdown) => {
-                try {
-                  await handleToolResult(toolCallId, {
-                    markdown,
-                    mode: 'preview',
-                    completed: true
-                  });
-                  await append({
-                    role: 'user',
-                    content: 'The contract looks good. Please proceed with sending it.'
-                  });
-                } catch (error) {
-                  console.error('Failed to confirm contract:', error);
-                }
-              }}
-              onBack={async (toolCallId) => {
-                try {
-                  await handleToolResult(toolCallId, {
-                    ...result,
-                    mode: 'preview'
-                  });
-                } catch (error) {
-                  console.error('Failed to go back:', error);
-                }
-              }}
+              onToolResult={handleToolResult}
+              onAppend={append}
             />
           );
 
