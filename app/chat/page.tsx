@@ -252,12 +252,6 @@ export default function ChatPage() {
                       completed: true,
                       status: 'signed'
                     });
-
-                    // Add user message to continue conversation
-                    await append({
-                      role: 'user',
-                      content: 'I have completed signing the document.'
-                    });
                   } catch (error) {
                     console.error('Error handling signing completion:', error);
                     toast({
