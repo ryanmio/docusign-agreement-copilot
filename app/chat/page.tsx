@@ -239,58 +239,59 @@ export default function ChatPage() {
           if (!result?.signingUrl) {
             return <div className="p-4 text-red-500">Error: Invalid signing configuration</div>;
           }
-          return (
-            <SigningView
-              signingUrl={result.signingUrl}
-              mode={result.mode}
-              toolCallId={toolCallId}
-              onComplete={async () => {
-                try {
-                  // Update tool result
-                  await handleToolResult(toolCallId, {
-                    ...result,
-                    completed: true,
-                    status: 'signed'
-                  });
+          
+          if (result?.status === 'ready') {
+            return (
+              <SigningView
+                signingUrl={result.signingUrl}
+                onComplete={async () => {
+                  try {
+                    // Update tool result
+                    await handleToolResult(toolCallId, {
+                      ...result,
+                      completed: true,
+                      status: 'signed'
+                    });
 
-                  // Add user message to continue conversation
-                  await append({
-                    role: 'user',
-                    content: 'I have completed signing the document.'
-                  });
-                } catch (error) {
-                  console.error('Error handling signing completion:', error);
-                  toast({
-                    title: 'Error updating signing status',
-                    description: 'The document was signed but there was an error updating the status',
-                    variant: 'destructive'
-                  });
-                }
-              }}
-              onError={async (error: Error) => {
-                try {
-                  await handleToolResult(toolCallId, {
-                    error: error.message,
-                    completed: true,
-                    status: 'error'
-                  });
+                    // Add user message to continue conversation
+                    await append({
+                      role: 'user',
+                      content: 'I have completed signing the document.'
+                    });
+                  } catch (error) {
+                    console.error('Error handling signing completion:', error);
+                    toast({
+                      title: 'Error updating signing status',
+                      description: 'The document was signed but there was an error updating the status',
+                      variant: 'destructive'
+                    });
+                  }
+                }}
+                onCancel={async () => {
+                  try {
+                    await handleToolResult(toolCallId, {
+                      ...result,
+                      completed: true,
+                      status: 'cancelled'
+                    });
 
-                  // Add user message to allow recovery
-                  await append({
-                    role: 'user',
-                    content: `There was an error while signing: ${error.message}. What should I do?`
-                  });
-                } catch (e) {
-                  console.error('Error handling signing error:', e);
-                  toast({
-                    title: 'Error',
-                    description: 'Failed to process signing error',
-                    variant: 'destructive'
-                  });
-                }
-              }}
-            />
-          );
+                    await append({
+                      role: 'user',
+                      content: 'I cancelled the signing process.'
+                    });
+                  } catch (error) {
+                    console.error('Error handling signing cancellation:', error);
+                    toast({
+                      title: 'Error',
+                      description: 'Failed to process signing cancellation',
+                      variant: 'destructive'
+                    });
+                  }
+                }}
+              />
+            );
+          }
+          return null;
 
         case 'sendReminder':
           return <ReminderConfirmation {...result} />;

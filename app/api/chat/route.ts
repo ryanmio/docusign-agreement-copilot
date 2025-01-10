@@ -32,6 +32,7 @@ export async function POST(req: Request) {
           2. After a tool displays information or UI, DO NOT describe what was just shown
           3. Only provide next steps or ask for specific actions
           4. Never repeat information that a tool has displayed
+
           
           When users ask about documents or envelopes, use displayDocumentDetails
           When users want to view a PDF, use displayPdfViewer
@@ -39,52 +40,57 @@ export async function POST(req: Request) {
           When users want to see their envelopes, use displayEnvelopeList
           When users ask about priorities, use displayPriorityDashboard (which will list the priorities – do not write them out in the chat!)
           When users want to send a reminder for a document, use sendReminder
-
+          
           When users request a custom contract (not using a template), follow these EXACT steps:
           1. First, understand the user's requirements and extract key details like:
-             - Contract type and purpose
-             - Number and roles of signing parties
-             - Key terms, conditions, and requirements
-
+          - Contract type and purpose
+          - Number and roles of signing parties
+          - Key terms, conditions, and requirements
+          
           2. Generate the contract content in markdown format. The contract should:
-             - Have a clear title
-             - Include all necessary sections (parties, terms, conditions, etc.)
-             - Use appropriate legal language and structure
-             - Include a signature section with DocuSign anchor tags
-
+          - Have a clear title
+          - Include all necessary sections (parties, terms, conditions, etc.)
+          - Use appropriate legal language and structure
+          - Include a signature section with DocuSign anchor tags
+          
           3. IMPORTANT - Signature Anchor Tags:
-             - Use <<SIGNERn_HERE>> where n is the signer number (1-based)
-             - Use <<DATE_HERE>> for date fields
-             - Example for a two-party contract:
-
-               First Party:                          Second Party:
-               <<SIGNER1_HERE>>                     <<SIGNER2_HERE>>
-               ________________                     ________________
-               Name:                                Name:
-               Title:                               Title:
-               Date: <<DATE_HERE>>                  Date: <<DATE_HERE>>
-
-             - For contracts with different numbers of signers, adjust accordingly
-             - You can add additional fields like name, title, etc.
-             - The signature block format is flexible as long as anchor tags are correct
-             - Use appropriate spacing/alignment for the number of signers
-
+          - Use <<SIGNERn_HERE>> where n is the signer number (1-based)
+          - Use <<DATE_HERE>> for date fields
+          - Example for a two-party contract:
+          
+          First Party:                          Second Party:
+          <<SIGNER1_HERE>>                     <<SIGNER2_HERE>>
+          ________________                     ________________
+          Name:                                Name:
+          Title:                               Title:
+          Date: <<DATE_HERE>>                  Date: <<DATE_HERE>>
+          
+          - For contracts with different numbers of signers, adjust accordingly
+          - You can add additional fields like name, title, etc.
+          - The signature block format is flexible as long as anchor tags are correct
+          - Use appropriate spacing/alignment for the number of signers
+          
           4. Call displayContractPreview with these EXACT parameters:
-             - markdown: The generated contract content
-             - mode: "preview"
-
+          - markdown: The generated contract content
+          - mode: "preview"
+          
           5. Wait for the user to review and edit if needed
-             - If user edits, they will use the UI
-             - When confirmed, the tool will return { completed: true, markdown: "edited content" }
-
+          - If user edits, they will use the UI
+          - When confirmed, the tool will return { completed: true, markdown: "edited content" }
+         
+          When users want to sign a document:
+          1. First try using the embedded signing view by calling signDocument
+          2. Only if that fails (returns an error), provide the signing URL as a clickable link
+          3. Never show both the embedded view and URL at the same time
+          
           When users ask any mathematical questions or need calculations:
           1. Call calculateMath tool with EXACTLY these parameters:
-             - expression: preserve original format with currency symbols (e.g., "$150,000 * 0.05" not "150000 * 0.05")
-             - showSteps: true (ALWAYS set this to true)
-             - context: description of the calculation (ALWAYS include for currency calculations)
+          - expression: preserve original format with currency symbols (e.g., "$150,000 * 0.05" not "150000 * 0.05")
+          - showSteps: true (ALWAYS set this to true)
+          - context: description of the calculation (ALWAYS include for currency calculations)
           2. DO NOT send any chat messages with the result. Let the tool's UI handle displaying the result
           3. Examples:
-             - Input: "(34*10 + 5) / 2"
+          - Input: "(34*10 + 5) / 2"
                Call: calculateMath({ expression: "(34*10 + 5) / 2", showSteps: true })
              - Input: "Calculate 5% of $150,000"
                Call: calculateMath({ expression: "$150,000 * 0.05", showSteps: true, context: "Calculating 5% of $150,000" })
@@ -748,7 +754,8 @@ export async function POST(req: Request) {
                 console.error('Authentication error:', sessionError);
                 return {
                   error: 'User not authenticated',
-                  completed: true
+                  completed: true,
+                  status: 'error'
                 };
               }
 
@@ -771,7 +778,8 @@ export async function POST(req: Request) {
                 console.error('Envelope error:', envelopeError);
                 return {
                   error: 'Envelope not found or access denied',
-                  completed: true
+                  completed: true,
+                  status: 'error'
                 };
               }
 
@@ -789,13 +797,17 @@ export async function POST(req: Request) {
                 envelopeId,
                 signingUrl,
                 mode: 'focused',
-                completed: false
+                status: 'ready',
+                completed: false,
+                embeddedViewShown: true
               };
             } catch (error) {
               console.error('Error in signDocument:', error);
               return {
                 error: error instanceof Error ? error.message : 'Failed to generate signing URL',
-                completed: true
+                status: 'error',
+                completed: true,
+                showEmbeddedView: false
               };
             }
           }
