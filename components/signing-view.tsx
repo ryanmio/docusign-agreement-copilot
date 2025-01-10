@@ -1,16 +1,11 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card } from './ui/card';
 import { Loader2 } from 'lucide-react';
-import Script from 'next/script';
-import { createPortal } from 'react-dom';
 
 interface SigningViewProps {
   signingUrl: string;
   onComplete?: () => void;
   onCancel?: () => void;
-  mode?: 'embedded' | 'modal';
-  toolCallId?: string;
-  onError?: (error: Error) => void;
 }
 
 declare global {
@@ -27,168 +22,164 @@ declare global {
   }
 }
 
+// Helper function to load DocuSign bundle
+const loadDocuSignBundle = (): Promise<void> => {
+  console.log('Loading DocuSign bundle...');
+  return new Promise((resolve, reject) => {
+    // Check if script already exists
+    if (document.querySelector('script[src="https://js-d.docusign.com/bundle.js"]')) {
+      console.log('DocuSign bundle already loaded');
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://js-d.docusign.com/bundle.js';
+    script.async = true;
+    script.onload = () => {
+      console.log('DocuSign bundle loaded successfully');
+      resolve();
+    };
+    script.onerror = () => {
+      console.error('Failed to load DocuSign bundle');
+      reject(new Error('Failed to load DocuSign bundle'));
+    };
+    document.body.appendChild(script);
+  });
+};
+
+// Type guard for DocuSign global
+const isDocuSignLoaded = (ds: any): ds is Window['DocuSign'] => {
+  return ds && typeof ds.loadDocuSign === 'function';
+};
+
 export function SigningView({ signingUrl, onComplete, onCancel }: SigningViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'signed' | 'error'>('loading');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const signingRef = useRef<any>(null);
+  const hasHandledSessionEnd = useRef(false);
   const integrationKey = process.env.NEXT_PUBLIC_DOCUSIGN_CLIENT_ID ?? '';
-  const signingInstanceRef = useRef<any>(null);
-  const initializingRef = useRef(false);
-  const mountedRef = useRef(false);
-  const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
-  // Create container on mount
   useEffect(() => {
-    const div = document.createElement('div');
-    div.id = 'docusign-container';
-    div.style.width = '100%';
-    div.style.height = '100%';
-    div.style.position = 'absolute';
-    div.style.inset = '0';
-    setContainer(div);
-    return () => {
-      setContainer(null);
-    };
-  }, []);
+    let mounted = true;
 
-  // Handle service worker
-  useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
-
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-      registrations.forEach((registration) => {
-        registration.unregister();
-      });
-    });
-  }, []);
-
-  const initializeDocuSign = useCallback(async () => {
-    if (initializingRef.current || signingInstanceRef.current || !window.DocuSign?.loadDocuSign) {
-      return;
-    }
-    
-    try {
-      initializingRef.current = true;
-      
-      const docusign = await window.DocuSign.loadDocuSign(integrationKey);
-      if (!docusign) {
-        throw new Error('DocuSign SDK not loaded');
-      }
-
-      if (!mountedRef.current) return;
-
-      const instance = await docusign.signing({
-        url: signingUrl,
-        displayFormat: 'default',
-        style: {
-          border: 'none',
-          width: '100%',
-          height: '100%'
+    const initialize = async () => {
+      try {
+        // Step 1: Load DocuSign bundle if needed
+        if (!window.DocuSign || !isDocuSignLoaded(window.DocuSign)) {
+          await loadDocuSignBundle();
         }
-      });
 
-      if (!mountedRef.current) {
-        instance.close?.();
-        return;
-      }
+        if (!mounted) return;
 
-      instance.on('ready', () => {
-        if (mountedRef.current) {
+        // Step 2: Initialize DocuSign
+        const docusign = await window.DocuSign?.loadDocuSign(integrationKey);
+        if (!docusign || !mounted) return;
+
+        // Step 3: Create and mount signing view
+        const signing = await docusign.signing({
+          url: signingUrl,
+          displayFormat: 'focused'
+        });
+
+        if (!mounted) return;
+
+        // Store instance first
+        signingRef.current = signing;
+
+        // Set up event listeners
+        signing.on('ready', () => {
+          if (mounted) {
+            setLoading(false);
+            setStatus('ready');
+          }
+        });
+
+        signing.on('sessionEnd', (event: any) => {
+          console.log('DocuSign session ended with event:', event);
+          if (!mounted || hasHandledSessionEnd.current) return;
+          
+          // Check the returnUrl for the event type
+          const returnUrl = event?.returnUrl;
+          if (returnUrl) {
+            const url = new URL(returnUrl);
+            const eventType = url.searchParams.get('event');
+            
+            if (eventType === 'signing_complete') {
+              hasHandledSessionEnd.current = true;
+              setStatus('signed');
+              onComplete?.();
+            } else if (eventType === 'cancel') {
+              hasHandledSessionEnd.current = true;
+              onCancel?.();
+            }
+          }
+        });
+
+        // Mount to container
+        if (containerRef.current) {
+          signing.mount('#docusign-focused-container');
+        }
+      } catch (err) {
+        console.error('Error initializing DocuSign:', err);
+        if (mounted) {
+          setError(err instanceof Error ? err.message : 'Failed to initialize DocuSign');
+          setStatus('error');
           setLoading(false);
         }
-      });
-
-      instance.on('sessionEnd', (event: string) => {
-        if (!mountedRef.current) return;
-        
-        if (event === 'signing_complete') {
-          onComplete?.();
-        } else if (event === 'cancel') {
-          onCancel?.();
-        }
-      });
-
-      if (container && mountedRef.current) {
-        instance.mount('#docusign-container');
-        signingInstanceRef.current = instance;
-      } else {
-        instance.close?.();
       }
-    } catch (error) {
-      if (mountedRef.current) {
-        console.error('DocuSign initialization error:', error);
-        setError(error instanceof Error ? error.message : 'Failed to initialize DocuSign');
-        setLoading(false);
-      }
-    } finally {
-      initializingRef.current = false;
-    }
-  }, [signingUrl, integrationKey, onComplete, onCancel, container]);
+    };
 
-  useEffect(() => {
-    if (!signingUrl || !integrationKey) {
-      setError('Missing required configuration');
-      setLoading(false);
-      return;
-    }
+    initialize();
 
-    mountedRef.current = true;
-
-    const cleanup = () => {
-      mountedRef.current = false;
-      if (signingInstanceRef.current?.close) {
+    return () => {
+      mounted = false;
+      hasHandledSessionEnd.current = false;
+      if (signingRef.current?.close) {
         try {
-          signingInstanceRef.current.close();
-        } catch (error) {
+          signingRef.current.close();
+        } catch (err) {
           // Ignore cleanup errors
         }
       }
-      signingInstanceRef.current = null;
+      signingRef.current = null;
     };
+  }, [signingUrl, integrationKey, onComplete, onCancel]);
 
-    window.addEventListener('beforeunload', cleanup);
-    return () => {
-      window.removeEventListener('beforeunload', cleanup);
-      cleanup();
-    };
-  }, [signingUrl, integrationKey]);
+  if (status === 'signed') {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow">
+        <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
+          <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Document Signed Successfully!</h3>
+        <p className="text-sm text-gray-500">The document has been signed and processed.</p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <Script 
-        src="https://js-d.docusign.com/bundle.js"
-        strategy="afterInteractive"
-        onLoad={initializeDocuSign}
-        onError={(error) => {
-          console.error('DocuSign script error:', error);
-          setError('Failed to load DocuSign script');
-          setLoading(false);
-        }}
+    <Card className="w-full h-[800px] relative overflow-hidden">
+      {loading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+          <div className="mt-4 font-medium">Loading DocuSign...</div>
+        </div>
+      )}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white">
+          <div className="text-red-500">Error: {error}</div>
+        </div>
+      )}
+      <div 
+        id="docusign-focused-container"
+        ref={containerRef}
+        className="w-full h-full"
       />
-      <Card className="w-full h-[800px] relative overflow-hidden">
-        {container && createPortal(
-          <>
-            {loading && (
-              <div className="flex flex-col items-center justify-center h-full gap-4 bg-white">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-                <div className="text-center">
-                  <div className="font-medium">Loading DocuSign...</div>
-                </div>
-              </div>
-            )}
-            {error && (
-              <div className="flex items-center justify-center h-full bg-white">
-                <div className="text-red-500">Error: {error}</div>
-              </div>
-            )}
-          </>,
-          container
-        )}
-        {container && <div className="w-full h-full absolute inset-0" ref={(el) => {
-          if (el && !el.contains(container)) {
-            el.appendChild(container);
-          }
-        }} />}
-      </Card>
-    </>
+    </Card>
   );
 } 
