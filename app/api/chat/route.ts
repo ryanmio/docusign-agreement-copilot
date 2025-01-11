@@ -960,6 +960,9 @@ export async function POST(req: Request) {
                 gfm: true
               });
 
+              // Log the HTML to verify anchor tags are preserved
+              console.log('HTML before final wrapping:', rawHtml);
+
               // Before PDF generation, prepare the HTML
               const finalHtml = `
                 <!DOCTYPE html>
@@ -980,6 +983,9 @@ export async function POST(req: Request) {
                         display: inline;
                         font-family: monospace;
                         white-space: pre;
+                        /* Use minimal styling to ensure tag preservation */
+                        color: #f8f8f8;  /* Very light gray, almost white */
+                        font-size: 9px;  /* Slightly larger to ensure clarity */
                       }
                     </style>
                   </head>
@@ -987,15 +993,29 @@ export async function POST(req: Request) {
                 </html>
               `;
 
+              // Log the final HTML to verify everything is intact
+              console.log('Final HTML structure (without content):', finalHtml.replace(rawHtml, '[CONTENT]'));
+
               // Launch browser
               const browser = await puppeteer.launch({ headless: true });
               try {
                 const page = await browser.newPage();
                 
-                // Before PDF generation, prepare the HTML
-                await page.setContent(finalHtml);
+                // Set content and log any errors
+                await page.setContent(finalHtml).catch(err => {
+                  console.error('Error setting page content:', err);
+                  throw err;
+                });
 
-                // Generate PDF
+                // Add a check to verify anchor tags in final DOM
+                const anchorTagsPresent = await page.evaluate(() => {
+                  const anchors = document.querySelectorAll('.docusign-anchor');
+                  return Array.from(anchors).map(a => a.textContent);
+                });
+                console.log('Anchor tags in final DOM:', anchorTagsPresent);
+
+                // Generate PDF with logging
+                console.log('Generating PDF...');
                 const pdfBuffer = await page.pdf({
                   format: 'A4',
                   printBackground: true,
@@ -1005,7 +1025,11 @@ export async function POST(req: Request) {
                     bottom: '20mm',
                     left: '20mm'
                   }
+                }).catch(err => {
+                  console.error('Error generating PDF:', err);
+                  throw err;
                 });
+                console.log('PDF generated successfully');
 
                 // Convert to base64 (hide from logs)
                 const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');

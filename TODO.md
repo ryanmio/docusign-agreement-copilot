@@ -76,20 +76,13 @@
 - [ ] Implement in-chat/embedded signing tool
       > ⚠️ ON HOLD: Technical blockers with Docusign SDK integration in Next.js. See [failure analysis report](agents/#12-failure-report.md) for details and next steps. Consider redirect flow as temporary alternative.
 - [ ] Implement document generation tool
-  - [ ] Add system prompt for contract generation to route.ts
-  - [ ] Create markdown preview component with editing capability
-  - [ ] Implement markdown to PDF conversion
-    - [ ] Research and select PDF conversion library
-    - [ ] Test anchor tag preservation
-    - [ ] Configure basic styling/formatting
-  - [ ] Create sendCustomEnvelope tool
-    - [ ] Implement markdown → PDF conversion
-    - [ ] Add envelope creation with anchor tabs
-    - [ ] Handle DocuSign API integration
-  - [ ] Add validation and error handling
-    - [ ] Verify anchor tags exist in final PDF
-    - [ ] Validate recipient role matching
-    - [ ] Add error messages for common failures
+  - [ ] Memoization of Markdown Generation
+  - [x] Make anchor tags white text or hide them somehow
+  - [ ] System Instructions Enhancement
+  - [x] Confirmation Component
+  - [ ] Error Handling Improvements
+  - [x] Investigate and fix duplicate key value warning
+  - [ ] Documentation
 - [ ] Implement memoization for markdown https://sdk.vercel.ai/cookbook/next/markdown-chatbot-with-memoization
 - [ ] Implement homepage like https://x.com/rauchg/status/1876306515285647802
 
