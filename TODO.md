@@ -86,30 +86,72 @@
       > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync Navigatorwith eSignature.
 
 ## Phase 3.5: Navigator Integration 🧭
-   > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync with eSignature.
-- [ ] Core Setup
+
+- [ ] Initial Access Setup
+  - [ ] Get sync access from DocuSign support (ON HOLD)
+  - [ ] Enable eSign -> Navigator sync in platform
+- [x] Core Setup
   - [x] Set up Navigator API authentication (added scopes to OAuth flow)
   - [x] Implement NavigatorClient class (basic implementation with error handling)
   - [x] Add error handling and retry logic
   - [x] Create test validation endpoint
 
+- [ ] Data Integration
+  - [ ] Create Navigator data models and types
+  - [ ] Implement agreement fetching and caching
+  - [ ] Add AI insight extraction helpers
+  - [ ] Set up real-time sync listeners
+  - [ ] Implement fallback mechanisms for API issues
+
 - [ ] Priority Enhancement
   - [ ] Enhance Priority Dashboard with AI insights
+    - [ ] Add AI urgency indicators
+    - [ ] Display confidence scores
+    - [ ] Show key dates from Navigator
   - [ ] Add agreement urgency scoring
+    - [ ] Implement scoring algorithm using Navigator data
+    - [ ] Add visual urgency indicators
   - [ ] Implement smart categorization
+    - [ ] Use Navigator's AI categories
+    - [ ] Add category filtering
   - [ ] Add confidence indicators
+    - [ ] Show AI confidence levels
+    - [ ] Add manual override options
 
 - [ ] Pattern Recognition
   - [ ] Implement Tuesday task detection
+    - [ ] Create pattern detection algorithm
+    - [ ] Add visualization component
   - [ ] Add renewal pattern analysis
+    - [ ] Implement renewal tracking
+    - [ ] Create renewal timeline view
   - [ ] Create employee agreement mapping
+    - [ ] Build relationship graph
+    - [ ] Add filtering by employee
   - [ ] Build relationship visualization
+    - [ ] Create interactive graph view
+    - [ ] Add drill-down capabilities
 
 - [ ] Predictive Features
   - [ ] Implement task forecasting
+    - [ ] Create prediction models
+    - [ ] Add forecast visualization
   - [ ] Add policy update detection
+    - [ ] Implement change detection
+    - [ ] Add notification system
   - [ ] Create proactive notifications
+    - [ ] Set up notification triggers
+    - [ ] Add user preferences
   - [ ] Build AI insight display
+    - [ ] Create insight dashboard
+    - [ ] Add filtering options
+    - [ ] Implement refresh mechanism
+
+- [ ] Testing & Validation
+  - [ ] Create test suite for Navigator features
+  - [ ] Add error simulation tests
+  - [ ] Implement performance monitoring
+  - [ ] Document edge cases and limitations
 
 ## Phase 4: Polish & Submission (Week 4) ✨
 - [ ] Implement homepage like https://x.com/rauchg/status/1876306515285647802
