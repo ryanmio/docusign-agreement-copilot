@@ -48,41 +48,47 @@ function ContractPreviewTool({
     return <div className="p-4 text-red-500">Error: No contract content generated</div>;
   }
 
-  console.log('Rendering MarkdownEditor with mode:', currentMode);
+  // Memoize callbacks to prevent re-renders
+  const handleEdit = React.useCallback(async (toolCallId: string) => {
+    console.log('Edit clicked, switching to edit mode');
+    setCurrentMode('edit');
+  }, []);
 
-  return (
+  const handleConfirm = React.useCallback(async (toolCallId: string, markdown: string) => {
+    console.log('Confirm clicked with markdown:', markdown);
+    try {
+      setCurrentMode('preview');
+      setCurrentMarkdown(markdown);
+      await onToolResult(toolCallId, {
+        markdown,
+        mode: 'preview',
+        completed: true
+      });
+      await onAppend({
+        role: 'user',
+        content: 'The contract looks good. Please proceed with sending it.'
+      } as Message);
+    } catch (error) {
+      console.error('Failed to confirm contract:', error);
+    }
+  }, [onToolResult, onAppend]);
+
+  const handleBack = React.useCallback(async (toolCallId: string) => {
+    console.log('Back clicked, returning to preview mode');
+    setCurrentMode('preview');
+  }, []);
+
+  // Memoize the entire component to prevent re-renders during streaming
+  return React.useMemo(() => (
     <MarkdownEditor
       markdown={currentMarkdown}
       mode={currentMode}
       toolCallId={toolCallId}
-      onEdit={async (toolCallId) => {
-        console.log('Edit clicked, switching to edit mode');
-        setCurrentMode('edit');
-      }}
-      onConfirm={async (toolCallId, markdown) => {
-        console.log('Confirm clicked with markdown:', markdown);
-        try {
-          setCurrentMode('preview');
-          setCurrentMarkdown(markdown);
-          await onToolResult(toolCallId, {
-            markdown,
-            mode: 'preview',
-            completed: true
-          });
-          await onAppend({
-            role: 'user',
-            content: 'The contract looks good. Please proceed with sending it.'
-          } as Message);
-        } catch (error) {
-          console.error('Failed to confirm contract:', error);
-        }
-      }}
-      onBack={async (toolCallId) => {
-        console.log('Back clicked, returning to preview mode');
-        setCurrentMode('preview');
-      }}
+      onEdit={handleEdit}
+      onConfirm={handleConfirm}
+      onBack={handleBack}
     />
-  );
+  ), [currentMarkdown, currentMode, toolCallId, handleEdit, handleConfirm, handleBack]);
 }
 
 export default function ChatPage() {
