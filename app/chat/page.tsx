@@ -292,6 +292,11 @@ export default function ChatPage() {
             <EnvelopeSuccess envelopeId={result.envelopeId} />
           ) : null;
 
+        case 'sendCustomEnvelope':
+          return result?.success ? (
+            <EnvelopeSuccess envelopeId={result.envelopeId} />
+          ) : null;
+
         case 'displayPriorityDashboard':
           return (
             <PriorityDashboard

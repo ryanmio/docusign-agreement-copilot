@@ -658,17 +658,20 @@ export async function POST(req: Request) {
               // Store envelope in database
               const { data: envelope, error: envelopeError } = await supabase
                 .from('envelopes')
-                .insert({
+                .upsert({
                   user_id: session.user.id,
                   docusign_envelope_id: docusignResponse.envelopeId,
-                  subject,
+                  subject: "Custom Contract",
                   message,
                   status: 'sent',
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString(),
                   metadata: {
-                    template_id: templateId,
+                    is_custom: true,
                   },
+                }, {
+                  onConflict: 'docusign_envelope_id',
+                  ignoreDuplicates: false
                 })
                 .select()
                 .single();
@@ -1061,7 +1064,7 @@ export async function POST(req: Request) {
                 // Store envelope in database
                 const { data: envelope, error: envelopeError } = await supabase
                   .from('envelopes')
-                  .insert({
+                  .upsert({
                     user_id: session.user.id,
                     docusign_envelope_id: docusignResponse.envelopeId,
                     subject: "Custom Contract",
@@ -1072,6 +1075,9 @@ export async function POST(req: Request) {
                     metadata: {
                       is_custom: true,
                     },
+                  }, {
+                    onConflict: 'docusign_envelope_id',
+                    ignoreDuplicates: false
                   })
                   .select()
                   .single();
@@ -1081,7 +1087,8 @@ export async function POST(req: Request) {
                   return {
                     success: true,
                     warning: 'Envelope created in DocuSign but failed to store in database',
-                    envelopeId: docusignResponse.envelopeId
+                    envelopeId: docusignResponse.envelopeId,
+                    status: 'sent'
                   };
                 }
 
@@ -1105,13 +1112,14 @@ export async function POST(req: Request) {
                   return {
                     success: true,
                     warning: 'Envelope created but recipient details not stored',
-                    envelope
+                    envelopeId: envelope.docusign_envelope_id,
+                    status: 'sent'
                   };
                 }
 
                 return {
                   success: true,
-                  envelopeId: envelope.id,
+                  envelopeId: envelope.docusign_envelope_id,
                   status: 'sent'
                 };
               } finally {
