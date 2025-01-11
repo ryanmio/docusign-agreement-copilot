@@ -451,6 +451,186 @@ Assistant: Here are your urgent agreements:
 [PriorityDashboard displays focused on urgent section]
 ```
 
+### ContractPreview
+
+A component that displays and allows editing of AI-generated contracts in markdown format.
+
+#### Tool Definition
+
+```typescript
+displayContractPreview: tool({
+  description: 'Display a contract in markdown format for preview and editing. Use this after generating contract content to show it to the user.',
+  parameters: z.object({
+    markdown: z.string().describe('The contract content in markdown format with DocuSign anchor tags'),
+    mode: z.enum(['preview', 'edit']).default('preview').describe('The initial display mode')
+  }),
+  execute: async ({ markdown, mode }) => {
+    return {
+      markdown,
+      mode,
+      completed: false
+    };
+  }
+})
+```
+
+#### Component Usage
+
+```tsx
+import { MarkdownEditor } from '@/components/markdown-editor';
+
+// In your page component:
+{message.toolInvocations?.map(toolInvocation => {
+  const { toolName, toolCallId, state } = toolInvocation;
+
+  if (state === 'result' && toolName === 'displayContractPreview') {
+    const { result } = toolInvocation;
+    return (
+      <div key={toolCallId}>
+        <MarkdownEditor {...result} />
+      </div>
+    );
+  }
+})}
+```
+
+**Features:**
+- Live markdown preview
+- Edit mode with syntax highlighting
+- DocuSign anchor tag preservation
+- Mobile-responsive design
+- Error handling for invalid markdown
+- Real-time preview updates
+
+**Use Cases:**
+- Previewing AI-generated contracts
+- Editing contract content
+- Verifying DocuSign anchor tags
+- Fine-tuning contract language
+
+**Technical Details:**
+- Uses marked library for markdown rendering
+- Preserves DocuSign anchor tags during conversion
+- Supports both preview and edit modes
+- TypeScript support with proper type definitions
+
+### CollectContractSigners
+
+A component that collects signer information for custom generated contracts.
+
+#### Tool Definition
+
+```typescript
+collectContractSigners: tool({
+  description: 'Collect signer information for a custom generated contract',
+  parameters: z.object({
+    roles: z.array(z.object({
+      roleName: z.string().describe('The name of the role')
+    })).describe('The roles needed to sign the contract (e.g. ["Employee", "Employer"])')
+  }),
+  execute: async ({ roles }) => {
+    return {
+      roles,
+      completed: false,
+      goBack: false,
+      recipients: []
+    };
+  }
+})
+```
+
+#### Component Usage
+
+```tsx
+import { SignerForm } from '@/components/signer-form';
+
+// In your page component:
+{message.toolInvocations?.map(toolInvocation => {
+  const { toolName, toolCallId, state } = toolInvocation;
+
+  if (state === 'result' && toolName === 'collectContractSigners') {
+    const { result } = toolInvocation;
+    return (
+      <div key={toolCallId}>
+        <SignerForm {...result} />
+      </div>
+    );
+  }
+})}
+```
+
+**Features:**
+- Dynamic form generation based on roles
+- Email validation
+- Required field handling
+- Back button support
+- Clean form layout
+- Mobile-responsive design
+
+**Use Cases:**
+- Collecting signer information for custom contracts
+- Validating recipient details
+- Multi-step contract sending flow
+
+### SendCustomEnvelope
+
+A tool for sending custom-generated contracts as DocuSign envelopes.
+
+#### Tool Definition
+
+```typescript
+sendCustomEnvelope: tool({
+  description: 'Send a custom contract as a DocuSign envelope',
+  parameters: z.object({
+    markdown: z.string().describe('The contract content in markdown format'),
+    recipients: z.array(z.object({
+      email: z.string(),
+      name: z.string(),
+      roleName: z.string()
+    })).describe('The recipients to send the contract to'),
+    message: z.string().optional().describe('Optional email message')
+  }),
+  execute: async ({ markdown, recipients, message }) => {
+    // Implementation converts markdown to PDF and sends via DocuSign
+    return {
+      success: true,
+      envelopeId: 'envelope-id',
+      status: 'sent'
+    };
+  }
+})
+```
+
+**Features:**
+- Markdown to PDF conversion
+- DocuSign anchor tag preservation
+- Proper recipient routing
+- Email notification support
+- Error handling and validation
+- Database record creation
+
+**Technical Details:**
+- Uses Puppeteer for PDF generation
+- Preserves DocuSign anchor tags
+- Creates proper envelope definition
+- Stores envelope and recipient records
+- Supports custom email messages
+
+**Example Chat Interactions:**
+```
+User: Create a consulting agreement for Acme Corp
+Assistant: I'll help you create a consulting agreement. Let me generate that for you...
+[ContractPreview component displays with generated agreement]
+
+User: Looks good, let's send it
+Assistant: I'll collect the signer information...
+[CollectContractSigners component displays]
+
+User: [After filling in signers]
+Assistant: Great! I'll send the agreement now...
+[SendCustomEnvelope processes and confirms sending]
+```
+
 ## Database Schema Dependencies
 
 Components may depend on specific database tables and schemas. Here are the current dependencies:
