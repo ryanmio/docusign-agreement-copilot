@@ -451,6 +451,251 @@ Assistant: Here are your urgent agreements:
 [PriorityDashboard displays focused on urgent section]
 ```
 
+### ContractPreview
+
+A component that displays and allows editing of AI-generated contracts in markdown format.
+
+#### Tool Definition
+
+```typescript
+displayContractPreview: tool({
+  description: 'Display a contract in markdown format for preview and editing. Use this after generating contract content to show it to the user.',
+  parameters: z.object({
+    markdown: z.string().describe('The contract content in markdown format with DocuSign anchor tags'),
+    mode: z.enum(['preview', 'edit']).default('preview').describe('The initial display mode')
+  }),
+  execute: async ({ markdown, mode }) => {
+    return {
+      markdown,
+      mode,
+      completed: false
+    };
+  }
+})
+```
+
+#### Component Usage
+
+```tsx
+import { MarkdownEditor } from '@/components/markdown-editor';
+
+// In your page component:
+{message.toolInvocations?.map(toolInvocation => {
+  const { toolName, toolCallId, state } = toolInvocation;
+
+  if (state === 'result' && toolName === 'displayContractPreview') {
+    const { result } = toolInvocation;
+    return (
+      <div key={toolCallId}>
+        <MarkdownEditor {...result} />
+      </div>
+    );
+  }
+})}
+```
+
+**Features:**
+- Live markdown preview
+- Edit mode with syntax highlighting
+- DocuSign anchor tag preservation
+- Mobile-responsive design
+- Error handling for invalid markdown
+- Real-time preview updates
+
+**Use Cases:**
+- Previewing AI-generated contracts
+- Editing contract content
+- Verifying DocuSign anchor tags
+- Fine-tuning contract language
+
+**Technical Details:**
+- Uses marked library for markdown rendering
+- Preserves DocuSign anchor tags during conversion
+- Supports both preview and edit modes
+- TypeScript support with proper type definitions
+
+### CollectContractSigners
+
+A component that collects signer information for custom generated contracts.
+
+#### Tool Definition
+
+```typescript
+collectContractSigners: tool({
+  description: 'Collect signer information for a custom generated contract',
+  parameters: z.object({
+    roles: z.array(z.object({
+      roleName: z.string().describe('The name of the role')
+    })).describe('The roles needed to sign the contract (e.g. ["Employee", "Employer"])')
+  }),
+  execute: async ({ roles }) => {
+    return {
+      roles,
+      completed: false,
+      goBack: false,
+      recipients: []
+    };
+  }
+})
+```
+
+#### Component Usage
+
+```tsx
+import { SignerForm } from '@/components/signer-form';
+
+// In your page component:
+{message.toolInvocations?.map(toolInvocation => {
+  const { toolName, toolCallId, state } = toolInvocation;
+
+  if (state === 'result' && toolName === 'collectContractSigners') {
+    const { result } = toolInvocation;
+    return (
+      <div key={toolCallId}>
+        <SignerForm {...result} />
+      </div>
+    );
+  }
+})}
+```
+
+**Features:**
+- Dynamic form generation based on roles
+- Email validation
+- Required field handling
+- Back button support
+- Clean form layout
+- Mobile-responsive design
+
+**Use Cases:**
+- Collecting signer information for custom contracts
+- Validating recipient details
+- Multi-step contract sending flow
+
+### SendCustomEnvelope
+
+A tool for sending custom-generated contracts as DocuSign envelopes.
+
+#### Tool Definition
+
+```typescript
+sendCustomEnvelope: tool({
+  description: 'Send a custom contract as a DocuSign envelope',
+  parameters: z.object({
+    markdown: z.string().describe('The contract content in markdown format'),
+    recipients: z.array(z.object({
+      email: z.string(),
+      name: z.string(),
+      roleName: z.string()
+    })).describe('The recipients to send the contract to'),
+    message: z.string().optional().describe('Optional email message')
+  }),
+  execute: async ({ markdown, recipients, message }) => {
+    // Implementation converts markdown to PDF and sends via DocuSign
+    return {
+      success: true,
+      envelopeId: 'envelope-id',
+      status: 'sent'
+    };
+  }
+})
+```
+
+**Features:**
+- Markdown to PDF conversion
+- DocuSign anchor tag preservation
+- Proper recipient routing
+- Email notification support
+- Error handling and validation
+- Database record creation
+- Real-time status tracking after sending
+- Recipient progress monitoring
+- Automatic status updates
+- Integration with EnvelopeSuccess component
+
+**Technical Details:**
+- Uses Puppeteer for PDF generation
+- Preserves DocuSign anchor tags
+- Creates proper envelope definition
+- Stores envelope and recipient records
+- Supports custom email messages
+
+**Example Chat Interactions:**
+```
+User: Create a consulting agreement for Acme Corp
+Assistant: I'll help you create a consulting agreement. Let me generate that for you...
+[ContractPreview component displays with generated agreement]
+
+User: Looks good, let's send it
+Assistant: I'll collect the signer information...
+[CollectContractSigners component displays]
+
+User: [After filling in signers]
+Assistant: Great! Sending the agreement now...
+[SendCustomEnvelope processes the request]
+[EnvelopeSuccess component appears showing real-time status]
+
+User: Has anyone signed yet?
+Assistant: Let me check the status:
+[EnvelopeSuccess component shows current signing progress]
+```
+
+### EnvelopeSuccess
+
+A component that displays real-time status tracking for sent envelopes, including recipient progress.
+
+#### Tool Definition
+This component is used automatically after successful envelope creation by both `sendTemplate` and `sendCustomEnvelope` tools.
+
+#### Component Usage
+
+```tsx
+import { EnvelopeSuccess } from '@/components/envelope-success';
+
+// In your page component:
+{message.toolInvocations?.map(toolInvocation => {
+  const { toolName, toolCallId, state } = toolInvocation;
+
+  if (state === 'result' && (toolName === 'sendTemplate' || toolName === 'sendCustomEnvelope')) {
+    const { result } = toolInvocation;
+    if (result.success) {
+      return (
+        <div key={toolCallId}>
+          <EnvelopeSuccess envelopeId={result.envelopeId} />
+        </div>
+      );
+    }
+  }
+})}
+```
+
+**Features:**
+- Real-time status updates via polling
+- Success header with checkmark
+- Overall envelope status display
+- Individual recipient status tracking
+- Status-based color coding
+- Automatic updates until completion
+
+**Technical Details:**
+- Polls envelope status every 5 seconds
+- Stops polling on final states (completed, declined, voided)
+- Uses Supabase for real-time data
+- Integrates with DocuSign webhook updates
+- Proper error handling and loading states
+
+**Example Chat Interactions:**
+```
+User: Send the contract to alice@example.com
+Assistant: I'll generate and send the contract...
+[Contract generation and sending process]
+[EnvelopeSuccess component displays with real-time status]
+
+User: What's the status of that contract?
+Assistant: Here's the current status:
+[EnvelopeSuccess component shows latest state]
+```
+
 ## Database Schema Dependencies
 
 Components may depend on specific database tables and schemas. Here are the current dependencies:

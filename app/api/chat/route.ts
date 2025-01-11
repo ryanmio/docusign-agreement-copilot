@@ -5,6 +5,8 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 import { cookies } from 'next/headers';
 import { create, all } from 'mathjs';
+import { marked } from 'marked';
+import puppeteer from 'puppeteer';
 
 // Create a math instance with all functions
 const math = create(all);
@@ -12,11 +14,42 @@ const math = create(all);
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
+// Configure marked to preserve anchor tags
+marked.use({
+  extensions: [{
+    name: 'docusign-anchors',
+    level: 'inline',
+    start(src: string) { return src.match(/<</)?.index; },
+    tokenizer(src: string) {
+      const rule = /^<<([^>]+)>>/;
+      const match = rule.exec(src);
+      if (match) {
+        return {
+          type: 'html',
+          raw: match[0],
+          text: `<pre class="docusign-anchor">&lt;&lt;${match[1]}&gt;&gt;</pre>`
+        };
+      }
+    }
+  }]
+});
+
 export async function POST(req: Request) {
   try {
     console.log('Chat route called');
     const { messages } = await req.json();
     console.log('Received messages:', JSON.stringify(messages, null, 2));
+    
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    });
+    
+    // Get session before starting stream
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session?.user) {
+      throw new Error('User not authenticated');
+    }
     
     const result = streamText({
       model: openai('gpt-4o'),
@@ -52,6 +85,7 @@ export async function POST(req: Request) {
           - Include all necessary sections (parties, terms, conditions, etc.)
           - Use appropriate legal language and structure
           - Include a signature section with DocuSign anchor tags
+          - IMPORTANT: DO NOT output the contract content in chat messages
           
           3. IMPORTANT - Signature Anchor Tags:
           - Use <<SIGNERn_HERE>> where n is the signer number (1-based)
@@ -73,11 +107,36 @@ export async function POST(req: Request) {
           4. Call displayContractPreview with these EXACT parameters:
           - markdown: The generated contract content
           - mode: "preview"
+          - Say "I've prepared a contract based on your requirements. Please review it below:"
           
           5. Wait for the user to review and edit if needed
-          - If user edits, they will use the UI
+          - If user wants to edit, they will use the UI
           - When confirmed, the tool will return { completed: true, markdown: "edited content" }
-         
+          - DO NOT proceed until user confirms and the tool returns { completed: true }
+          
+          6. After contract is confirmed (when { completed: true } is returned):
+          - Say "Now I'll collect the signer information. Please fill in the form below:"
+          - Call collectContractSigners with the roles array matching the number of signers
+          - The form will return { completed: false } while waiting for submission
+          - DO NOT ask for information again or retry while completed is false
+          - When the form is submitted, it will return { completed: true, recipients: [...] }
+          - Only after completed: true, proceed to sending the envelope
+          - DO NOT try to collect signer info via chat
+          
+          7. After signers form is submitted:
+          - Show summary and ask for confirmation:
+            "I'll send this contract to:
+            - [Role 1]: [Name] ([Email])
+            - [Role 2]: [Name] ([Email])
+            Is this correct? Please confirm by saying 'send' or go back by saying 'edit signers'."
+          
+          8. Only after 'send' confirmation:
+          - Call sendCustomEnvelope with:
+            - markdown: the confirmed contract content
+            - recipients: the collected signer information
+          - Wait for success response
+          - DO NOT try to send without explicit confirmation
+
           When users want to sign a document:
           1. First try using the embedded signing view by calling signDocument
           2. Only if that fails (returns an error), provide the signing URL as a clickable link
@@ -110,9 +169,8 @@ export async function POST(req: Request) {
           
           3. For collecting recipients:
              - Say "Please fill in the recipient information in the form below."
-             - Call collectRecipients with roles from previewTemplate
+             - Call collectTemplateRecipients with roles from previewTemplate
              - Wait for the form to be submitted (completed: true)
-             - DO NOT try to collect recipient info via chat
           
           4. After recipients form is submitted:
              - Call getTemplateTabs for each role
@@ -132,7 +190,7 @@ export async function POST(req: Request) {
           6. Only after 'send' confirmation:
              - Use sendTemplate with all collected info
           
-          IMPORTANT: Never try to collect recipient information through chat messages. Always use the collectRecipients tool.
+          IMPORTANT: Never try to collect recipient or signer information through chat messages. Always use the appropriate form tool.
           
           If a tool call fails, inform the user and suggest retrying or contacting support.`
         },
@@ -615,17 +673,20 @@ export async function POST(req: Request) {
               // Store envelope in database
               const { data: envelope, error: envelopeError } = await supabase
                 .from('envelopes')
-                .insert({
+                .upsert({
                   user_id: session.user.id,
                   docusign_envelope_id: docusignResponse.envelopeId,
-                  subject,
+                  subject: "Custom Contract",
                   message,
                   status: 'sent',
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString(),
                   metadata: {
-                    template_id: templateId,
+                    is_custom: true,
                   },
+                }, {
+                  onConflict: 'docusign_envelope_id',
+                  ignoreDuplicates: false
                 })
                 .select()
                 .single();
@@ -712,7 +773,7 @@ export async function POST(req: Request) {
             }
           }
         }),
-        collectRecipients: tool({
+        collectTemplateRecipients: tool({
           description: 'Display a form to collect recipient information. The form will return { completed: true, recipients: [...] } when submitted.',
           parameters: z.object({
             roles: z.array(z.object({
@@ -721,7 +782,7 @@ export async function POST(req: Request) {
             templateName: z.string().describe('The name of the template being sent')
           }),
           execute: async ({ roles, templateName }) => {
-            console.log('Executing collectRecipients:', { roles, templateName });
+            console.log('Executing collectTemplateRecipients:', { roles, templateName });
             return {
               roles,
               completed: false,
@@ -860,6 +921,258 @@ export async function POST(req: Request) {
               mode,
               completed: false
             };
+          }
+        }),
+        collectContractSigners: tool({
+          description: 'Collect signer information for a custom generated contract. Returns { completed: true, recipients: [...] } when form is submitted, { completed: false } while waiting.',
+          parameters: z.object({
+            roles: z.array(z.object({
+              roleName: z.string().describe('The name of the role')
+            })).describe('The roles needed to sign the contract (e.g. ["Employee", "Employer"])')
+          }),
+          execute: async ({ roles }) => {
+            console.log('Starting collectContractSigners execution:', { roles });
+            
+            // Return initial state to show form
+            const result = {
+              roles,
+              completed: false,
+              goBack: false,
+              recipients: []
+            };
+            
+            console.log('Returning collectContractSigners result:', result);
+            return result;
+          }
+        }),
+        sendCustomEnvelope: tool({
+          description: 'Send a custom contract as a DocuSign envelope',
+          parameters: z.object({
+            markdown: z.string().describe('The contract content in markdown format'),
+            recipients: z.array(z.object({
+              email: z.string(),
+              name: z.string(),
+              roleName: z.string()
+            })).describe('The recipients to send the contract to'),
+            message: z.string().optional().describe('Optional email message')
+          }),
+          execute: async ({ markdown, recipients, message }) => {
+            console.log('Starting sendCustomEnvelope execution:', { recipients });
+            try {
+              const cookieStore = cookies();
+              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              if (sessionError || !session?.user) {
+                throw new Error('User not authenticated');
+              }
+
+              // Preprocess markdown to protect anchor tags
+              const preprocessedMarkdown = markdown.replace(
+                /<<([^>]+)>>/g,
+                '<span class="docusign-anchor"><<$1>></span>'
+              );
+
+              // Convert markdown to HTML
+              const rawHtml = await marked.parse(preprocessedMarkdown, {
+                async: true,
+                breaks: true,
+                gfm: true
+              });
+
+              // Log the HTML to verify anchor tags are preserved
+              console.log('HTML before final wrapping:', rawHtml);
+
+              // Before PDF generation, prepare the HTML
+              const finalHtml = `
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <style>
+                      body {
+                        font-family: Arial, sans-serif;
+                        font-size: 12px;
+                        line-height: 1.6;
+                        padding: 20mm;
+                        margin: 0;
+                      }
+                      h1 { font-size: 18px; margin-bottom: 20px; }
+                      h2 { font-size: 14px; margin-top: 20px; }
+                      p { margin: 10px 0; }
+                      .docusign-anchor { 
+                        display: inline;
+                        font-family: monospace;
+                        white-space: pre;
+                        /* Use minimal styling to ensure tag preservation */
+                        color: #f8f8f8;  /* Very light gray, almost white */
+                        font-size: 9px;  /* Slightly larger to ensure clarity */
+                      }
+                    </style>
+                  </head>
+                  <body>${rawHtml}</body>
+                </html>
+              `;
+
+              // Log the final HTML to verify everything is intact
+              console.log('Final HTML structure (without content):', finalHtml.replace(rawHtml, '[CONTENT]'));
+
+              // Launch browser
+              const browser = await puppeteer.launch({ headless: true });
+              try {
+                const page = await browser.newPage();
+                
+                // Set content and log any errors
+                await page.setContent(finalHtml).catch(err => {
+                  console.error('Error setting page content:', err);
+                  throw err;
+                });
+
+                // Add a check to verify anchor tags in final DOM
+                const anchorTagsPresent = await page.evaluate(() => {
+                  const anchors = document.querySelectorAll('.docusign-anchor');
+                  return Array.from(anchors).map(a => a.textContent);
+                });
+                console.log('Anchor tags in final DOM:', anchorTagsPresent);
+
+                // Generate PDF with logging
+                console.log('Generating PDF...');
+                const pdfBuffer = await page.pdf({
+                  format: 'A4',
+                  printBackground: true,
+                  margin: {
+                    top: '20mm',
+                    right: '20mm',
+                    bottom: '20mm',
+                    left: '20mm'
+                  }
+                }).catch(err => {
+                  console.error('Error generating PDF:', err);
+                  throw err;
+                });
+                console.log('PDF generated successfully');
+
+                // Convert to base64 (hide from logs)
+                const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
+                
+                // Send envelope using DocuSign (with cleaner logging)
+                const docusign = new DocuSignEnvelopes(supabase);
+                const envelopeDefinition = {
+                  emailSubject: "Custom Contract",
+                  emailBlurb: message,
+                  documents: [{
+                    name: 'Contract.pdf',
+                    fileExtension: 'pdf',
+                    documentId: '1'
+                  }],
+                  recipients: {
+                    signers: recipients.map((recipient, i) => ({
+                      email: recipient.email,
+                      name: recipient.name,
+                      recipientId: (i + 1).toString(),
+                      routingOrder: i + 1,
+                      tabs: {
+                        signHereTabs: [{
+                          anchorString: `<<SIGNER${i + 1}_HERE>>`,
+                          anchorUnits: "pixels",
+                          anchorXOffset: "0",
+                          anchorYOffset: "0",
+                          anchorIgnoreIfNotPresent: false,
+                          anchorMatchWholeWord: true
+                        }],
+                        dateSignedTabs: [{
+                          anchorString: "<<DATE_HERE>>",
+                          anchorUnits: "pixels",
+                          anchorXOffset: "0",
+                          anchorYOffset: "0",
+                          anchorIgnoreIfNotPresent: false,
+                          anchorMatchWholeWord: true
+                        }]
+                      }
+                    }))
+                  },
+                  status: "sent"
+                };
+
+                // Log envelope definition without base64 content
+                console.log('Sending envelope definition:', JSON.stringify(envelopeDefinition, null, 2));
+
+                // Create actual envelope with base64 content (not logged)
+                const docusignResponse = await docusign.createEnvelope(session.user.id, {
+                  ...envelopeDefinition,
+                  documents: [{
+                    ...envelopeDefinition.documents[0],
+                    documentBase64: pdfBase64
+                  }]
+                });
+
+                // Store envelope in database
+                const { data: envelope, error: envelopeError } = await supabase
+                  .from('envelopes')
+                  .upsert({
+                    user_id: session.user.id,
+                    docusign_envelope_id: docusignResponse.envelopeId,
+                    subject: "Custom Contract",
+                    message,
+                    status: 'sent',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    metadata: {
+                      is_custom: true,
+                    },
+                  }, {
+                    onConflict: 'docusign_envelope_id',
+                    ignoreDuplicates: false
+                  })
+                  .select()
+                  .single();
+
+                if (envelopeError) {
+                  console.error('Database error:', envelopeError);
+                  return {
+                    success: true,
+                    warning: 'Envelope created in DocuSign but failed to store in database',
+                    envelopeId: docusignResponse.envelopeId,
+                    status: 'sent'
+                  };
+                }
+
+                // Store recipients
+                const { error: recipientsError } = await supabase
+                  .from('recipients')
+                  .insert(
+                    recipients.map((recipient, i) => ({
+                      envelope_id: envelope.id,
+                      email: recipient.email,
+                      name: recipient.name,
+                      routing_order: i + 1,
+                      metadata: {
+                        role_name: recipient.roleName,
+                      },
+                    }))
+                  );
+
+                if (recipientsError) {
+                  console.error('Recipients storage error:', recipientsError);
+                  return {
+                    success: true,
+                    warning: 'Envelope created but recipient details not stored',
+                    envelopeId: envelope.docusign_envelope_id,
+                    status: 'sent'
+                  };
+                }
+
+                return {
+                  success: true,
+                  envelopeId: envelope.docusign_envelope_id,
+                  status: 'sent'
+                };
+              } finally {
+                await browser.close();
+              }
+            } catch (error) {
+              console.error('Error in sendCustomEnvelope:', error);
+              throw error;
+            }
           }
         })
       }

@@ -166,3 +166,32 @@ Never try to handle document conversion or styling - the app will manage that.
 5. Add error handling and validation
 
 This approach provides a streamlined way to generate custom contracts while maintaining professional formatting and reliable signature field placement. 
+
+- After contract is confirmed in the editor:
+  - Call collectContractSigners to gather signer information
+  - Wait for form submission
+  - Call sendCustomEnvelope with contract and signers
+
+Tool Definitions:
+
+```typescript
+collectContractSigners: {
+  description: "Collect signer information for a custom generated contract",
+  parameters: {
+    roles: Array<{ roleName: string }>,  // e.g. ["Signer 1", "Signer 2"]
+    showBackButton?: boolean
+  }
+}
+
+sendCustomEnvelope: {
+  description: "Send a custom contract as a DocuSign envelope",
+  parameters: {
+    markdown: string,        // The contract content in markdown
+    recipients: Array<{      // From collectContractSigners
+      email: string,
+      name: string,
+      roleName: string
+    }>,
+    message?: string        // Optional email message
+  }
+} 

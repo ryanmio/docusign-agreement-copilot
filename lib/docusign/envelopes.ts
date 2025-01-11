@@ -44,11 +44,21 @@ interface EnvelopeDefinition {
       routingOrder: number;
       tabs?: {
         signHereTabs?: Array<{
-          documentId: string;
-          pageNumber: string;
-          xPosition: string;
-          yPosition: string;
-          scale: number;
+          anchorString?: string;
+          anchorUnits?: string;
+          anchorXOffset?: string;
+          anchorYOffset?: string;
+          documentId?: string;
+          pageNumber?: string;
+          xPosition?: string;
+          yPosition?: string;
+          scale?: number;
+        }>;
+        dateSignedTabs?: Array<{
+          anchorString?: string;
+          anchorUnits?: string;
+          anchorXOffset?: string;
+          anchorYOffset?: string;
         }>;
       };
     }>;
@@ -200,18 +210,37 @@ export class DocuSignEnvelopes {
       envelopeDefinition.templateId = args.templateId;
       envelopeDefinition.templateRoles = args.templateRoles?.map(role => ({
         ...role,
-        clientUserId: role.email,
-        embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN',
-        suppressEmails: true
+        ...(args.enableEmbeddedSigning ? {
+          clientUserId: role.email,
+          embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN',
+          suppressEmails: true
+        } : {})
       }));
     } else {
       if (args.recipients?.signers) {
         envelopeDefinition.recipients = {
-          signers: args.recipients.signers.map(signer => ({
+          signers: args.recipients.signers.map((signer, index) => ({
             ...signer,
-            clientUserId: signer.email,
-            embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN',
-            suppressEmails: true
+            ...(args.enableEmbeddedSigning ? {
+              clientUserId: signer.email,
+              embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN',
+              suppressEmails: true
+            } : {}),
+            tabs: {
+              signHereTabs: [{
+                anchorString: `<<SIGNER${index + 1}_HERE>>`,
+                anchorUnits: 'pixels',
+                anchorXOffset: '0',
+                anchorYOffset: '0',
+                documentId: '1'
+              }],
+              dateSignedTabs: [{
+                anchorString: '<<DATE_HERE>>',
+                anchorUnits: 'pixels',
+                anchorXOffset: '0',
+                anchorYOffset: '0'
+              }]
+            }
           }))
         };
       }

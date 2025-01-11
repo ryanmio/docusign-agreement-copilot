@@ -200,8 +200,8 @@ export const tools = {
       };
     }
   },
-  collectRecipients: {
-    description: 'Display a form to collect recipient information for a template',
+  collectTemplateRecipients: {
+    description: 'Collect recipient information for sending a DocuSign template',
     parameters: z.object({
       templateId: z.string().describe('The ID of the template to collect recipients for'),
       roles: z.array(z.object({
@@ -214,9 +214,30 @@ export const tools = {
       roles: Array<{ roleName: string }>;
       showBackButton?: boolean;
     }) => {
-      console.log('Starting collectRecipients execution:', { templateId, roles });
+      console.log('Starting collectTemplateRecipients execution:', { templateId, roles });
       return {
         templateId,
+        roles,
+        mode: 'collect',
+        showBackButton: showBackButton ?? false,
+        requireConfirmation: true
+      };
+    }
+  },
+  collectContractSigners: {
+    description: 'Collect signer information for a custom generated contract',
+    parameters: z.object({
+      roles: z.array(z.object({
+        roleName: z.string()
+      })).describe('The roles needed to sign the contract (e.g. ["Signer 1", "Signer 2"])'),
+      showBackButton: z.boolean().optional().describe('Whether to show a back button')
+    }),
+    execute: async ({ roles, showBackButton }: { 
+      roles: Array<{ roleName: string }>;
+      showBackButton?: boolean;
+    }) => {
+      console.log('Starting collectContractSigners execution:', { roles });
+      return {
         roles,
         mode: 'collect',
         showBackButton: showBackButton ?? false,

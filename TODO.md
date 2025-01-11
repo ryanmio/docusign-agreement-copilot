@@ -68,30 +68,21 @@
 - [x] Implement "Get Template Tabs" tool
 - [x] Implement "Send Reminder" tool
 - [x] Implement math tool
-- [ ] Explore feasibility of "settings" tool including Docusign integration connections and disconnections
+- [x] Implement in-chat/embedded signing tool
+- [x] Implement memoization for markdown https://sdk.vercel.ai/cookbook/next/markdown-chatbot-with-memoization
+- [x] Implement document generation tool
+  - [x] Memoization of Markdown Generation
+  - [x] Make anchor tags white text or hide them somehow
+  - [x] System Instructions Enhancement
+  - [x] Confirmation Component
+  - [x] Investigate and fix duplicate key value warning
+  - [x] Error Handling Improvements
+  - [x] Documentation
+- [ ] Implement Connect/Disconnect tool
 - [ ] Implement "Memory" tool
 - [ ] Implement prepopulated search ability for template search tool
 - [ ] Implement pattern recognition tool
-      > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync with eSignature.
-- [ ] Implement in-chat/embedded signing tool
-      > ⚠️ ON HOLD: Technical blockers with Docusign SDK integration in Next.js. See [failure analysis report](agents/#12-failure-report.md) for details and next steps. Consider redirect flow as temporary alternative.
-- [ ] Implement document generation tool
-  - [ ] Add system prompt for contract generation to route.ts
-  - [ ] Create markdown preview component with editing capability
-  - [ ] Implement markdown to PDF conversion
-    - [ ] Research and select PDF conversion library
-    - [ ] Test anchor tag preservation
-    - [ ] Configure basic styling/formatting
-  - [ ] Create sendCustomEnvelope tool
-    - [ ] Implement markdown → PDF conversion
-    - [ ] Add envelope creation with anchor tabs
-    - [ ] Handle DocuSign API integration
-  - [ ] Add validation and error handling
-    - [ ] Verify anchor tags exist in final PDF
-    - [ ] Validate recipient role matching
-    - [ ] Add error messages for common failures
-- [ ] Implement memoization for markdown https://sdk.vercel.ai/cookbook/next/markdown-chatbot-with-memoization
-- [ ] Implement homepage like https://x.com/rauchg/status/1876306515285647802
+      > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync Navigatorwith eSignature.
 
 ## Phase 3.5: Navigator Integration 🧭
    > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync with eSignature.
@@ -120,6 +111,7 @@
   - [ ] Build AI insight display
 
 ## Phase 4: Polish & Submission (Week 4) ✨
+- [ ] Implement homepage like https://x.com/rauchg/status/1876306515285647802
 - [ ] Optimize conversation starters for productivity
 - [ ] Make the chat page the default view and home page once logged in
 - [ ] Make the design more beautiful
@@ -134,6 +126,7 @@
   - [ ] Fix bugs and issues
 - [ ] Check to make sure docusign doesnt have cap S ever
 - [ ] Create project logo
+- [ ] Add new chat button
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README

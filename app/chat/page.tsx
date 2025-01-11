@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { useChat, Message, UseChatHelpers } from 'ai/react';
+import { useChat, Message, UseChatHelpers, CreateMessage } from 'ai/react';
 import ReactMarkdown from 'react-markdown';
 import { DocumentView } from '@/components/document-view';
 import { BulkOperationView } from '@/components/bulk-operation-view';
@@ -28,6 +28,67 @@ interface ExtendedChatOptions {
   onFinish?: (message: Message) => void;
   onResponse?: (response: Response) => void;
   onToolCall?: (params: { toolCall: any }) => React.ReactNode;
+}
+
+function ContractPreviewTool({ 
+  result, 
+  toolCallId, 
+  onToolResult, 
+  onAppend 
+}: { 
+  result: any; 
+  toolCallId: string; 
+  onToolResult: (toolCallId: string, result: any) => Promise<void>;
+  onAppend: (message: Message | CreateMessage) => Promise<string | null | undefined>;
+}) {
+  const [currentMode, setCurrentMode] = React.useState(result.mode || 'preview');
+  const [currentMarkdown, setCurrentMarkdown] = React.useState(result.markdown);
+
+  if (!result?.markdown) {
+    return <div className="p-4 text-red-500">Error: No contract content generated</div>;
+  }
+
+  // Memoize callbacks to prevent re-renders
+  const handleEdit = React.useCallback(async (toolCallId: string) => {
+    console.log('Edit clicked, switching to edit mode');
+    setCurrentMode('edit');
+  }, []);
+
+  const handleConfirm = React.useCallback(async (toolCallId: string, markdown: string) => {
+    console.log('Confirm clicked with markdown:', markdown);
+    try {
+      setCurrentMode('preview');
+      setCurrentMarkdown(markdown);
+      await onToolResult(toolCallId, {
+        markdown,
+        mode: 'preview',
+        completed: true
+      });
+      await onAppend({
+        role: 'user',
+        content: 'The contract looks good. Please proceed with sending it.'
+      } as Message);
+    } catch (error) {
+      console.error('Failed to confirm contract:', error);
+    }
+  }, [onToolResult, onAppend]);
+
+  const handleBack = React.useCallback(async (toolCallId: string) => {
+    console.log('Back clicked, returning to preview mode');
+    setCurrentMode('preview');
+  }, []);
+
+  // Memoize the entire component to prevent re-renders during streaming
+  return React.useMemo(() => (
+    <MarkdownEditor
+      markdown={currentMarkdown}
+      mode={currentMode}
+      toolCallId={toolCallId}
+      onEdit={handleEdit}
+      onConfirm={handleConfirm}
+      onBack={handleBack}
+    />
+  ), [currentMarkdown, currentMode, toolCallId, handleEdit, handleConfirm, handleBack]);
 }
 
 export default function ChatPage() {
@@ -102,7 +163,7 @@ export default function ChatPage() {
     // Handle result state
     if (state === 'result') {
       switch (toolName) {
-        case 'collectRecipients':
+        case 'collectTemplateRecipients':
           if (!result?.roles) {
             return <div className="p-4 text-red-500">Error: Invalid form configuration</div>;
           }
@@ -124,9 +185,56 @@ export default function ChatPage() {
                   });
                 } catch (error) {
                   console.error('Failed to handle recipient submission:', error);
-                  // Basic error handling
                   await handleToolResult(toolCallId, {
                     error: error instanceof Error ? error.message : 'Failed to submit recipients'
+                  });
+                }
+              }}
+              onBack={async () => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    goBack: true,
+                    completed: true
+                  });
+                  await append({
+                    role: 'user',
+                    content: 'go back'
+                  });
+                } catch (error) {
+                  console.error('Failed to handle back action:', error);
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to go back'
+                  });
+                }
+              }}
+            />
+          );
+
+        case 'collectContractSigners':
+          if (!result?.roles) {
+            return <div className="p-4 text-red-500">Error: Invalid form configuration</div>;
+          }
+          return (
+            <RecipientForm 
+              roles={result.roles}
+              toolCallId={toolCallId}
+              onSubmit={async (recipients) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    recipients,
+                    completed: true
+                  });
+                  await append({
+                    role: 'user',
+                    content: `I've added the signers: ${recipients.map(r => 
+                      `${r.roleName}: ${r.name} (${r.email})`).join(', ')}. Please proceed with sending the contract.`
+                  });
+                } catch (error) {
+                  console.error('Failed to handle signer submission:', error);
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to submit signers'
                   });
                 }
               }}
@@ -186,6 +294,11 @@ export default function ChatPage() {
           return <DocumentView {...result} />;
 
         case 'sendTemplate':
+          return result?.success ? (
+            <EnvelopeSuccess envelopeId={result.envelopeId} />
+          ) : null;
+
+        case 'sendCustomEnvelope':
           return result?.success ? (
             <EnvelopeSuccess envelopeId={result.envelopeId} />
           ) : null;
@@ -324,49 +437,12 @@ export default function ChatPage() {
           );
 
         case 'displayContractPreview':
-          if (!result?.markdown) {
-            return <div className="p-4 text-red-500">Error: No contract content generated</div>;
-          }
           return (
-            <MarkdownEditor
-              markdown={result.markdown}
-              mode={result.mode || 'preview'}
+            <ContractPreviewTool
+              result={result}
               toolCallId={toolCallId}
-              onEdit={async (toolCallId) => {
-                try {
-                  await handleToolResult(toolCallId, {
-                    ...result,
-                    mode: 'edit'
-                  });
-                } catch (error) {
-                  console.error('Failed to switch to edit mode:', error);
-                }
-              }}
-              onConfirm={async (toolCallId, markdown) => {
-                try {
-                  await handleToolResult(toolCallId, {
-                    markdown,
-                    mode: 'preview',
-                    completed: true
-                  });
-                  await append({
-                    role: 'user',
-                    content: 'The contract looks good. Please proceed with sending it.'
-                  });
-                } catch (error) {
-                  console.error('Failed to confirm contract:', error);
-                }
-              }}
-              onBack={async (toolCallId) => {
-                try {
-                  await handleToolResult(toolCallId, {
-                    ...result,
-                    mode: 'preview'
-                  });
-                } catch (error) {
-                  console.error('Failed to go back:', error);
-                }
-              }}
+              onToolResult={handleToolResult}
+              onAppend={append}
             />
           );
 
