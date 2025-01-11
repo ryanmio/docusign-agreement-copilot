@@ -210,18 +210,22 @@ export class DocuSignEnvelopes {
       envelopeDefinition.templateId = args.templateId;
       envelopeDefinition.templateRoles = args.templateRoles?.map(role => ({
         ...role,
-        clientUserId: role.email,
-        embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN',
-        suppressEmails: true
+        ...(args.enableEmbeddedSigning ? {
+          clientUserId: role.email,
+          embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN',
+          suppressEmails: true
+        } : {})
       }));
     } else {
       if (args.recipients?.signers) {
         envelopeDefinition.recipients = {
           signers: args.recipients.signers.map((signer, index) => ({
             ...signer,
-            clientUserId: signer.email,
-            embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN',
-            suppressEmails: true,
+            ...(args.enableEmbeddedSigning ? {
+              clientUserId: signer.email,
+              embeddedRecipientStartURL: 'SIGN_AT_DOCUSIGN',
+              suppressEmails: true
+            } : {}),
             tabs: {
               signHereTabs: [{
                 anchorString: `<<SIGNER${index + 1}_HERE>>`,
