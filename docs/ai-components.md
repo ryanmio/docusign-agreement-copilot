@@ -608,6 +608,10 @@ sendCustomEnvelope: tool({
 - Email notification support
 - Error handling and validation
 - Database record creation
+- Real-time status tracking after sending
+- Recipient progress monitoring
+- Automatic status updates
+- Integration with EnvelopeSuccess component
 
 **Technical Details:**
 - Uses Puppeteer for PDF generation
@@ -627,8 +631,69 @@ Assistant: I'll collect the signer information...
 [CollectContractSigners component displays]
 
 User: [After filling in signers]
-Assistant: Great! I'll send the agreement now...
-[SendCustomEnvelope processes and confirms sending]
+Assistant: Great! Sending the agreement now...
+[SendCustomEnvelope processes the request]
+[EnvelopeSuccess component appears showing real-time status]
+
+User: Has anyone signed yet?
+Assistant: Let me check the status:
+[EnvelopeSuccess component shows current signing progress]
+```
+
+### EnvelopeSuccess
+
+A component that displays real-time status tracking for sent envelopes, including recipient progress.
+
+#### Tool Definition
+This component is used automatically after successful envelope creation by both `sendTemplate` and `sendCustomEnvelope` tools.
+
+#### Component Usage
+
+```tsx
+import { EnvelopeSuccess } from '@/components/envelope-success';
+
+// In your page component:
+{message.toolInvocations?.map(toolInvocation => {
+  const { toolName, toolCallId, state } = toolInvocation;
+
+  if (state === 'result' && (toolName === 'sendTemplate' || toolName === 'sendCustomEnvelope')) {
+    const { result } = toolInvocation;
+    if (result.success) {
+      return (
+        <div key={toolCallId}>
+          <EnvelopeSuccess envelopeId={result.envelopeId} />
+        </div>
+      );
+    }
+  }
+})}
+```
+
+**Features:**
+- Real-time status updates via polling
+- Success header with checkmark
+- Overall envelope status display
+- Individual recipient status tracking
+- Status-based color coding
+- Automatic updates until completion
+
+**Technical Details:**
+- Polls envelope status every 5 seconds
+- Stops polling on final states (completed, declined, voided)
+- Uses Supabase for real-time data
+- Integrates with DocuSign webhook updates
+- Proper error handling and loading states
+
+**Example Chat Interactions:**
+```
+User: Send the contract to alice@example.com
+Assistant: I'll generate and send the contract...
+[Contract generation and sending process]
+[EnvelopeSuccess component displays with real-time status]
+
+User: What's the status of that contract?
+Assistant: Here's the current status:
+[EnvelopeSuccess component shows latest state]
 ```
 
 ## Database Schema Dependencies

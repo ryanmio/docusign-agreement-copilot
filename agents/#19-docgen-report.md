@@ -47,6 +47,7 @@ We have successfully implemented AI-powered document generation with DocuSign in
 
 ### Immediate Improvements
 - Memoization of Markdown Generation
+- Make anchor tags white text or hide them somehow
 - System Instructions Enhancement
 - Confirmation Component
 - Error Handling Improvements
