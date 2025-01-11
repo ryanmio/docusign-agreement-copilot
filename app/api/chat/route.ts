@@ -112,9 +112,9 @@ export async function POST(req: Request) {
           5. Wait for the user to review and edit if needed
           - If user wants to edit, they will use the UI
           - When confirmed, the tool will return { completed: true, markdown: "edited content" }
-          - DO NOT proceed until user confirms
+          - DO NOT proceed until user confirms and the tool returns { completed: true }
           
-          6. After contract is confirmed:
+          6. After contract is confirmed (when { completed: true } is returned):
           - Say "Now I'll collect the signer information. Please fill in the form below:"
           - Call collectContractSigners with the roles array matching the number of signers
           - The form will return { completed: false } while waiting for submission
