@@ -78,6 +78,7 @@
   - [x] Investigate and fix duplicate key value warning
   - [x] Error Handling Improvements
   - [x] Documentation
+  - [ ] Imeplement pre-filled recipient name logic
 - [ ] Implement Connect/Disconnect tool
 - [ ] Implement "Memory" tool
 - [ ] Implement prepopulated search ability for template search tool
@@ -87,10 +88,10 @@
 ## Phase 3.5: Navigator Integration 🧭
    > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync with eSignature.
 - [ ] Core Setup
-  - [ ] Set up Navigator API authentication
-  - [ ] Implement NavigatorClient class
-  - [ ] Add error handling and retry logic
-  - [ ] Create test validation endpoint
+  - [x] Set up Navigator API authentication (added scopes to OAuth flow)
+  - [x] Implement NavigatorClient class (basic implementation with error handling)
+  - [x] Add error handling and retry logic
+  - [x] Create test validation endpoint
 
 - [ ] Priority Enhancement
   - [ ] Enhance Priority Dashboard with AI insights
@@ -118,13 +119,8 @@
   - [ ] Improve Chat UI
     - [x] Auto-Scroll to bottom
   - [ ] Style like Docusign
-- Restyle header
-- [ ] Testing & Optimization
-  - [ ] Perform security audit
-  - [ ] Optimize performance
-  - [ ] Conduct user testing
-  - [ ] Fix bugs and issues
-- [ ] Check to make sure docusign doesnt have cap S ever
+- [ ]Restyle header
+- [ ] Check to make sure "Docusign" doesnt have camel-case capital S
 - [ ] Create project logo
 - [ ] Add new chat button
 
