@@ -85,6 +85,7 @@ export async function POST(req: Request) {
           - Include all necessary sections (parties, terms, conditions, etc.)
           - Use appropriate legal language and structure
           - Include a signature section with DocuSign anchor tags
+          - IMPORTANT: DO NOT output the contract content in chat messages
           
           3. IMPORTANT - Signature Anchor Tags:
           - Use <<SIGNERn_HERE>> where n is the signer number (1-based)
@@ -106,11 +107,36 @@ export async function POST(req: Request) {
           4. Call displayContractPreview with these EXACT parameters:
           - markdown: The generated contract content
           - mode: "preview"
+          - Say "I've prepared a contract based on your requirements. Please review it below:"
           
           5. Wait for the user to review and edit if needed
-          - If user edits, they will use the UI
+          - If user wants to edit, they will use the UI
           - When confirmed, the tool will return { completed: true, markdown: "edited content" }
-         
+          - DO NOT proceed until user confirms
+          
+          6. After contract is confirmed:
+          - Say "Now I'll collect the signer information. Please fill in the form below:"
+          - Call collectContractSigners with the roles array matching the number of signers
+          - The form will return { completed: false } while waiting for submission
+          - DO NOT ask for information again or retry while completed is false
+          - When the form is submitted, it will return { completed: true, recipients: [...] }
+          - Only after completed: true, proceed to sending the envelope
+          - DO NOT try to collect signer info via chat
+          
+          7. After signers form is submitted:
+          - Show summary and ask for confirmation:
+            "I'll send this contract to:
+            - [Role 1]: [Name] ([Email])
+            - [Role 2]: [Name] ([Email])
+            Is this correct? Please confirm by saying 'send' or go back by saying 'edit signers'."
+          
+          8. Only after 'send' confirmation:
+          - Call sendCustomEnvelope with:
+            - markdown: the confirmed contract content
+            - recipients: the collected signer information
+          - Wait for success response
+          - DO NOT try to send without explicit confirmation
+
           When users want to sign a document:
           1. First try using the embedded signing view by calling signDocument
           2. Only if that fails (returns an error), provide the signing URL as a clickable link
@@ -145,7 +171,6 @@ export async function POST(req: Request) {
              - Say "Please fill in the recipient information in the form below."
              - Call collectTemplateRecipients with roles from previewTemplate
              - Wait for the form to be submitted (completed: true)
-             - DO NOT try to collect recipient info via chat
           
           4. After recipients form is submitted:
              - Call getTemplateTabs for each role
@@ -165,16 +190,6 @@ export async function POST(req: Request) {
           6. Only after 'send' confirmation:
              - Use sendTemplate with all collected info
           
-          For custom contracts:
-          1. After contract is confirmed in the editor:
-             - Say "Now I'll collect the signer information."
-             - Call collectContractSigners with the appropriate number of signers
-             - Wait for the form to be submitted
-             - DO NOT try to collect signer info via chat
-
-          2. After signers are collected:
-             - Call sendCustomEnvelope with the contract markdown and signer information
-
           IMPORTANT: Never try to collect recipient or signer information through chat messages. Always use the appropriate form tool.
           
           If a tool call fails, inform the user and suggest retrying or contacting support.`
@@ -909,20 +924,25 @@ export async function POST(req: Request) {
           }
         }),
         collectContractSigners: tool({
-          description: 'Collect signer information for a custom generated contract',
+          description: 'Collect signer information for a custom generated contract. Returns { completed: true, recipients: [...] } when form is submitted, { completed: false } while waiting.',
           parameters: z.object({
             roles: z.array(z.object({
               roleName: z.string().describe('The name of the role')
             })).describe('The roles needed to sign the contract (e.g. ["Employee", "Employer"])')
           }),
           execute: async ({ roles }) => {
-            console.log('Executing collectContractSigners:', { roles });
-            return {
+            console.log('Starting collectContractSigners execution:', { roles });
+            
+            // Return initial state to show form
+            const result = {
               roles,
               completed: false,
               goBack: false,
               recipients: []
             };
+            
+            console.log('Returning collectContractSigners result:', result);
+            return result;
           }
         }),
         sendCustomEnvelope: tool({

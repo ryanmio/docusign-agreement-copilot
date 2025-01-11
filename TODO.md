@@ -78,7 +78,7 @@
 - [ ] Implement document generation tool
   - [ ] Memoization of Markdown Generation
   - [x] Make anchor tags white text or hide them somehow
-  - [ ] System Instructions Enhancement
+  - [x] System Instructions Enhancement
   - [x] Confirmation Component
   - [ ] Error Handling Improvements
   - [x] Investigate and fix duplicate key value warning
