@@ -157,7 +157,7 @@ export default function ChatPage() {
     // Handle result state
     if (state === 'result') {
       switch (toolName) {
-        case 'collectRecipients':
+        case 'collectTemplateRecipients':
           if (!result?.roles) {
             return <div className="p-4 text-red-500">Error: Invalid form configuration</div>;
           }
@@ -179,9 +179,56 @@ export default function ChatPage() {
                   });
                 } catch (error) {
                   console.error('Failed to handle recipient submission:', error);
-                  // Basic error handling
                   await handleToolResult(toolCallId, {
                     error: error instanceof Error ? error.message : 'Failed to submit recipients'
+                  });
+                }
+              }}
+              onBack={async () => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    goBack: true,
+                    completed: true
+                  });
+                  await append({
+                    role: 'user',
+                    content: 'go back'
+                  });
+                } catch (error) {
+                  console.error('Failed to handle back action:', error);
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to go back'
+                  });
+                }
+              }}
+            />
+          );
+
+        case 'collectContractSigners':
+          if (!result?.roles) {
+            return <div className="p-4 text-red-500">Error: Invalid form configuration</div>;
+          }
+          return (
+            <RecipientForm 
+              roles={result.roles}
+              toolCallId={toolCallId}
+              onSubmit={async (recipients) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    recipients,
+                    completed: true
+                  });
+                  await append({
+                    role: 'user',
+                    content: `I've added the signers: ${recipients.map(r => 
+                      `${r.roleName}: ${r.name} (${r.email})`).join(', ')}. Please proceed with sending the contract.`
+                  });
+                } catch (error) {
+                  console.error('Failed to handle signer submission:', error);
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to submit signers'
                   });
                 }
               }}
