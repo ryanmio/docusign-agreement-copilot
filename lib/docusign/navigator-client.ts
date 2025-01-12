@@ -11,7 +11,7 @@ import { DocuSignClient } from './client';
  * 2. Wait for AI analysis to complete
  * 3. Access through Navigator API
  */
-interface NavigatorAgreement {
+export interface NavigatorAgreement {
   id: string;
   type: string;
   category: string;
@@ -214,5 +214,91 @@ export class NavigatorClient {
     }
 
     return analysis;
+  }
+
+  /**
+   * Transform agreements into timeline-friendly format
+   * Groups events by agreement and sorts them chronologically
+   */
+  async getTimelineData(userId: string, options: {
+    from_date: string;
+    to_date: string;
+  }): Promise<Array<{
+    id: string;
+    type: string;
+    category: string;
+    events: Array<{
+      type: 'execution' | 'effective' | 'expiration' | 'modification';
+      date: string;
+      label: string;
+    }>;
+    parties: Array<{
+      id: string;
+      name: string;
+    }>;
+    metadata: {
+      value?: string;
+      currency?: string;
+      jurisdiction?: string;
+    };
+  }>> {
+    const agreements = await this.getAgreements(userId, options);
+    const items = agreements.items || [];
+
+    return items.map(agreement => {
+      // Collect all valid dates
+      const events = [];
+
+      if (agreement.provisions?.execution_date) {
+        events.push({
+          type: 'execution',
+          date: agreement.provisions.execution_date,
+          label: 'Executed'
+        });
+      }
+
+      if (agreement.provisions?.effective_date) {
+        events.push({
+          type: 'effective',
+          date: agreement.provisions.effective_date,
+          label: 'Effective'
+        });
+      }
+
+      if (agreement.provisions?.expiration_date) {
+        events.push({
+          type: 'expiration',
+          date: agreement.provisions.expiration_date,
+          label: 'Expires'
+        });
+      }
+
+      if (agreement.metadata?.modified_at) {
+        events.push({
+          type: 'modification',
+          date: agreement.metadata.modified_at,
+          label: 'Modified'
+        });
+      }
+
+      // Sort events chronologically
+      events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      return {
+        id: agreement.id,
+        type: agreement.type,
+        category: agreement.category,
+        events,
+        parties: agreement.parties.map(p => ({
+          id: p.id,
+          name: p.name_in_agreement
+        })),
+        metadata: {
+          value: agreement.provisions?.annual_agreement_value,
+          currency: agreement.provisions?.annual_agreement_value_currency_code,
+          jurisdiction: agreement.provisions?.jurisdiction
+        }
+      };
+    });
   }
 } 
