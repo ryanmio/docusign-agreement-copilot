@@ -1,207 +1,350 @@
 # Navigator API Integration Plan
 
-## 1. Demo Integration Points
+## 1. Confirmed Data Structure
+Based on API validation, we have access to:
 
-### Step 1: "Morning Scramble" (0:15 - 0:45)
-- **Navigator Enhancement:** AI-powered agreement prioritization
-  ```typescript
-  // Use Navigator's AI to analyze agreement importance
-  interface AgreementPriority {
-    urgency: number;        // AI-determined urgency score
-    category: string;       // AI-classified agreement type
-    key_dates: {           // AI-extracted important dates
-      effective: string;
-      expiration: string;
-      review_needed: string;
-    };
-    ai_insights: {         // Navigator's AI analysis
-      risk_level: string;
-      attention_needed: boolean;
-      suggested_actions: string[];
-    };
-  }
-  ```
-
-### Step 2: "Bulk Vendor Renewals" (0:45 - 1:45)
-- **Navigator Enhancement:** Agreement pattern analysis
-  ```typescript
-  // Use Navigator to analyze common renewal patterns
-  interface RenewalPattern {
-    template_used: string;
-    typical_terms: {
-      price_increase: string;
-      renewal_period: string;
-    };
-    common_modifications: string[];
-    confidence_score: number;
-  }
-  ```
-
-### Step 3: "Tuesday Review" (1:45 - 2:45)
-- **Navigator Enhancement:** Historical pattern recognition
-  ```typescript
-  // Use Navigator to identify regular tasks
-  interface TaskPattern {
-    day_of_week: string;
-    recurring_tasks: {
-      task_type: string;
-      frequency: string;
-      last_performed: string;
-      agreements_involved: string[];
-    }[];
-    confidence_score: number;
-  }
-  ```
-
-### Step 4: "Employee Offboarding" (2:45 - 3:45)
-- **Navigator Enhancement:** Agreement relationship mapping
-  ```typescript
-  // Use Navigator to find related agreements
-  interface RelatedAgreements {
-    employee_id: string;
-    agreements: {
-      id: string;
-      type: string;
-      status: string;
-      requires_action: boolean;
-      ai_suggested_action: string;
-    }[];
-  }
-  ```
-
-### Step 5: "Proactive Support" (3:45 - 4:45)
-- **Navigator Enhancement:** Predictive insights
-  ```typescript
-  // Use Navigator for upcoming task prediction
-  interface PredictiveInsights {
-    upcoming_tasks: {
-      task_type: string;
-      due_date: string;
-      confidence: number;
-      suggested_preparation: string[];
-    }[];
-    policy_updates_needed: boolean;
-  }
-  ```
-
-## 2. Implementation Phases
-
-### Phase 1: Core Navigator Integration (Pre-Demo)
-1. **Navigator Client Setup**
-   - Authentication and token management
-   - Base API endpoint integration
-   - Error handling and retry logic
-
-2. **Data Models**
-   - Agreement priority scoring
-   - Pattern recognition structures
-   - Relationship mapping schemas
-
-3. **Basic Integration**
-   - Agreement fetching
-   - Basic pattern detection
-   - Simple AI insights
-
-### Phase 2: Demo Feature Enhancement
-1. **Priority Dashboard Enhancement**
-   - AI-powered urgency scoring
-   - Smart categorization
-   - Intelligent filtering
-
-2. **Pattern Recognition System**
-   - Tuesday task detection
-   - Renewal pattern analysis
-   - Employee agreement mapping
-
-3. **Predictive Features**
-   - Task forecasting
-   - Policy update detection
-   - Proactive notifications
-
-### Phase 3: Demo Polish
-1. **Performance Optimization**
-   - Response caching
-   - Batch processing
-   - Fallback strategies
-
-2. **UI/UX Enhancement**
-   - AI insight visualization
-   - Confidence indicators
-   - Pattern explanations
-
-## 3. Technical Implementation
-
-### Navigator Client Interface
+### Core Agreement Data
 ```typescript
-class NavigatorClient {
-  // Core Agreement Operations
-  async getAgreements(options: FetchOptions): Promise<Agreement[]>
-  async getAgreement(id: string): Promise<Agreement>
-  
-  // Pattern Analysis
-  async analyzeDayPatterns(day: string): Promise<TaskPattern>
-  async analyzeRenewalPatterns(): Promise<RenewalPattern[]>
-  
-  // AI Insights
-  async getPriorities(): Promise<AgreementPriority[]>
-  async getRelatedAgreements(entityId: string): Promise<RelatedAgreements>
-  async getPredictiveInsights(): Promise<PredictiveInsights>
+{
+  id: string;
+  file_name: string;
+  type: string;          // e.g., "ConfirmationOfRenewal"
+  category: string;      // e.g., "Miscellaneous"
+  status: string;        // e.g., "COMPLETE"
+  languages: string[];   // e.g., ["en"]
 }
 ```
 
-### Integration Points
+### Rich Metadata
+```typescript
+provisions: {
+  effective_date: string;
+  expiration_date: string;
+  execution_date: string;
+  term_length: string;          // e.g., "P1Y"
+  jurisdiction: string;         // e.g., "California"
+  annual_agreement_value: number;
+  annual_agreement_value_currency_code: string;
+  payment_terms_due_date: string;
+}
+
+parties: Array<{
+  id: string;
+  name_in_agreement: string;    // e.g., "GreenLeaf Analytics Inc."
+}>;
+
+metadata: {
+  created_at: string;
+  modified_at: string;
+  modified_by: string;
+}
+```
+
+## 2. Demo Features Implementation
+
+### 2.1 "Morning Scramble" (Priority Dashboard)
+- **Script Requirement**: Show urgent priorities including vendor renewals and offboarding documents
+- **Data Source**: 
+  - `provisions.expiration_date` for deadline tracking
+  - `annual_agreement_value` for financial impact
+  - `status` for agreement state
+- **Implementation**:
+  ```typescript
+  interface PriorityItem {
+    id: string;
+    daysUntilExpiration: number;
+    value: number;
+    parties: string[];
+    type: string;
+  }
+  ```
+- **Logic Flow**:
+  1. Fetch agreements with `expiration_date` within next 30 days
+  2. Sort by priority using weighted scoring:
+     ```typescript
+     function calculatePriority(agreement: NavigatorAgreement): number {
+       const daysUntilExpiration = calculateDays(agreement.provisions.expiration_date);
+       const financialImpact = agreement.provisions.annual_agreement_value;
+       const baseScore = (30 - daysUntilExpiration) * 10;  // More urgent as expiration approaches
+       const valueScore = Math.log10(financialImpact) * 5;  // Higher value = higher priority
+       return baseScore + valueScore;
+     }
+     ```
+  3. Group by urgency categories:
+     - Critical (< 3 days): Red highlighting
+     - Urgent (< 7 days): Orange highlighting
+     - Upcoming (< 30 days): Yellow highlighting
+  4. Display in EnvelopeList component with:
+     - Expiration countdown
+     - Financial value
+     - Party names from `parties` array
+     - Quick action buttons
+
+### 2.2 "Bulk Vendor Renewals"
+- **Script Requirement**: Handle vendor renewals with 5% increase using Tom's pattern
+- **Data Source**:
+  - `type: "ConfirmationOfRenewal"`
+  - `provisions.term_length`
+  - `provisions.annual_agreement_value`
+  - `parties` for vendor names
+- **Implementation**:
+  ```typescript
+  interface RenewalOperation {
+    vendorName: string;
+    currentValue: number;
+    suggestedIncrease: number;
+    newTermLength: string;
+  }
+  ```
+- **Logic Flow**:
+  1. Identify renewal candidates:
+     ```typescript
+     function findRenewalCandidates(): NavigatorAgreement[] {
+       return agreements.filter(a => 
+         a.type === "ConfirmationOfRenewal" &&
+         isWithinDays(a.provisions.expiration_date, 30) &&
+         !hasRenewalInProgress(a.parties)
+       );
+     }
+     ```
+  2. Calculate new terms:
+     ```typescript
+     function calculateRenewalTerms(agreement: NavigatorAgreement): RenewalOperation {
+       const currentValue = agreement.provisions.annual_agreement_value;
+       const vendorName = agreement.parties.find(p => p.name_in_agreement !== "AcmeCorp").name_in_agreement;
+       return {
+         vendorName,
+         currentValue,
+         suggestedIncrease: currentValue * 0.05,
+         newTermLength: agreement.provisions.term_length // Maintain same term
+       };
+     }
+     ```
+  3. Batch process renewals:
+     - Group by vendor
+     - Apply 5% increase
+     - Use term_length from original agreement
+     - Track progress in BulkOperationView
+
+### 2.3 "Tuesday Review Tasks"
+- **Script Requirement**: Show Tom's typical Tuesday pattern of handling vendor renewals
+- **Data Source**:
+  - `metadata.created_at` for identifying Tuesday patterns
+  - `type: "ConfirmationOfRenewal"` for identifying renewals
+  - `provisions.annual_agreement_value` for renewal values
+- **Implementation**:
+  ```typescript
+  interface TuesdayAnalysis {
+    renewalCount: number;
+    totalValue: number;
+    pendingRenewals: Array<{
+      vendorName: string;
+      currentValue: number;
+      expirationDate: string;
+    }>;
+  }
+  ```
+- **Logic Flow**:
+  1. Analyze Tuesday renewal patterns:
+     ```typescript
+     function analyzeTuesdayRenewals(): TuesdayAnalysis {
+       const tuesdayRenewals = agreements.filter(a => 
+         getDayOfWeek(a.metadata.created_at) === 'Tuesday' &&
+         a.type === "ConfirmationOfRenewal"
+       );
+       
+       return {
+         renewalCount: tuesdayRenewals.length,
+         totalValue: sumAgreementValues(tuesdayRenewals),
+         averageProcessingTime: calculateProcessingTime(tuesdayRenewals)
+       };
+     }
+     ```
+  2. Generate today's task list:
+     ```typescript
+     function generateTuesdayTasks(): TuesdayTasks {
+       const patterns = analyzeTuesdayRenewals();
+       const pendingRenewals = findPendingRenewals();
+       
+       return {
+         typicalRenewalCount: patterns.renewalCount,
+         pendingItems: pendingRenewals.map(r => ({
+           vendorName: r.parties[0].name_in_agreement,
+           currentValue: r.provisions.annual_agreement_value,
+           expirationDate: r.provisions.expiration_date
+         })),
+         suggestedActions: generateRenewalActions(pendingRenewals)
+       };
+     }
+     ```
+  3. Present focused renewal summary:
+     - Number of renewals typically handled on Tuesdays
+     - Today's pending renewal reviews
+     - Suggested renewal actions with 5% increase calculations
+
+### 2.4 "Employee Transition" (Sarah's Offboarding)
+- **Script Requirement**: Find all agreements related to Sarah and handle offboarding
+- **Data Source**:
+  - `parties.name_in_agreement` for relationship mapping
+  - `type` and `category` for agreement classification
+  - `provisions` for obligation tracking
+- **Implementation**:
+  ```typescript
+  interface PartyAgreements {
+    partyName: string;
+    activeAgreements: number;
+    totalValue: number;
+    jurisdictions: string[];
+  }
+  ```
+- **Logic Flow**:
+  1. Find related agreements:
+     ```typescript
+     function findEmployeeAgreements(employeeName: string): EmployeeAgreements {
+       const relatedAgreements = agreements.filter(a =>
+         a.parties.some(p => 
+           p.name_in_agreement.toLowerCase().includes(employeeName.toLowerCase())
+         )
+       );
+
+       return {
+         active: groupByStatus(relatedAgreements),
+         byType: categorizeAgreements(relatedAgreements),
+         obligations: extractObligations(relatedAgreements)
+       };
+     }
+     ```
+  2. Categorize agreements:
+     ```typescript
+     function categorizeForOffboarding(agreements: NavigatorAgreement[]): OffboardingTasks {
+       return {
+         ndas: findAgreementsByType(agreements, 'NDA'),
+         ipAgreements: findAgreementsByType(agreements, 'IP'),
+         vendorAccounts: findAgreementsByType(agreements, 'VendorAccess'),
+         requiredActions: generateRequiredActions(agreements)
+       };
+     }
+     ```
+  3. Generate task list:
+     - Required signatures
+     - Account terminations
+     - Document transfers
+     - Compliance checklist
+
+### 2.5 "Proactive Support"
+- **Script Requirement**: Show upcoming deadlines and pending tasks
+- **Data Source**:
+  - All agreement metadata
+   - Historical patterns
+  - Upcoming deadlines
+- **Logic Flow**:
+  1. Analyze upcoming events:
+     ```typescript
+     function findUpcomingEvents(): ProactiveAlerts {
+       return {
+         expirations: findUpcomingExpirations(),
+         reviews: findScheduledReviews(),
+         renewals: findPendingRenewals(),
+         patterns: detectRelevantPatterns()
+       };
+     }
+     ```
+  2. Generate suggestions:
+     ```typescript
+     function generateSuggestions(): ActionItems[] {
+       const events = findUpcomingEvents();
+       return [
+         ...generateRenewalSuggestions(events.renewals),
+         ...generateReviewReminders(events.reviews),
+         ...generateComplianceAlerts(events.expirations)
+       ].sort(byPriority);
+     }
+     ```
+  3. Present proactive notifications:
+     - Upcoming deadlines
+     - Required preparations
+     - Suggested actions
+     - Quick action buttons
+
+## 3. Implementation Phases
+
+### Phase 1: Core Integration (Week 1)
+1. **Navigator Client Enhancement**
+   - Implement robust error handling
+   - Add rate limiting protection
+   - Cache frequently accessed data
+
+2. **Data Models & Interfaces**
+   - Create TypeScript interfaces for all data structures
+   - Implement data validation and transformation
+
+3. **Basic Pattern Detection**
+   - Time-based patterns using metadata
+   - Value-based patterns using provisions
+   - Geographic patterns using jurisdiction
+
+### Phase 2: Feature Implementation (Week 2)
 1. **Priority Dashboard**
-   - Integrate AI-powered prioritization
-   - Show confidence scores
-   - Display AI insights
+   - Real-time expiration tracking
+   - Financial impact visualization
+   - Party relationship mapping
 
-2. **Pattern Display**
-   - Visualize recurring patterns
-   - Show relationship maps
-   - Present predictive insights
+2. **Bulk Operations**
+   - Vendor renewal workflow
+   - Batch processing interface
+   - Progress tracking
 
-3. **Chat Interface**
-   - Enhance responses with AI insights
-   - Add predictive suggestions
-   - Include confidence indicators
+3. **Pattern Analysis**
+   - Day-of-week analytics
+   - Value trend analysis
+   - Geographic distribution
 
-## 4. Demo Success Criteria
+### Phase 3: Demo Polish (Week 3)
+1. **UI/UX Enhancement**
+   - Responsive design
+   - Loading states
+   - Error handling
 
-### Technical Requirements
-- Navigator API response time < 500ms
-- 95% pattern detection accuracy
-- Reliable fallback mechanisms
+2. **Performance Optimization**
+   - Response caching
+   - Batch processing
+   - Lazy loading
 
-### User Experience
-- Clear AI insight presentation
-- Intuitive pattern visualization
-- Smooth demo flow transitions
+3. **Demo Preparation**
+   - Test data setup
+   - Fallback scenarios
+   - Documentation
 
-### Demo Impact
-- Highlight AI capabilities
-- Demonstrate pattern accuracy
-- Show proactive features
+## 4. Success Metrics
+- Response time < 200ms for priority dashboard
+- 100% accuracy in expiration tracking
+- Zero errors in bulk operations
+- Reliable pattern detection with confidence scores
 
-## 5. Fallback Strategy
+## 5. Technical Requirements
+- TypeScript for type safety
+- React for UI components
+- Next.js API routes for backend
+- Supabase for data persistence
 
-### API Issues
-- Cache critical patterns
-- Use basic sorting for priorities
-- Maintain core functionality
+## 6. Error Handling Strategy
+1. **API Errors**
+   - Rate limiting
+   - Authentication failures
+   - Network issues
 
-### Performance
-- Implement request queuing
-- Use optimistic updates
-- Maintain responsive UI
+2. **Data Validation**
+   - Missing required fields
+   - Invalid date formats
+   - Inconsistent data
 
-## 6. Post-Demo Enhancement
+3. **Fallback Behavior**
+   - Cached data display
+   - Graceful degradation
+   - User notifications
 
-### Feature Expansion
-- Advanced pattern detection
-- More AI-powered insights
-- Enhanced prediction accuracy
-
-### Integration Depth
-- Deeper Navigator API usage
-- More complex pattern analysis
-- Richer AI insights 
+## 7. Monitoring & Logging
+- API response times
+- Error rates
+- Pattern detection accuracy
+- User interaction metrics 
