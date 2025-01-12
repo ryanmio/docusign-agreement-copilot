@@ -37,8 +37,6 @@ export interface NavigatorAgreement {
 export class NavigatorClient {
   private docuSignClient: DocuSignClient;
   public navigatorBasePath: string;
-  public accountId?: string;
-  public accessToken?: string;
 
   constructor(supabase: SupabaseClient) {
     this.docuSignClient = new DocuSignClient(supabase);
@@ -64,35 +62,33 @@ export class NavigatorClient {
     to_date?: string;
     agreement_type?: string;
   }) {
-    const client = await this.docuSignClient.getClient(userId);
-    this.accountId = client.accountId;
-    
-    // Safely extract token from Authorization header
-    const authHeader = Object.entries(client.headers)
-      .find(([key]) => key.toLowerCase() === 'authorization')?.[1];
-    this.accessToken = authHeader?.toString().split(' ')[1];
-    
+    // Get a valid token using DocuSignClient's token management
+    const token = await this.docuSignClient.getValidToken(userId);
+    const userInfo = await this.docuSignClient.getUserInfo(userId);
+    const accountId = userInfo.accounts.find(a => a.is_default)?.account_id || userInfo.accounts[0]?.account_id;
+
+    if (!accountId) {
+      throw new Error('No DocuSign account found');
+    }
+
     const queryParams = new URLSearchParams();
-    
     if (options?.from_date) queryParams.append('from_date', options.from_date);
     if (options?.to_date) queryParams.append('to_date', options.to_date);
     if (options?.agreement_type) queryParams.append('agreement_type', options.agreement_type);
 
     console.log('🔍 Debug: Making Navigator API request:', {
-      url: `${this.navigatorBasePath}/v1/accounts/${client.accountId}/agreements?${queryParams}`,
-      hasToken: !!this.accessToken,
-      headers: {
-        ...client.headers,
-        'Accept': 'application/json'
-      }
+      url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
+      hasToken: !!token,
+      tokenPrefix: token ? token.substring(0, 10) + '...' : 'none',
+      accountId
     });
 
     try {
       const response = await fetch(
-        `${this.navigatorBasePath}/v1/accounts/${client.accountId}/agreements?${queryParams}`,
+        `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
         {
           headers: {
-            ...client.headers,
+            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
         }
@@ -104,9 +100,13 @@ export class NavigatorClient {
           status: response.status,
           statusText: response.statusText,
           error: errorText,
-          url: `${this.navigatorBasePath}/v1/accounts/${client.accountId}/agreements?${queryParams}`,
-          headers: client.headers
+          url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
         });
+        
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please reconnect DocuSign to refresh your token.');
+        }
+        
         throw new Error(`Failed to get agreements from Navigator API: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
@@ -117,7 +117,7 @@ export class NavigatorClient {
         data,
         responseStatus: response.status,
         headers: Object.fromEntries(response.headers.entries()),
-        endpoint: `${this.navigatorBasePath}/v1/accounts/${client.accountId}/agreements?${queryParams}`
+        endpoint: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`
       });
       
       // Handle response where agreements are in data.data
@@ -140,21 +140,26 @@ export class NavigatorClient {
     } catch (error) {
       console.error('Navigator API fetch error:', {
         error,
-        url: `${this.navigatorBasePath}/v1/accounts/${client.accountId}/agreements?${queryParams}`,
-        headers: client.headers
+        url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
       });
       throw error;
     }
   }
 
   async getAgreement(userId: string, agreementId: string) {
-    const client = await this.docuSignClient.getClient(userId);
+    const token = await this.docuSignClient.getValidToken(userId);
+    const userInfo = await this.docuSignClient.getUserInfo(userId);
+    const accountId = userInfo.accounts.find(a => a.is_default)?.account_id || userInfo.accounts[0]?.account_id;
+
+    if (!accountId) {
+      throw new Error('No DocuSign account found');
+    }
 
     const response = await fetch(
-      `${this.navigatorBasePath}/v1/accounts/${client.accountId}/agreements/${agreementId}`,
+      `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements/${agreementId}`,
       {
         headers: {
-          ...client.headers,
+          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       }
@@ -214,91 +219,5 @@ export class NavigatorClient {
     }
 
     return analysis;
-  }
-
-  /**
-   * Transform agreements into timeline-friendly format
-   * Groups events by agreement and sorts them chronologically
-   */
-  async getTimelineData(userId: string, options: {
-    from_date: string;
-    to_date: string;
-  }): Promise<Array<{
-    id: string;
-    type: string;
-    category: string;
-    events: Array<{
-      type: 'execution' | 'effective' | 'expiration' | 'modification';
-      date: string;
-      label: string;
-    }>;
-    parties: Array<{
-      id: string;
-      name: string;
-    }>;
-    metadata: {
-      value?: string;
-      currency?: string;
-      jurisdiction?: string;
-    };
-  }>> {
-    const agreements = await this.getAgreements(userId, options);
-    const items = agreements.items || [];
-
-    return items.map(agreement => {
-      // Collect all valid dates
-      const events = [];
-
-      if (agreement.provisions?.execution_date) {
-        events.push({
-          type: 'execution',
-          date: agreement.provisions.execution_date,
-          label: 'Executed'
-        });
-      }
-
-      if (agreement.provisions?.effective_date) {
-        events.push({
-          type: 'effective',
-          date: agreement.provisions.effective_date,
-          label: 'Effective'
-        });
-      }
-
-      if (agreement.provisions?.expiration_date) {
-        events.push({
-          type: 'expiration',
-          date: agreement.provisions.expiration_date,
-          label: 'Expires'
-        });
-      }
-
-      if (agreement.metadata?.modified_at) {
-        events.push({
-          type: 'modification',
-          date: agreement.metadata.modified_at,
-          label: 'Modified'
-        });
-      }
-
-      // Sort events chronologically
-      events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      return {
-        id: agreement.id,
-        type: agreement.type,
-        category: agreement.category,
-        events,
-        parties: agreement.parties.map(p => ({
-          id: p.id,
-          name: p.name_in_agreement
-        })),
-        metadata: {
-          value: agreement.provisions?.annual_agreement_value,
-          currency: agreement.provisions?.annual_agreement_value_currency_code,
-          jurisdiction: agreement.provisions?.jurisdiction
-        }
-      };
-    });
   }
 } 
