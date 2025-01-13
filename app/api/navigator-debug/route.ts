@@ -86,9 +86,8 @@ export async function GET() {
           ? 'Navigator is working and found agreements'
           : 'Navigator is working but no agreements found - try uploading some documents',
         debug: {
-          accountId: navigatorClient.accountId,
           baseUrl: navigatorClient.navigatorBasePath,
-          hasValidToken: !!navigatorClient.accessToken
+          timestamp: new Date().toISOString()
         }
       },
       dataValidation,

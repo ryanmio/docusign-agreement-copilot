@@ -20,6 +20,7 @@ import { ConversationStarters } from '@/components/conversation-starters';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { MarkdownEditor } from '@/components/markdown-editor';
+import { NavigatorAnalysis } from '@/components/navigator-analysis';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -443,6 +444,30 @@ export default function ChatPage() {
               toolCallId={toolCallId}
               onToolResult={handleToolResult}
               onAppend={append}
+            />
+          );
+
+        case 'navigatorAnalysis':
+          return (
+            <NavigatorAnalysis
+              toolCallId={toolCallId}
+              query={result.query}
+              apiCall={result.apiCall}
+              result={result.result}
+              isDebug={result.isDebug}
+              onComplete={async (analysisResult) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    completed: true
+                  });
+                } catch (error) {
+                  console.error('Failed to handle analysis completion:', error);
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to complete analysis'
+                  });
+                }
+              }}
             />
           );
 
