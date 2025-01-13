@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AgreementList } from './agreement-list';
@@ -56,12 +56,18 @@ export function NavigatorAnalysis({
   onComplete
 }: NavigatorAnalysisProps) {
   const [isLoading, setIsLoading] = useState(!result);
+  const [accordionValue, setAccordionValue] = useState<string>("filters");
   const [filters, setFilters] = useState<FilterState>({
     partyName: '',
     type: '',
     category: '',
     jurisdiction: ''
   });
+
+  // Add refs for inputs that need focus management
+  const partyNameRef = useRef<HTMLInputElement>(null);
+  const minValueRef = useRef<HTMLInputElement>(null);
+  const maxValueRef = useRef<HTMLInputElement>(null);
 
   // Get unique values for dropdowns
   const uniqueValues = useMemo(() => {
@@ -95,8 +101,8 @@ export function NavigatorAnalysis({
     return result.result.agreements.filter(agreement => {
       const matchesParty = !filters.partyName || 
         agreement.parties.some((p: any) => {
-          if (typeof p !== 'string') return false;
-          return p.toLowerCase().includes(filters.partyName.toLowerCase());
+          if (!p.name_in_agreement) return false;
+          return p.name_in_agreement.toLowerCase().includes(filters.partyName.toLowerCase());
         });
       
       const matchesType = !filters.type || 
@@ -109,8 +115,9 @@ export function NavigatorAnalysis({
         (agreement.provisions?.jurisdiction && 
          String(agreement.provisions.jurisdiction).toLowerCase() === filters.jurisdiction.toLowerCase());
       
-      const matchesValue = (!filters.minValue || agreement.provisions?.annual_agreement_value >= filters.minValue) &&
-        (!filters.maxValue || agreement.provisions?.annual_agreement_value <= filters.maxValue);
+      const annualValue = agreement.provisions?.annual_agreement_value;
+      const matchesValue = (!filters.minValue || (annualValue !== undefined && annualValue >= filters.minValue)) &&
+        (!filters.maxValue || (annualValue !== undefined && annualValue <= filters.maxValue));
       
       return matchesParty && matchesType && matchesCategory && 
         matchesJurisdiction && matchesValue;
@@ -127,8 +134,37 @@ export function NavigatorAnalysis({
       filters.maxValue
     ].filter(Boolean).length;
 
+    const handleInputClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+    };
+
+    const handleInputChange = (
+      e: React.ChangeEvent<HTMLInputElement>,
+      field: keyof FilterState,
+      ref: React.RefObject<HTMLInputElement>
+    ) => {
+      e.stopPropagation();
+      const value = e.target.value;
+      setFilters(f => ({ 
+        ...f, 
+        [field]: field === 'minValue' || field === 'maxValue' 
+          ? (value ? Number(value) : undefined)
+          : value 
+      }));
+      // Maintain focus after state update
+      setTimeout(() => {
+        ref.current?.focus();
+      }, 0);
+    };
+
     return (
-      <Accordion type="single" collapsible className="mb-6 bg-gray-50 rounded-lg">
+      <Accordion 
+        type="single" 
+        collapsible 
+        className="mb-6 bg-gray-50 rounded-lg"
+        value={accordionValue}
+        onValueChange={setAccordionValue}
+      >
         <AccordionItem value="filters" className="border-none">
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
             <div className="flex items-center gap-2">
@@ -146,15 +182,16 @@ export function NavigatorAnalysis({
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
-            <div className="space-y-4">
+            <div className="space-y-4" onClick={handleInputClick}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div key="party-name">
                   <Label htmlFor="party-name">Party Name</Label>
                   <Input
                     id="party-name"
+                    ref={partyNameRef}
                     placeholder="Search parties..."
                     value={filters.partyName}
-                    onChange={e => setFilters(f => ({ ...f, partyName: e.target.value }))}
+                    onChange={e => handleInputChange(e, 'partyName', partyNameRef)}
                   />
                 </div>
                 
@@ -207,10 +244,11 @@ export function NavigatorAnalysis({
                   <Label htmlFor="min-value">Min Annual Value</Label>
                   <Input
                     id="min-value"
+                    ref={minValueRef}
                     type="number"
                     placeholder="Min value..."
                     value={filters.minValue || ''}
-                    onChange={e => setFilters(f => ({ ...f, minValue: e.target.value ? Number(e.target.value) : undefined }))}
+                    onChange={e => handleInputChange(e, 'minValue', minValueRef)}
                   />
                 </div>
                 
@@ -218,10 +256,11 @@ export function NavigatorAnalysis({
                   <Label htmlFor="max-value">Max Annual Value</Label>
                   <Input
                     id="max-value"
+                    ref={maxValueRef}
                     type="number"
                     placeholder="Max value..."
                     value={filters.maxValue || ''}
-                    onChange={e => setFilters(f => ({ ...f, maxValue: e.target.value ? Number(e.target.value) : undefined }))}
+                    onChange={e => handleInputChange(e, 'maxValue', maxValueRef)}
                   />
                 </div>
               </div>
@@ -230,12 +269,15 @@ export function NavigatorAnalysis({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setFilters({
-                    partyName: '',
-                    type: '',
-                    category: '',
-                    jurisdiction: ''
-                  })}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFilters({
+                      partyName: '',
+                      type: '',
+                      category: '',
+                      jurisdiction: ''
+                    });
+                  }}
                   className="text-sm"
                 >
                   Clear Filters
