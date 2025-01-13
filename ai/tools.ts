@@ -511,7 +511,7 @@ export const tools = {
       }).optional(),
       isDebug: z.boolean().optional().describe('Whether to show debug information')
     }),
-    execute: async ({ query, filters, isDebug = false }) => {
+    execute: async ({ query, filters, isDebug = false }: { query: string; filters?: Record<string, any>; isDebug?: boolean }) => {
       const supabase = createClientComponentClient();
       const { data: { user } } = await supabase.auth.getUser();
       
