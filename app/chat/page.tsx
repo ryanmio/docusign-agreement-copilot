@@ -294,6 +294,13 @@ export default function ChatPage() {
         case 'displayDocumentDetails':
           return <DocumentView {...result} />;
 
+        case 'displayPdfViewer':
+          return (
+            <div className="h-[750px] border border-gray-300 rounded-lg">
+              <PDFViewer {...result} />
+            </div>
+          );
+
         case 'sendTemplate':
           return result?.success ? (
             <EnvelopeSuccess envelopeId={result.envelopeId} />
