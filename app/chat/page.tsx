@@ -114,6 +114,13 @@ export default function ChatPage() {
     }
   } as ExtendedChatOptions);
 
+  const handleEnvelopeClick = useCallback((envelopeId: string) => {
+    const message = `Tell me about envelope ${envelopeId}`;
+    handleInputChange({ target: { value: message } } as React.ChangeEvent<HTMLInputElement>);
+    const event = { preventDefault: () => {} } as React.FormEvent<HTMLFormElement>;
+    handleSubmit(event);
+  }, [handleSubmit, handleInputChange]);
+
   const handleToolResult = async (toolCallId: string, result: any) => {
     try {
       await addToolResult({
@@ -297,7 +304,21 @@ export default function ChatPage() {
         case 'displayPdfViewer':
           return (
             <div className="h-[750px] border border-gray-300 rounded-lg">
-              <PDFViewer {...result} />
+              <PDFViewer {...toolInvocation.result} />
+            </div>
+          );
+
+        case 'displayBulkOperation':
+          return (
+            <div key={toolInvocation.toolCallId}>
+              <BulkOperationView {...toolInvocation.result} />
+            </div>
+          );
+
+        case 'displayEnvelopeList':
+          return (
+            <div key={toolInvocation.toolCallId}>
+              <EnvelopeList {...toolInvocation.result} onEnvelopeClick={handleEnvelopeClick} />
             </div>
           );
 
