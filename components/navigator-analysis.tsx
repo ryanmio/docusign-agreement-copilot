@@ -56,7 +56,7 @@ export function NavigatorAnalysis({
   onComplete
 }: NavigatorAnalysisProps) {
   const [isLoading, setIsLoading] = useState(!result);
-  const [accordionValue, setAccordionValue] = useState<string>("filters");
+  const [accordionValue, setAccordionValue] = useState<string>("");
   const [filters, setFilters] = useState<FilterState>({
     partyName: '',
     type: '',
@@ -165,7 +165,7 @@ export function NavigatorAnalysis({
         value={accordionValue}
         onValueChange={setAccordionValue}
       >
-        <AccordionItem value="filters" className="border-none">
+        <AccordionItem value="filters">
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Filter Results</span>
