@@ -97,26 +97,15 @@
   - [x] Create test validation endpoint
 
 - [ ] Data Integration
-  - [ ] Create Navigator data models and types
-  - [ ] Implement agreement fetching and caching
-  - [ ] Add AI insight extraction helpers
-  - [ ] Set up real-time sync listeners
-  - [ ] Implement fallback mechanisms for API issues
+  - [x] Create Navigator data models and types
+  - [x] Implement agreement fetching and caching
+  - [x] Add AI insight extraction helpers
 
 - [ ] Priority Enhancement
   - [ ] Enhance Priority Dashboard with AI insights
-    - [ ] Add AI urgency indicators
-    - [ ] Display confidence scores
-    - [ ] Show key dates from Navigator
   - [ ] Add agreement urgency scoring
     - [ ] Implement scoring algorithm using Navigator data
     - [ ] Add visual urgency indicators
-  - [ ] Implement smart categorization
-    - [ ] Use Navigator's AI categories
-    - [ ] Add category filtering
-  - [ ] Add confidence indicators
-    - [ ] Show AI confidence levels
-    - [ ] Add manual override options
 
 - [ ] Pattern Recognition
   - [ ] Implement Tuesday task detection
@@ -128,9 +117,7 @@
   - [ ] Create employee agreement mapping
     - [ ] Build relationship graph
     - [ ] Add filtering by employee
-  - [ ] Build relationship visualization
-    - [ ] Create interactive graph view
-    - [ ] Add drill-down capabilities
+  - [ ] Build timeline view or other visualizations
 
 - [ ] Predictive Features
   - [ ] Implement task forecasting
@@ -139,13 +126,8 @@
   - [ ] Add policy update detection
     - [ ] Implement change detection
     - [ ] Add notification system
-  - [ ] Create proactive notifications
-    - [ ] Set up notification triggers
-    - [ ] Add user preferences
   - [ ] Build AI insight display
     - [ ] Create insight dashboard
-    - [ ] Add filtering options
-    - [ ] Implement refresh mechanism
 
 - [ ] Testing & Validation
   - [ ] Create test suite for Navigator features
