@@ -94,7 +94,22 @@ function ContractPreviewTool({
 
 export default function ChatPage() {
   const { toast } = useToast();
-  const [messagesContainerRef, messagesEndRef] = useScrollToBottom<HTMLDivElement>();
+  const [messagesContainerRef, messagesEndRef, scrollToBottom] = useScrollToBottom<HTMLDivElement>();
+  const [showScrollButton, setShowScrollButton] = React.useState(false);
+
+  // Add scroll listener to show/hide button
+  React.useEffect(() => {
+    const handleScroll = () => {
+      // Show button when not at bottom (with a small threshold)
+      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
+      setShowScrollButton(!isAtBottom);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Check initial scroll position
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const { messages, input, handleInputChange, handleSubmit, append, addToolResult, isLoading } = useChat({
     maxSteps: 5,
@@ -552,6 +567,29 @@ export default function ChatPage() {
 
           <div ref={messagesEndRef} className="h-1" />
         </div>
+
+        {showScrollButton && (
+          <button
+            onClick={scrollToBottom}
+            className="fixed bottom-24 right-8 bg-white/80 backdrop-blur-sm shadow-lg rounded-full p-2 hover:bg-gray-100 transition-all duration-200 border border-gray-200"
+            aria-label="Scroll to bottom"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              className="text-gray-600"
+            >
+              <path d="M12 19V5M5 12l7 7 7-7"/>
+            </svg>
+          </button>
+        )}
 
         <form onSubmit={handleSubmit} className="flex gap-4">
           <input
