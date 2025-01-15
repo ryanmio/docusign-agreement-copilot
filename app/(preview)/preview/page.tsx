@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { TemplateSelector } from '@/components/template-selector';
+import { TemplateSelectorPreview } from '@/components/preview/template-selector';
 import { PriorityDashboard } from '@/components/priority-dashboard';
 import { TemplatePreview } from '@/components/template-preview';
 import { RecipientForm } from '@/components/recipient-form';
@@ -115,7 +116,7 @@ export default function PreviewPage() {
             }
           ]}
         >
-          <TemplateSelector
+          <TemplateSelectorPreview
             value={mockTemplates[0].templateId}
             onChange={(value) => console.log('Selected template:', value)}
           />
