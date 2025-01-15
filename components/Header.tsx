@@ -4,6 +4,13 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Session } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { Menu } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header({ session }: { session: Session | null }) {
   const router = useRouter();
@@ -25,19 +32,28 @@ export default function Header({ session }: { session: Session | null }) {
           Agreement Copilot
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center">
           {session ? (
-            <>
-              <span className="text-sm text-gray-600">
-                {session.user.email}
-              </span>
-              <button
-                onClick={handleSignOut}
-                className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md text-sm"
-              >
-                Sign Out
-              </button>
-            </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-2 hover:bg-gray-100 rounded-md">
+                  <Menu className="h-5 w-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-white shadow-lg border rounded-md">
+                <div className="px-2 py-1.5 text-sm text-gray-600 border-b">
+                  {session.user.email}
+                </div>
+                <DropdownMenuItem asChild className="focus:bg-gray-50">
+                  <Link href="/settings">
+                    Docusign Integration
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut} className="focus:bg-gray-50">
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Link
               href="/auth/login"
