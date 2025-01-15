@@ -7,8 +7,8 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient({ req, res });
   const { data: { session } } = await supabase.auth.getSession();
 
-  // Allow homepage access without auth
-  if (req.nextUrl.pathname === '/') {
+  // Allow homepage and preview page access without auth
+  if (req.nextUrl.pathname === '/' || req.nextUrl.pathname === '/preview') {
     return res;
   }
 
