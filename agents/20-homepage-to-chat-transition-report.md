@@ -19,7 +19,9 @@ This approach:
 
 ### 2. Component Updates
 
-#### SearchInput Component
+#### ChatEntryInput Component
+The main entry point for starting conversations on the homepage. This component simulates the chat interface's input field, providing a seamless transition from homepage to chat.
+
 ```typescript
 const handleSubmit = () => {
   if (!message.trim() || isLoading) return;
@@ -27,6 +29,7 @@ const handleSubmit = () => {
   router.push(`/chat?message=${encodeURIComponent(message.trim())}`);
 };
 ```
+- Simulates chat interface on homepage
 - Captures user input
 - Handles both Enter key and button click
 - Shows loading state during transition
