@@ -3,12 +3,14 @@
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { TemplateSelector } from '@/components/template-selector';
+import { TemplateSelectorPreview } from '@/components/preview/template-selector';
 import { PriorityDashboard } from '@/components/priority-dashboard';
 import { TemplatePreview } from '@/components/template-preview';
 import { RecipientForm } from '@/components/recipient-form';
 import PDFViewer from '@/components/pdf-viewer';
 import { MathResult } from '@/components/math-result';
 import { BulkOperationsList } from '@/components/bulk-operations-list';
+import { BulkOperationsListPreview } from '@/components/preview/bulk-operations-list';
 import {
   mockTemplates,
   mockPriorityDashboard,
@@ -73,6 +75,7 @@ function ComponentSection({
 
 export default function PreviewPage() {
   const [editorMode, setEditorMode] = useState<'preview' | 'edit'>('preview');
+  const [selectedTemplate, setSelectedTemplate] = useState('');
 
   return (
     <div className="divide-y divide-[#CBC2FF]/30 px-8">
@@ -115,9 +118,9 @@ export default function PreviewPage() {
             }
           ]}
         >
-          <TemplateSelector
-            value={mockTemplates[0].templateId}
-            onChange={(value) => console.log('Selected template:', value)}
+          <TemplateSelectorPreview
+            value={selectedTemplate}
+            onChange={setSelectedTemplate}
           />
         </ComponentSection>
       </div>
@@ -378,12 +381,12 @@ export default function PreviewPage() {
             {
               name: '-',
               type: '-',
-              description: 'No props required - Fetches data internally',
+              description: 'No props required - Uses mock data internally',
               required: false
             }
           ]}
         >
-          <BulkOperationsList />
+          <BulkOperationsListPreview />
         </ComponentSection>
       </div>
 

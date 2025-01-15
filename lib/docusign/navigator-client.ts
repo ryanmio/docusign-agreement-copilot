@@ -11,7 +11,7 @@ import { DocuSignClient } from './client';
  * 2. Wait for AI analysis to complete
  * 3. Access through Navigator API
  */
-interface NavigatorAgreement {
+export interface NavigatorAgreement {
   id: string;
   type: string;
   category: string;
@@ -36,7 +36,7 @@ interface NavigatorAgreement {
 
 export class NavigatorClient {
   private docuSignClient: DocuSignClient;
-  private navigatorBasePath: string;
+  public navigatorBasePath: string;
 
   constructor(supabase: SupabaseClient) {
     this.docuSignClient = new DocuSignClient(supabase);
@@ -62,51 +62,104 @@ export class NavigatorClient {
     to_date?: string;
     agreement_type?: string;
   }) {
-    const client = await this.docuSignClient.getClient(userId);
+    // Get a valid token using DocuSignClient's token management
+    const token = await this.docuSignClient.getValidToken(userId);
+    const userInfo = await this.docuSignClient.getUserInfo(userId);
+    const accountId = userInfo.accounts.find(a => a.is_default)?.account_id || userInfo.accounts[0]?.account_id;
+
+    if (!accountId) {
+      throw new Error('No DocuSign account found');
+    }
+
     const queryParams = new URLSearchParams();
-    
     if (options?.from_date) queryParams.append('from_date', options.from_date);
     if (options?.to_date) queryParams.append('to_date', options.to_date);
     if (options?.agreement_type) queryParams.append('agreement_type', options.agreement_type);
 
-    const response = await fetch(
-      `${this.navigatorBasePath}/v1/accounts/${client.accountId}/agreements?${queryParams}`,
-      {
-        headers: {
-          ...client.headers,
-          'Accept': 'application/json',
-        },
+    console.log('🔍 Debug: Making Navigator API request:', {
+      url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
+      hasToken: !!token,
+      tokenPrefix: token ? token.substring(0, 10) + '...' : 'none',
+      accountId
+    });
+
+    try {
+      const response = await fetch(
+        `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Navigator API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
+        });
+        
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please reconnect DocuSign to refresh your token.');
+        }
+        
+        throw new Error(`Failed to get agreements from Navigator API: ${response.status} ${response.statusText} - ${errorText}`);
       }
-    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Navigator API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText
+      const data = await response.json();
+      
+      // Log full response structure to see all available fields
+      console.log('Navigator API full response structure:', {
+        data,
+        responseStatus: response.status,
+        headers: Object.fromEntries(response.headers.entries()),
+        endpoint: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`
       });
-      throw new Error(`Failed to get agreements from Navigator API: ${response.status} ${response.statusText}`);
-    }
+      
+      // Handle response where agreements are in data.data
+      const agreements = data.data || [];
+      
+      // Add warning log if no agreements found
+      if (!agreements.length) {
+        console.warn('No agreements found in Navigator response:', {
+          agreements,
+          metadata: data.response_metadata,
+          responseFields: Object.keys(data)
+        });
+      }
 
-    const data = await response.json();
-    
-    // Add warning log if no agreements found
-    if (!data.items?.length) {
-      console.warn('No agreements found in Navigator. Agreements must be uploaded through Navigator UI first.');
+      // Return in expected format
+      return {
+        items: agreements,
+        response_metadata: data.response_metadata
+      };
+    } catch (error) {
+      console.error('Navigator API fetch error:', {
+        error,
+        url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
+      });
+      throw error;
     }
-
-    return data;
   }
 
   async getAgreement(userId: string, agreementId: string) {
-    const client = await this.docuSignClient.getClient(userId);
+    const token = await this.docuSignClient.getValidToken(userId);
+    const userInfo = await this.docuSignClient.getUserInfo(userId);
+    const accountId = userInfo.accounts.find(a => a.is_default)?.account_id || userInfo.accounts[0]?.account_id;
+
+    if (!accountId) {
+      throw new Error('No DocuSign account found');
+    }
 
     const response = await fetch(
-      `${this.navigatorBasePath}/v1/accounts/${client.accountId}/agreements/${agreementId}`,
+      `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements/${agreementId}`,
       {
         headers: {
-          ...client.headers,
+          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       }

@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface PriorityEnvelope {
   envelopeId: string;
@@ -26,7 +27,7 @@ interface PriorityDashboardProps {
   toolCallId: string;
 }
 
-export function PriorityDashboard({ sections, onAction }: PriorityDashboardProps) {
+export function PriorityDashboard({ sections, onAction, toolCallId }: PriorityDashboardProps) {
   return (
     <div className="space-y-8">
       {sections.map((section) => (
@@ -55,7 +56,7 @@ export function PriorityDashboard({ sections, onAction }: PriorityDashboardProps
                     <h3 className="font-medium text-sm truncate">
                       {envelope.subject}
                     </h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-[2px] ${
+                    <span className={`text-xs px-2 py-0.5 rounded ${
                       envelope.status === 'sent' ? 'bg-blue-50 text-blue-700' :
                       envelope.status === 'voided' ? 'bg-gray-100 text-gray-700' :
                       envelope.status === 'declined' ? 'bg-red-50 text-red-700' :
@@ -71,26 +72,29 @@ export function PriorityDashboard({ sections, onAction }: PriorityDashboardProps
 
                 <div className="flex items-center gap-2 ml-4">
                   {envelope.status === 'sent' && (
-                    <button
-                      className="ds-button-primary"
+                    <Button
+                      size="sm"
+                      className="bg-[#6B4CF6] hover:bg-[#5A3FD6] text-white"
                       onClick={() => onAction(envelope.envelopeId, 'sign')}
                     >
                       Sign
-                    </button>
+                    </Button>
                   )}
-                  <button
-                    className="ds-button-secondary"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onAction(envelope.envelopeId, 'view')}
                   >
                     View
-                  </button>
+                  </Button>
                   {envelope.status !== 'declined' && envelope.status !== 'voided' && (
-                    <button
-                      className="ds-button-secondary"
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => onAction(envelope.envelopeId, 'remind')}
                     >
                       Remind
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>

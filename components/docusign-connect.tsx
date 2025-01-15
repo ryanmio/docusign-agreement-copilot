@@ -12,6 +12,7 @@ export default function DocuSignConnect() {
   const [isProcessing, setIsProcessing] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const redirect = searchParams.get('redirect');
 
   const checkConnection = useCallback(async () => {
     try {
@@ -21,13 +22,18 @@ export default function DocuSignConnect() {
       if (!response.ok) throw new Error('Failed to check connection status');
       const data = await response.json();
       setIsConnected(data.connected);
+      
+      // If connected and there's a redirect, handle it
+      if (data.connected && redirect) {
+        router.push(`/${redirect}`);
+      }
     } catch (error) {
       console.error('Error checking connection:', error);
       setIsConnected(false);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [redirect, router]);
 
   useEffect(() => {
     checkConnection();
@@ -47,18 +53,22 @@ export default function DocuSignConnect() {
         
         if (data.success) {
           await checkConnection();
-          router.push('/settings?success=DocuSign disconnected successfully', { scroll: false });
+          router.push('/?success=DocuSign disconnected successfully');
         } else {
           throw new Error(data.error || 'Failed to disconnect');
         }
       } catch (error) {
         console.error('Error disconnecting:', error);
-        router.push('/settings?error=Failed to disconnect DocuSign', { scroll: false });
+        router.push('/?error=Failed to disconnect DocuSign');
       } finally {
         setIsProcessing(false);
       }
     } else {
-      window.location.href = '/api/auth/docusign';
+      // Add redirect parameter to DocuSign auth URL if present
+      const authUrl = redirect 
+        ? `/api/auth/docusign?redirect=${redirect}`
+        : '/api/auth/docusign';
+      window.location.href = authUrl;
     }
   };
 
@@ -82,6 +92,7 @@ export default function DocuSignConnect() {
           variant={isConnected ? "destructive" : "default"}
           onClick={handleConnection}
           disabled={isProcessing}
+          className={!isConnected ? "bg-[#4C00FF] hover:bg-[#4C00FF]/90 text-white" : ""}
         >
           {isProcessing ? 'Processing...' : (isConnected ? 'Disconnect' : 'Connect DocuSign')}
         </Button>

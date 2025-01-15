@@ -20,6 +20,7 @@ import { ConversationStarters } from '@/components/conversation-starters';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { MarkdownEditor } from '@/components/markdown-editor';
+import { NavigatorAnalysis } from '@/components/navigator-analysis';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -93,7 +94,9 @@ function ContractPreviewTool({
 
 export default function ChatPage() {
   const { toast } = useToast();
-  const [messagesContainerRef, messagesEndRef] = useScrollToBottom<HTMLDivElement>();
+  const [messagesContainerRef, messagesEndRef, scrollToBottom] = useScrollToBottom<HTMLDivElement>();
+  const [showScrollButton, setShowScrollButton] = React.useState(false);
+  const initialMessageSent = React.useRef(false);
 
   const { messages, input, handleInputChange, handleSubmit, append, addToolResult, isLoading } = useChat({
     maxSteps: 5,
@@ -112,6 +115,49 @@ export default function ChatPage() {
       }
     }
   } as ExtendedChatOptions);
+
+  // Handle initial message from URL
+  React.useEffect(() => {
+    if (initialMessageSent.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const message = params.get('message');
+    
+    if (message) {
+      initialMessageSent.current = true;
+      const decodedMessage = decodeURIComponent(message);
+      
+      // Clear the URL parameter without refreshing the page
+      window.history.replaceState({}, '', '/chat');
+      
+      // Send the message
+      append({
+        role: 'user',
+        content: decodedMessage
+      });
+    }
+  }, [append]);
+
+  // Add scroll listener to show/hide button
+  React.useEffect(() => {
+    const handleScroll = () => {
+      // Show button when not at bottom (with a small threshold)
+      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
+      setShowScrollButton(!isAtBottom);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Check initial scroll position
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleEnvelopeClick = useCallback((envelopeId: string) => {
+    const message = `Tell me about envelope ${envelopeId}`;
+    handleInputChange({ target: { value: message } } as React.ChangeEvent<HTMLInputElement>);
+    const event = { preventDefault: () => {} } as React.FormEvent<HTMLFormElement>;
+    handleSubmit(event);
+  }, [handleSubmit, handleInputChange]);
 
   const handleToolResult = async (toolCallId: string, result: any) => {
     try {
@@ -293,6 +339,27 @@ export default function ChatPage() {
         case 'displayDocumentDetails':
           return <DocumentView {...result} />;
 
+        case 'displayPdfViewer':
+          return (
+            <div className="h-[750px] border border-gray-300 rounded-lg">
+              <PDFViewer {...toolInvocation.result} />
+            </div>
+          );
+
+        case 'displayBulkOperation':
+          return (
+            <div key={toolInvocation.toolCallId}>
+              <BulkOperationView {...toolInvocation.result} />
+            </div>
+          );
+
+        case 'displayEnvelopeList':
+          return (
+            <div key={toolInvocation.toolCallId}>
+              <EnvelopeList {...toolInvocation.result} onEnvelopeClick={handleEnvelopeClick} />
+            </div>
+          );
+
         case 'sendTemplate':
           return result?.success ? (
             <EnvelopeSuccess envelopeId={result.envelopeId} />
@@ -446,6 +513,30 @@ export default function ChatPage() {
             />
           );
 
+        case 'navigatorAnalysis':
+          return (
+            <NavigatorAnalysis
+              toolCallId={toolCallId}
+              query={result.query}
+              apiCall={result.apiCall}
+              result={result.result}
+              isDebug={result.isDebug}
+              onComplete={async (analysisResult) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    completed: true
+                  });
+                } catch (error) {
+                  console.error('Failed to handle analysis completion:', error);
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to complete analysis'
+                  });
+                }
+              }}
+            />
+          );
+
         default:
           return null;
       }
@@ -499,6 +590,29 @@ export default function ChatPage() {
 
           <div ref={messagesEndRef} className="h-1" />
         </div>
+
+        {showScrollButton && (
+          <button
+            onClick={scrollToBottom}
+            className="fixed bottom-24 right-8 bg-white/80 backdrop-blur-sm shadow-lg rounded-full p-2 hover:bg-gray-100 transition-all duration-200 border border-gray-200"
+            aria-label="Scroll to bottom"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              className="text-gray-600"
+            >
+              <path d="M12 19V5M5 12l7 7 7-7"/>
+            </svg>
+          </button>
+        )}
 
         <form onSubmit={handleSubmit} className="flex gap-4">
           <input

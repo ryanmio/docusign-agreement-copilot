@@ -493,5 +493,72 @@ export const tools = {
         completed: false
       };
     }
+  },
+  navigatorAnalysis: {
+    name: 'navigatorAnalysis',
+    description: 'Analyze agreements using natural language queries. Convert user questions into Navigator API calls and display results.',
+    parameters: z.object({
+      query: z.string().describe('The natural language query from the user'),
+      filters: z.object({
+        dateRange: z.object({
+          from: z.string().optional(),
+          to: z.string().optional()
+        }).optional(),
+        parties: z.array(z.string()).optional(),
+        categories: z.array(z.string()).optional(),
+        types: z.array(z.string()).optional(),
+        provisions: z.record(z.any()).optional()
+      }).optional(),
+      isDebug: z.boolean().optional().describe('Whether to show debug information')
+    }),
+    execute: async ({ query, filters, isDebug = false }: { query: string; filters?: Record<string, any>; isDebug?: boolean }) => {
+      const supabase = createClientComponentClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Construct API call parameters
+      const apiCall = {
+        endpoint: '/api/navigator/analyze',
+        params: {
+          query,
+          ...filters
+        }
+      };
+
+      try {
+        // Make the API call
+        const response = await fetch(apiCall.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(apiCall.params),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to analyze agreements');
+        }
+
+        const result = await response.json();
+
+        return {
+          query,
+          apiCall: isDebug ? apiCall : undefined,
+          result,
+          isDebug
+        };
+      } catch (error) {
+        console.error('Navigator analysis error:', error);
+        return {
+          query,
+          apiCall: isDebug ? apiCall : undefined,
+          error: error instanceof Error ? error.message : 'Failed to analyze agreements',
+          isDebug
+        };
+      }
+    }
   }
 }; 

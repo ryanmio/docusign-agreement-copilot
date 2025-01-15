@@ -86,43 +86,65 @@
       > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync Navigatorwith eSignature.
 
 ## Phase 3.5: Navigator Integration 🧭
-   > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync with eSignature.
-- [ ] Core Setup
+
+- [ ] Initial Access Setup
+  - [ ] Get sync access from DocuSign support (ON HOLD)
+  - [ ] Enable eSign -> Navigator sync in platform
+- [x] Core Setup
   - [x] Set up Navigator API authentication (added scopes to OAuth flow)
   - [x] Implement NavigatorClient class (basic implementation with error handling)
   - [x] Add error handling and retry logic
   - [x] Create test validation endpoint
 
+- [ ] Data Integration
+  - [x] Create Navigator data models and types
+  - [x] Implement agreement fetching and caching
+  - [x] Add AI insight extraction helpers
+
 - [ ] Priority Enhancement
   - [ ] Enhance Priority Dashboard with AI insights
   - [ ] Add agreement urgency scoring
-  - [ ] Implement smart categorization
-  - [ ] Add confidence indicators
+    - [ ] Implement scoring algorithm using Navigator data
+    - [ ] Add visual urgency indicators
 
 - [ ] Pattern Recognition
   - [ ] Implement Tuesday task detection
+    - [ ] Create pattern detection algorithm
+    - [ ] Add visualization component
   - [ ] Add renewal pattern analysis
+    - [ ] Implement renewal tracking
+    - [ ] Create renewal timeline view
   - [ ] Create employee agreement mapping
-  - [ ] Build relationship visualization
+    - [ ] Build relationship graph
+    - [ ] Add filtering by employee
+  - [ ] Build timeline view or other visualizations
 
 - [ ] Predictive Features
   - [ ] Implement task forecasting
+    - [ ] Create prediction models
+    - [ ] Add forecast visualization
   - [ ] Add policy update detection
-  - [ ] Create proactive notifications
+    - [ ] Implement change detection
+    - [ ] Add notification system
   - [ ] Build AI insight display
+    - [ ] Create insight dashboard
+
+- [ ] Testing & Validation
+  - [ ] Create test suite for Navigator features
+  - [ ] Add error simulation tests
+  - [ ] Implement performance monitoring
+  - [ ] Document edge cases and limitations
 
 ## Phase 4: Polish & Submission (Week 4) ✨
-- [ ] Implement homepage like https://x.com/rauchg/status/1876306515285647802
+- [x] Auto-Scroll to bottom
+- [x] Make the homepage design more beautiful
+- [x] Create project logo
+- [x] Create homepage to chat page transition
+- [ ] Style remaining componentslike Docusign
 - [ ] Optimize conversation starters for productivity
-- [ ] Make the chat page the default view and home page once logged in
-- [ ] Make the design more beautiful
-  - [ ] Improve Chat UI
-    - [x] Auto-Scroll to bottom
-  - [ ] Style like Docusign
-- [ ]Restyle header
+- [ ] Restyle header
 - [ ] Check to make sure "Docusign" doesnt have camel-case capital S
-- [ ] Create project logo
-- [ ] Add new chat button
+- [ ] Add "new chat" button
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README

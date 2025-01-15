@@ -192,6 +192,24 @@ export async function POST(req: Request) {
           
           IMPORTANT: Never try to collect recipient or signer information through chat messages. Always use the appropriate form tool.
           
+          When users ask about agreement patterns, insights, or analysis:
+          1. Use the navigatorAnalysis tool to analyze agreements based on natural language queries
+          2. You can analyze:
+             - Agreement patterns by day, category, or type
+             - Relationships between parties
+             - Common provisions and terms
+             - Upcoming renewals and deadlines
+          3. Examples of queries:
+             - "Show me all agreements with Acme Corp from the last 6 months"
+             - "Find patterns in vendor agreements expiring this year"
+             - "What categories of contracts do we typically send on Mondays?"
+          4. For debugging or detailed analysis:
+             - Set isDebug: true to show API call details and raw results
+             - Use filters to narrow down the analysis by date range, parties, categories, or types
+          5. After analysis:
+             - DO NOT repeat or describe the results shown in the UI
+             - Only provide insights or suggest next steps based on the findings
+          
           If a tool call fails, inform the user and suggest retrying or contacting support.`
         },
         ...messages
@@ -245,6 +263,80 @@ export async function POST(req: Request) {
                 result: {
                   expression,
                   error: error instanceof Error ? error.message : 'Failed to calculate expression',
+                  completed: true
+                }
+              };
+            }
+          }
+        }),
+        navigatorAnalysis: tool({
+          description: 'Analyze agreements using natural language queries. Convert user questions into Navigator API calls and display results.',
+          parameters: z.object({
+            query: z.string().describe('The natural language query from the user'),
+            filters: z.object({
+              dateRange: z.object({
+                from: z.string().optional(),
+                to: z.string().optional()
+              }).optional(),
+              parties: z.array(z.string()).optional(),
+              categories: z.array(z.string()).optional(),
+              types: z.array(z.string()).optional(),
+              provisions: z.record(z.any()).optional()
+            }).optional(),
+            isDebug: z.boolean().optional().describe('Whether to show debug information')
+          }),
+          execute: async ({ query, filters, isDebug = false }) => {
+            try {
+              // Get the base URL from the environment or use a default
+              const baseUrl = process.env.VERCEL_URL 
+                ? `https://${process.env.VERCEL_URL}` 
+                : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+                
+              const cookieStore = cookies();
+              const response = await fetch(`${baseUrl}/api/navigator/analyze`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Cookie': cookieStore.toString()
+                },
+                body: JSON.stringify({
+                  query,
+                  ...filters
+                })
+              });
+
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Navigator API error:', {
+                  status: response.status,
+                  statusText: response.statusText,
+                  error: errorText
+                });
+                throw new Error(`Navigator API error: ${response.status} ${response.statusText}`);
+              }
+
+              const result = await response.json();
+
+              return {
+                state: 'result',
+                result: {
+                  query,
+                  apiCall: isDebug ? {
+                    endpoint: '/api/navigator/analyze',
+                    params: { query, ...filters }
+                  } : undefined,
+                  result,
+                  isDebug,
+                  completed: true
+                }
+              };
+            } catch (error) {
+              console.error('Navigator analysis error:', error);
+              return {
+                state: 'error',
+                result: {
+                  query,
+                  error: error instanceof Error ? error.message : 'Failed to analyze agreements',
                   completed: true
                 }
               };
