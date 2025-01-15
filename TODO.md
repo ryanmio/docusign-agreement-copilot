@@ -140,11 +140,15 @@
 - [x] Make the homepage design more beautiful
 - [x] Create project logo
 - [x] Create homepage to chat page transition
-- [ ] Style remaining componentslike Docusign
+- [ ] Style remaining components like Docusign
 - [ ] Optimize conversation starters for productivity
 - [ ] Restyle header
 - [ ] Check to make sure "Docusign" doesnt have camel-case capital S
-- [ ] Add "new chat" button
+- [ ] Update system instructions per https://x.com/weswinder/status/1860035463152828471
+- [ ] Compare to Stripe https://stripe.dev/blog/adding-payments-to-your-agentic-workflows
+- [ ] Metered billing
+- [ ] Other models?
+- [ ] Reorder the preview tools page
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README
@@ -152,8 +156,11 @@
   - [ ] Write setup instructions
   - [ ] Create user guide
 
+- [ ] Agent Toolkit 
+  - [ ] Documentation
+    - [ ] Example: https://github.com/stripe/agent-toolkit
+  - [ ] Create npm package
+
 - [ ] Submission Materials
   - [ ] Record demo video
-  - [ ] Write project description
-  - [ ] Prepare presentation materials
-  - [ ] Test submission requirements
+  - [ ] Write project submission
