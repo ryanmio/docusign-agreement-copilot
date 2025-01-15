@@ -3,9 +3,7 @@ import { SearchInput } from "@/components/search-input"
 import { StarterBubbles } from "@/components/starter-bubbles"
 import { CapabilitiesSection } from "@/components/capabilities-section"
 
-export const dynamic = 'force-dynamic';
-
-export default function Home() {
+export default function ChatPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#F8F7FF] to-[#F0EDFF] flex flex-col">
       <AuthHeader />
@@ -33,5 +31,6 @@ export default function Home() {
         </div>
       </main>
     </div>
-  );
+  )
 }
+

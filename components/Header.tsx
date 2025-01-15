@@ -3,16 +3,20 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Session } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function Header({ session }: { session: Session | null }) {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClientComponentClient();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.refresh();
   };
+
+  // Hide the header on the homepage
+  if (pathname === '/') return null;
 
   return (
     <header className="border-b border-gray-200">
