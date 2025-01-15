@@ -96,20 +96,7 @@ export default function ChatPage() {
   const { toast } = useToast();
   const [messagesContainerRef, messagesEndRef, scrollToBottom] = useScrollToBottom<HTMLDivElement>();
   const [showScrollButton, setShowScrollButton] = React.useState(false);
-
-  // Add scroll listener to show/hide button
-  React.useEffect(() => {
-    const handleScroll = () => {
-      // Show button when not at bottom (with a small threshold)
-      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
-      setShowScrollButton(!isAtBottom);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    // Check initial scroll position
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const initialMessageSent = React.useRef(false);
 
   const { messages, input, handleInputChange, handleSubmit, append, addToolResult, isLoading } = useChat({
     maxSteps: 5,
@@ -128,6 +115,42 @@ export default function ChatPage() {
       }
     }
   } as ExtendedChatOptions);
+
+  // Handle initial message from URL
+  React.useEffect(() => {
+    if (initialMessageSent.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const message = params.get('message');
+    
+    if (message) {
+      initialMessageSent.current = true;
+      const decodedMessage = decodeURIComponent(message);
+      
+      // Clear the URL parameter without refreshing the page
+      window.history.replaceState({}, '', '/chat');
+      
+      // Send the message
+      append({
+        role: 'user',
+        content: decodedMessage
+      });
+    }
+  }, [append]);
+
+  // Add scroll listener to show/hide button
+  React.useEffect(() => {
+    const handleScroll = () => {
+      // Show button when not at bottom (with a small threshold)
+      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
+      setShowScrollButton(!isAtBottom);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Check initial scroll position
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleEnvelopeClick = useCallback((envelopeId: string) => {
     const message = `Tell me about envelope ${envelopeId}`;

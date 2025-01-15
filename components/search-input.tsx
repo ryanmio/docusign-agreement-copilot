@@ -3,47 +3,20 @@
 import { Sparkles, ChevronRight } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useState } from 'react';
 
 export function SearchInput() {
   const router = useRouter();
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = () => {
     if (!message.trim() || isLoading) return;
     
     setIsLoading(true);
-    try {
-      // Check auth status
-      const supabase = createClientComponentClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        router.push('/auth/connect?redirect=chat');
-        return;
-      }
-
-      // Check DocuSign connection
-      const response = await fetch('/api/auth/docusign/status');
-      const { connected } = await response.json();
-      
-      if (!connected) {
-        router.push('/auth/connect?redirect=chat');
-        return;
-      }
-
-      // Process message
-      // TODO: Add message processing logic
-      console.log('Processing message:', message);
-      
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [message, router, isLoading]);
+    // Redirect to chat with the message
+    router.push(`/chat?message=${encodeURIComponent(message.trim())}`);
+  };
 
   return (
     <div className="relative w-full">

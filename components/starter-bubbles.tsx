@@ -1,36 +1,44 @@
 "use client"
 
+import { useRouter } from 'next/navigation';
+
 type StarterBubble = {
   title: string
   subtitle: string
-  onClick: () => void
+  message: string
 }
 
 export function StarterBubbles() {
+  const router = useRouter();
+
   const bubbles: StarterBubble[] = [
     {
       title: "Check renewals",
       subtitle: "expiring soon",
-      onClick: () => console.log("Check renewals clicked")
+      message: "Show me agreements that need to be renewed soon"
     },
     {
       title: "Send an NDA",
       subtitle: "to a new client",
-      onClick: () => console.log("Send NDA clicked")
+      message: "I need to send a non-disclosure agreement to a new client"
     },
     {
       title: "Send reminders",
       subtitle: "for unsigned documents",
-      onClick: () => console.log("Send reminders clicked")
+      message: "Send reminders for documents that haven't been signed yet"
     }
-  ]
+  ];
+
+  const handleBubbleClick = (message: string) => {
+    router.push(`/chat?message=${encodeURIComponent(message)}`);
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto mt-6 flex flex-wrap gap-3 justify-center">
       {bubbles.map((bubble, index) => (
         <button
           key={index}
-          onClick={bubble.onClick}
+          onClick={() => handleBubbleClick(bubble.message)}
           className="bg-white hover:bg-gray-50 border shadow-sm rounded-full px-4 py-2 text-left transition-all hover:shadow-md"
         >
           <div className="text-sm text-[#26065D]">{bubble.title}</div>
