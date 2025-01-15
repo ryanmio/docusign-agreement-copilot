@@ -10,6 +10,7 @@ import { RecipientForm } from '@/components/recipient-form';
 import PDFViewer from '@/components/pdf-viewer';
 import { MathResult } from '@/components/math-result';
 import { BulkOperationsList } from '@/components/bulk-operations-list';
+import { BulkOperationsListPreview } from '@/components/preview/bulk-operations-list';
 import {
   mockTemplates,
   mockPriorityDashboard,
@@ -380,12 +381,12 @@ export default function PreviewPage() {
             {
               name: '-',
               type: '-',
-              description: 'No props required - Fetches data internally',
+              description: 'No props required - Uses mock data internally',
               required: false
             }
           ]}
         >
-          <BulkOperationsList />
+          <BulkOperationsListPreview />
         </ComponentSection>
       </div>
 
