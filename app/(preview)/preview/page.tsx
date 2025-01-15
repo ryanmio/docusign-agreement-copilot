@@ -74,6 +74,7 @@ function ComponentSection({
 
 export default function PreviewPage() {
   const [editorMode, setEditorMode] = useState<'preview' | 'edit'>('preview');
+  const [selectedTemplate, setSelectedTemplate] = useState('');
 
   return (
     <div className="divide-y divide-[#CBC2FF]/30 px-8">
@@ -117,8 +118,8 @@ export default function PreviewPage() {
           ]}
         >
           <TemplateSelectorPreview
-            value={mockTemplates[0].templateId}
-            onChange={(value) => console.log('Selected template:', value)}
+            value={selectedTemplate}
+            onChange={setSelectedTemplate}
           />
         </ComponentSection>
       </div>
