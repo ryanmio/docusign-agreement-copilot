@@ -20,7 +20,7 @@ const nextConfig = {
               "font-src 'self' data: https://vercel.live https://assets.vercel.com",
               "frame-src 'self' https://*.docusign.net https://*.docusign.com https://vercel.live https://*.vercel.live https://*.vercel.app",
               "frame-ancestors 'self' https://*.docusign.net https://*.docusign.com https://vercel.live https://*.vercel.live https://*.vercel.app",
-              "connect-src 'self' https://*.docusign.net https://*.docusign.com https://*.supabase.co wss://*.supabase.co https://unpkg.com https://ahynitsoacoisrgodqqq.supabase.co https://*.w3.org https://www.w3.org https://*.vercel.app https://vercel.live https://*.vercel.sh wss://ws-us3.pusher.com",
+              "connect-src 'self' https://*.docusign.net https://*.docusign.com https://*.supabase.co wss://*.supabase.co https://unpkg.com https://ahynitsoacoisrgodqqq.supabase.co https://*.w3.org https://www.w3.org https://*.vercel.app https://vercel.live https://*.vercel.sh wss://ws-us3.pusher.com wss://*.pusher.com",
               "worker-src 'self' blob:",
               "child-src 'self' blob:",
             ].join('; '),
