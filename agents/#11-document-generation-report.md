@@ -18,8 +18,8 @@ Total Documents: 15 documents demonstrating key patterns:
 2. Vendor Renewals with 5% Annual Increase Pattern (3 current + 9 historical):
    Current Renewals:
    - FastComm: Feb 1, 2025 - $150,000 (Sent - Upcoming)
-   - GlobalTech: Jan 7, 2025 - $200,000 (Completed)
-   - AcmeCorp: Jan 15, 2025 - $175,000 (Declined)
+   - GlobalTech: Jan 7, 2025 - $200,000 (Declined)
+   - AcmeCorp: Jan 15, 2025 - $175,000 (Completed)
    
    Historical Data (All Completed):
    - 2022-2024 renewals for each vendor showing consistent 5% annual increases
