@@ -142,10 +142,10 @@
 - [ ] Make the design more beautiful
   - [ ] Improve Chat UI
     - [x] Auto-Scroll to bottom
-  - [ ] Style like Docusign
+  - [ ] Style remaining componentslike Docusign
 - [ ]Restyle header
 - [ ] Check to make sure "Docusign" doesnt have camel-case capital S
-- [ ] Create project logo
+- [x] Create project logo
 - [ ] Add new chat button
 
 - [ ] Documentation 📚

@@ -1,13 +1,12 @@
 import { AuthHeader } from "@/components/auth-header"
-import { SearchInput } from "@/components/search-input"
+import { ChatEntryInput } from "@/components/chat-entry-input"
 import { StarterBubbles } from "@/components/starter-bubbles"
 import { CapabilitiesSection } from "@/components/capabilities-section"
 
-export default function ChatPage() {
+export function ChatPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#F8F7FF] to-[#F0EDFF] flex flex-col">
+    <div className="flex flex-col min-h-screen">
       <AuthHeader />
-      
       <main className="flex-1 container mx-auto px-4">
         <div className="max-w-2xl mx-auto flex flex-col items-center min-h-[calc(100vh-64px)] justify-between py-8">
           <div className="flex-1 flex flex-col items-center justify-center w-full space-y-8">
@@ -19,7 +18,7 @@ export default function ChatPage() {
             </div>
 
             <div className="w-full space-y-6">
-              <SearchInput />
+              <ChatEntryInput />
               <StarterBubbles />
               <CapabilitiesSection />
             </div>
