@@ -8,7 +8,11 @@ export async function middleware(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session && !req.nextUrl.pathname.startsWith('/auth')) {
-    return NextResponse.redirect(new URL('/auth/login', req.url));
+    const connectUrl = new URL('/auth/connect', req.url);
+    if (req.nextUrl.pathname !== '/') {
+      connectUrl.searchParams.set('redirect', req.nextUrl.pathname.slice(1));
+    }
+    return NextResponse.redirect(connectUrl);
   }
 
   return res;

@@ -1,14 +1,32 @@
-import { AuthHeader } from "@/components/auth-header"
-import { SearchInput } from "@/components/search-input"
-import { StarterBubbles } from "@/components/starter-bubbles"
-import { CapabilitiesSection } from "@/components/capabilities-section"
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { Button } from "@/components/ui/button";
+import { SearchInput } from "@/components/search-input";
+import { StarterBubbles } from "@/components/starter-bubbles";
+import { CapabilitiesSection } from "@/components/capabilities-section";
 
 export const dynamic = 'force-dynamic';
 
-export default function Home() {
+export default async function Home() {
+  const supabase = createServerComponentClient({ cookies });
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#F8F7FF] to-[#F0EDFF] flex flex-col">
-      <AuthHeader />
+      {!user && (
+        <div className="w-full">
+          <div className="container mx-auto px-4 py-4 flex justify-end">
+            <div className="flex gap-2">
+              <Button variant="outline" asChild>
+                <a href="/preview">Preview Components</a>
+              </Button>
+              <Button className="bg-[#4C00FF] hover:bg-[#4C00FF]/90 text-white" asChild>
+                <a href="/auth/connect">Connect to DocuSign</a>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <main className="flex-1 container mx-auto px-4">
         <div className="max-w-2xl mx-auto flex flex-col items-center min-h-[calc(100vh-64px)] justify-between py-8">
