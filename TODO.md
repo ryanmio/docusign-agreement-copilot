@@ -136,17 +136,15 @@
   - [ ] Document edge cases and limitations
 
 ## Phase 4: Polish & Submission (Week 4) ✨
-- [ ] Implement homepage like https://x.com/rauchg/status/1876306515285647802
-- [ ] Optimize conversation starters for productivity
-- [ ] Make the chat page the default view and home page once logged in
-- [ ] Make the design more beautiful
-  - [ ] Improve Chat UI
-    - [x] Auto-Scroll to bottom
-  - [ ] Style remaining componentslike Docusign
-- [ ]Restyle header
-- [ ] Check to make sure "Docusign" doesnt have camel-case capital S
+- [x] Auto-Scroll to bottom
+- [x] Make the homepage design more beautiful
 - [x] Create project logo
-- [ ] Add new chat button
+- [x] Create homepage to chat page transition
+- [ ] Style remaining componentslike Docusign
+- [ ] Optimize conversation starters for productivity
+- [ ] Restyle header
+- [ ] Check to make sure "Docusign" doesnt have camel-case capital S
+- [ ] Add "new chat" button
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README
