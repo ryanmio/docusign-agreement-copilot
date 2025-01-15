@@ -1,7 +1,7 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { Button } from "@/components/ui/button";
-import { SearchInput } from "@/components/search-input";
+import { ChatEntryInput } from "@/components/chat-entry-input";
 import { StarterBubbles } from "@/components/starter-bubbles";
 import { CapabilitiesSection } from "@/components/capabilities-section";
 
@@ -39,7 +39,7 @@ export default async function Home() {
             </div>
 
             <div className="w-full space-y-6">
-              <SearchInput />
+              <ChatEntryInput />
               <StarterBubbles />
               <CapabilitiesSection />
             </div>
