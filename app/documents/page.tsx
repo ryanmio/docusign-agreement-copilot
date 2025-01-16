@@ -11,7 +11,7 @@ export default async function DocumentsPage() {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login');
+    redirect('/auth/connect');
   }
 
   const { data: envelopes, error: envelopesError } = await supabase

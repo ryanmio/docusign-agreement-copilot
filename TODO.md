@@ -149,6 +149,7 @@
 - [ ] Metered billing
 - [ ] Other models?
 - [ ] Reorder the preview tools page
+- [ ] Test new user onboarding
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README

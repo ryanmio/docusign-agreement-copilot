@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     if (userError || !user) {
       console.error('Auth error:', userError);
       return NextResponse.redirect(
-        new URL('/auth/login', process.env.NEXT_PUBLIC_BASE_URL)
+        new URL('/auth/connect', process.env.NEXT_PUBLIC_BASE_URL)
       );
     }
 

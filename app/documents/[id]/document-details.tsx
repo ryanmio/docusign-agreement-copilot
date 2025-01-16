@@ -26,7 +26,7 @@ export default function DocumentDetails({
     async function fetchData() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
-        router.push('/auth/login');
+        router.push('/auth/connect');
         return;
       }
 

@@ -11,7 +11,7 @@ export async function GET() {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-      return NextResponse.redirect(new URL('/auth/login', process.env.NEXT_PUBLIC_BASE_URL));
+      return NextResponse.redirect(new URL('/auth/connect', process.env.NEXT_PUBLIC_BASE_URL));
     }
 
     const docusign = new DocuSignClient(supabase);
