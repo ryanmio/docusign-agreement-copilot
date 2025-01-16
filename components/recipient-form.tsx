@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Card } from './ui/card';
 import { useFormInstance } from '../hooks/use-form-instance';
 import { FormState, RecipientData } from '../types/form';
 
@@ -14,7 +13,7 @@ export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: Recipient
   const { instance, isRestored, updateState, validateForm } = useFormInstance(toolCallId, roles);
 
   if (!isRestored || !instance) {
-    return <div className="p-4 text-gray-500">Loading...</div>;
+    return <div className="p-4 text-[#130032]/60">Loading...</div>;
   }
 
   const { state } = instance;
@@ -77,16 +76,16 @@ export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: Recipient
   };
 
   return (
-    <div className="space-y-4">
-      <div>
+    <div className="w-full max-w-[900px] mx-auto">
+      <div className="space-y-1 mb-6">
         <h2 className="text-[1.75rem] font-light text-[#130032] leading-[1.25] tracking-[-0.01em]">Add Recipients</h2>
-        <p className="text-[#130032]/70 mt-1">Enter the name and email for each recipient</p>
+        <p className="text-[#130032]/60">Enter the name and email for each recipient</p>
       </div>
       
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {recipients.map((recipient, index) => (
           <div key={index} className="space-y-3">
-            <h3 className="text-base font-medium text-[#130032]">{recipient.roleName}</h3>
+            <h3 className="font-medium text-sm text-[#130032] tracking-[-0.01em]">{recipient.roleName}</h3>
             
             <div className="space-y-3">
               <div>
@@ -119,7 +118,7 @@ export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: Recipient
         ))}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end mt-6">
         <button
           onClick={handleSubmit}
           disabled={state.status === 'submitting'}
