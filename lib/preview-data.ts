@@ -266,4 +266,43 @@ ____________________                      ____________________
 Name: <<SIGNER1_NAME>>                    Name: <<SIGNER2_NAME>>
 Title: <<SIGNER1_TITLE>>                  Title: <<SIGNER2_TITLE>>
 Date: <<DATE_HERE>>                       Date: <<DATE_HERE>>
-\`\`\``; 
+\`\`\``;
+
+export const mockDocumentView = {
+  envelopeId: 'env-123',
+  envelope: {
+    id: 'env-123',
+    subject: 'Sales Agreement - ACME Corp',
+    message: 'Please review and sign the sales agreement',
+    status: 'sent',
+    created_at: '2024-01-15T10:00:00Z',
+    updated_at: '2024-01-15T10:00:00Z',
+    completed_at: undefined,
+    recipients: [
+      {
+        id: 'rec-1',
+        name: 'John Doe',
+        email: 'john@acme.com',
+        status: 'sent'
+      },
+      {
+        id: 'rec-2',
+        name: 'Jane Smith',
+        email: 'jane@acme.com',
+        status: 'delivered'
+      }
+    ]
+  },
+  documents: {
+    envelopeDocuments: [
+      {
+        documentId: 'doc-1',
+        name: 'Sales Agreement.pdf'
+      },
+      {
+        documentId: 'doc-2',
+        name: 'Terms and Conditions.pdf'
+      }
+    ]
+  }
+}; 

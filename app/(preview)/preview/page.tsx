@@ -18,13 +18,15 @@ import {
   mockTemplatePreview,
   mockMathResult,
   mockPdfUrl,
-  mockContractMarkdown
+  mockContractMarkdown,
+  mockDocumentView
 } from '@/lib/preview-data';
 import DocuSignConnectPreview from '@/components/preview/docusign-connect';
 import { EnvelopeSuccessPreview } from '@/components/preview/envelope-success';
 import { ReminderConfirmationPreview } from '@/components/preview/reminder-confirmation';
 import { BulkOperationViewPreview } from '@/components/preview/bulk-operation-view';
 import { MarkdownEditor } from '@/components/markdown-editor';
+import { DocumentViewPreview } from '@/components/preview/document-view';
 import { useState } from 'react';
 
 function ComponentSection({
@@ -443,6 +445,41 @@ export default function PreviewPage() {
               setEditorMode('preview');
             }}
           />
+        </ComponentSection>
+      </div>
+
+      <div className="py-12">
+        <ComponentSection
+          title="Document View"
+          description="Displays envelope documents and details"
+          props={[
+            {
+              name: 'envelopeId',
+              type: 'string',
+              description: 'DocuSign envelope identifier',
+              required: true
+            },
+            {
+              name: 'envelope',
+              type: 'Envelope',
+              description: 'Envelope details including recipients',
+              required: true
+            },
+            {
+              name: 'documents',
+              type: '{ envelopeDocuments: Document[] }',
+              description: 'List of documents in the envelope',
+              required: true
+            },
+            {
+              name: 'showActions',
+              type: 'boolean',
+              description: 'Whether to show action buttons',
+              required: false
+            }
+          ]}
+        >
+          <DocumentViewPreview {...mockDocumentView} />
         </ComponentSection>
       </div>
     </div>
