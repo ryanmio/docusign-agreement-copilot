@@ -41,6 +41,7 @@ Successfully implemented a component preview page for the DocuSign Agreement Cop
    - DocuSign Connect (with preview-specific implementation)
    - Envelope Success (with status progression simulation)
    - Reminder Confirmation (with state toggle)
+   - Document View (with interactive actions)
 
 ### UI/UX Improvements
 - Added proper spacing between loading state examples
@@ -85,6 +86,22 @@ To ensure components work correctly in the preview context without requiring bac
    - Maintains consistent styling with DocuSign's design system
    - Uses mock data to demonstrate both success and error scenarios
 
+4. **Document View Component**
+   - Created a preview version that simulates document viewing and envelope management
+   - Features:
+     - Interactive void and resend actions with simulated API delays
+     - Status updates reflecting actions (sent, voided, etc.)
+     - Timeline view with formatted dates
+     - Recipients list with status badges
+     - Multiple document support with PDF viewer
+     - Success/error alerts for actions
+     - Download button (disabled with informative message)
+   - Mock data includes:
+     - Sample envelope with subject and message
+     - Two recipients with different statuses
+     - Two sample documents (Sales Agreement and Terms)
+     - Timeline data with created/updated timestamps
+
 ### Brand Consistency
 - Used DocuSign's color palette:
   - Primary text: #130032
@@ -97,6 +114,7 @@ To ensure components work correctly in the preview context without requiring bac
     - Delivered: Yellow (#FEF3C7/#92400E)
     - Completed: Green (#DCFCE7/#166534)
     - Error states: Red (#FEE2E2/#991B1B)
+    - Voided: Gray (#F3F4F6/#374151)
 
 ## Future Considerations
 1. Add more component variants to showcase different states
@@ -110,4 +128,10 @@ To ensure components work correctly in the preview context without requiring bac
    - Declined envelopes
    - Voided envelopes
    - Authentication errors
-   - Network timeout scenarios 
+   - Network timeout scenarios
+8. Consider adding more document view variations:
+   - Multiple document types
+   - Different recipient configurations
+   - Various envelope statuses
+   - Error scenarios (download failures, API errors)
+   - Accessibility improvements for document viewing 
