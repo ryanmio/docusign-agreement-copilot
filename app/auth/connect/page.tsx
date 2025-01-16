@@ -86,7 +86,7 @@ export default function ConnectPage() {
             <>
               <div className="text-center space-y-2">
                 <h1 className="text-2xl font-semibold text-[#130032]">
-                  Create Your Account
+                  Get Started
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   Create an account or sign in to get started with Agreement Copilot
@@ -105,7 +105,6 @@ export default function ConnectPage() {
                       },
                     },
                   },
-                  // Keep sign in but make it less prominent
                   className: {
                     divider: 'hidden',
                     container: 'space-y-4',
@@ -113,9 +112,9 @@ export default function ConnectPage() {
                     anchor: 'text-xs text-gray-500 hover:text-gray-800',
                   },
                 }}
-                view="sign_up"
                 showLinks={true}
                 providers={[]}
+                view="sign_up"
                 redirectTo={callbackUrl.toString()}
               />
             </>
