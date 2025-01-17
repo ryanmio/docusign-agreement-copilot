@@ -34,6 +34,9 @@ marked.use({
   }]
 });
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function POST(req: Request) {
   try {
     console.log('Chat route called');
@@ -1110,7 +1113,7 @@ export async function POST(req: Request) {
                 const page = await browser.newPage();
                 
                 // Set content and log any errors
-                await page.setContent(finalHtml).catch(err => {
+                await page.setContent(finalHtml).catch((err: Error) => {
                   console.error('Error setting page content:', err);
                   throw err;
                 });
@@ -1133,7 +1136,7 @@ export async function POST(req: Request) {
                     bottom: '20mm',
                     left: '20mm'
                   }
-                }).catch(err => {
+                }).catch((err: Error) => {
                   console.error('Error generating PDF:', err);
                   throw err;
                 });
@@ -1267,7 +1270,18 @@ export async function POST(req: Request) {
     });
 
     console.log('Streaming response');
-    return result.toDataStreamResponse();
+    const response = result.toDataStreamResponse();
+    
+    // Add required headers for streaming in Edge runtime
+    const headers = new Headers(response.headers);
+    headers.set('Content-Type', 'text/event-stream');
+    headers.set('Cache-Control', 'no-cache');
+    headers.set('Connection', 'keep-alive');
+    
+    return new Response(response.body, {
+      headers,
+      status: 200,
+    });
   } catch (error: any) {
     console.error('Error in chat route:', error);
     return new Response(
