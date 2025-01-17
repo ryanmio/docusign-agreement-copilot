@@ -37,9 +37,6 @@ export interface NavigatorAgreement {
 interface GetAgreementsOptions {
   limit?: number;
   ctoken?: string;
-  from_date?: string;
-  to_date?: string;
-  agreement_type?: string;
 }
 
 export class NavigatorClient {
@@ -177,13 +174,13 @@ export class NavigatorClient {
     return response.json();
   }
 
-  async analyzePatterns(userId: string): Promise<{
+  async analyzePatterns(userId: string, options?: GetAgreementsOptions): Promise<{
     totalAgreements: number;
     byDayOfWeek: Record<string, number>;
     byType: Record<string, number>;
     byCategory: Record<string, number>;
   }> {
-    const agreements = await this.getAgreements(userId);
+    const agreements = await this.getAgreements(userId, options);
     
     const analysis = {
       totalAgreements: 0,

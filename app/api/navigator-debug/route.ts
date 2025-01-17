@@ -18,20 +18,14 @@ export async function GET() {
     console.log('🔍 Debug: Fetching agreements for user:', session.user.id);
 
     // Test basic agreement fetching
-    const agreements = await navigatorClient.getAgreements(session.user.id, {
-      from_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // Last 30 days
-      to_date: new Date().toISOString()
-    });
+    const agreements = await navigatorClient.getAgreements(session.user.id);
 
     console.log('📊 Debug: Raw Agreement Data Sample:', 
       agreements.items?.[0] ? JSON.stringify(agreements.items[0], null, 2) : 'No agreements'
     );
 
     // Analyze patterns
-    const patterns = await navigatorClient.analyzePatterns(session.user.id, {
-      from_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      to_date: new Date().toISOString()
-    });
+    const patterns = await navigatorClient.analyzePatterns(session.user.id);
 
     // Validate key data structures we need for demo features
     const dataValidation = {
