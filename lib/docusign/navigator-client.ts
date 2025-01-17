@@ -37,6 +37,9 @@ export interface NavigatorAgreement {
 interface GetAgreementsOptions {
   limit?: number;
   ctoken?: string;
+  from_date?: string;
+  to_date?: string;
+  agreement_type?: string;
 }
 
 export class NavigatorClient {
