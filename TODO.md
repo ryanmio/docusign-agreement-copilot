@@ -101,6 +101,10 @@
   - [x] Implement agreement fetching and caching
   - [x] Add AI insight extraction helpers
 
+- [ ] Navigator Analysis
+  - [ ] Implement Navigator Analysis component
+  - [ ] Add manual filtering
+
 - [ ] Priority Enhancement
   - [ ] Enhance Priority Dashboard with AI insights
   - [ ] Add agreement urgency scoring
@@ -140,7 +144,7 @@
 - [x] Make the homepage design more beautiful
 - [x] Create project logo
 - [x] Create homepage to chat page transition
-- [ ] Style remaining components like Docusign
+- [x] Style remaining components like Docusign
 - [ ] Optimize conversation starters for productivity
 - [ ] Restyle header
 - [ ] Check to make sure "Docusign" doesnt have camel-case capital S
