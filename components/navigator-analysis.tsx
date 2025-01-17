@@ -1,7 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { AgreementList } from './agreement-list';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -151,8 +150,8 @@ export function NavigatorAnalysis({
         title: agreement.title, 
         matchesParty,
         parties: agreement.parties.map((p: any) => p.name_in_agreement)
-      });
-
+        });
+      
       const matchesType = !filters.type || 
         (agreement.type && agreement.type.toLowerCase() === filters.type.toLowerCase());
       
@@ -213,27 +212,23 @@ export function NavigatorAnalysis({
       <Accordion 
         type="single" 
         collapsible 
-        className="mb-6 bg-gray-50 rounded-lg"
+        className="mb-6"
         value={accordionValue}
         onValueChange={setAccordionValue}
       >
-        <AccordionItem value="filters">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Filter Results</span>
+        <AccordionItem value="filters" className="border-none">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline bg-[#F8F3F0] rounded-lg">
+            <div className="flex items-center gap-3">
+              <Filter className="h-5 w-5 text-[#4C00FF]" />
+              <span className="text-[#130032] font-medium">Filter Results</span>
               {activeFilterCount > 0 && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                <Badge variant="secondary" className="bg-[#4C00FF]/10 text-[#4C00FF] font-medium">
                   {activeFilterCount} active
-                </span>
+                </Badge>
               )}
-              <span className="text-sm text-gray-500">
-                {activeFilterCount > 0 ? 
-                  `(${filteredAgreements.length} of ${result?.result?.agreements?.length || 0} matches)` : 
-                  ''}
-              </span>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
+          <AccordionContent className="px-4 pb-4 bg-[#F8F3F0] rounded-b-lg mt-0">
             <div className="space-y-4" onClick={handleInputClick}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div key="party-name">
@@ -385,151 +380,151 @@ export function NavigatorAnalysis({
   };
 
   // Production mode display
-  if (isLoading) {
-    return (
-      <Card className="w-full max-w-4xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
-        <div className="p-6">
-          <div className="text-[#130032] tracking-[-0.02em] text-2xl font-light mb-4">{query}</div>
+    if (isLoading) {
+      return (
+        <Card className="w-full max-w-4xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+          <div className="p-6">
+            <div className="text-[#130032] tracking-[-0.02em] text-2xl font-light mb-4">{query}</div>
           <div className="flex justify-center">
             <LoadingSpinner label="Analyzing agreements..." />
+            </div>
           </div>
-        </div>
-      </Card>
-    );
-  }
+        </Card>
+      );
+    }
 
-  const agreements = result?.result?.agreements || [];
-  if (!agreements.length) {
+    const agreements = result?.result?.agreements || [];
+    if (!agreements.length) {
+      return (
+        <Card className="w-full max-w-4xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+          <div className="p-6">
+            <div className="text-[#130032] tracking-[-0.02em] text-2xl font-light mb-4">{query}</div>
+            <div className="text-[#130032]/60">No agreements found for this query.</div>
+          </div>
+        </Card>
+      );
+    }
+
     return (
       <Card className="w-full max-w-4xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
         <div className="p-6">
-          <div className="text-[#130032] tracking-[-0.02em] text-2xl font-light mb-4">{query}</div>
-          <div className="text-[#130032]/60">No agreements found for this query.</div>
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="w-full max-w-4xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
-      <div className="p-6">
-        <div className="text-[#130032] tracking-[-0.02em] text-2xl font-light mb-6">{query}</div>
-        
+          <div className="text-[#130032] tracking-[-0.02em] text-2xl font-light mb-6">{query}</div>
+          
         <FilterControls />
-        
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[#130032] font-medium">
-              Found Agreements ({filteredAgreements.length} of {agreements.length})
-            </h3>
-            <span className="text-sm text-[#130032]/60">
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[#130032] font-medium">
+                Found Agreements ({filteredAgreements.length} of {agreements.length})
+              </h3>
+              <span className="text-sm text-[#130032]/60">
               {filters.dateRange ? 
                 `From ${new Date(filters.dateRange.start || Date.now()).toLocaleDateString()} to ${new Date(filters.dateRange.end || Date.now()).toLocaleDateString()}`
-                : undefined
-              }
-            </span>
-          </div>
+            : undefined
+          }
+              </span>
+            </div>
 
-          <div className="space-y-4">
+            <div className="space-y-4">
             {paginatedAgreements.map((agreement: any) => (
-              <Card key={agreement.id} className="border border-[#130032]/10">
-                <div className="p-4">
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="text-lg font-medium text-[#130032]">
-                          {agreement.title || 
-                            (agreement.file_name ? agreement.file_name.replace(/_/g, ' ').replace('.pdf', '') : 
-                            'Untitled Agreement')
-                          }
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="bg-[#CBC2FF]/40 text-[#26065D]">
-                            {agreement.type}
-                          </Badge>
-                          <Badge variant="secondary" className="bg-[#4C00FF]/10 text-[#4C00FF]">
-                            {agreement.category}
-                          </Badge>
-                          <Badge 
-                            variant="secondary" 
-                            className={`${
-                              agreement.status === 'COMPLETE' ? 'bg-emerald-100 text-emerald-800' :
-                              agreement.status === 'PENDING' ? 'bg-amber-100 text-amber-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {agreement.status?.toLowerCase().replace(/_/g, ' ')}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xl font-semibold text-[#130032]">
-                          {new Intl.NumberFormat('en-US', {
-                            style: 'currency',
-                            currency: 'USD'
-                          }).format(agreement.provisions?.annual_agreement_value || 0)}
-                        </div>
-                        <div className="text-sm text-[#130032]/60">Annual Value</div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-[#130032]/40" />
-                        <div className="text-sm">
-                          <div className="font-medium text-[#130032]">Parties</div>
-                          <div className="text-[#130032]/60">
-                            {agreement.parties?.map((p: any) => p.name_in_agreement).join(', ')}
+                <Card key={agreement.id} className="border border-[#130032]/10">
+                  <div className="p-4">
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="text-lg font-medium text-[#130032]">
+                            {agreement.title || 
+                              (agreement.file_name ? agreement.file_name.replace(/_/g, ' ').replace('.pdf', '') : 
+                              'Untitled Agreement')
+                            }
+                          </h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="secondary" className="bg-[#CBC2FF]/40 text-[#26065D]">
+                              {agreement.type}
+                            </Badge>
+                            <Badge variant="secondary" className="bg-[#4C00FF]/10 text-[#4C00FF]">
+                              {agreement.category}
+                            </Badge>
+                            <Badge 
+                              variant="secondary" 
+                              className={`${
+                                agreement.status === 'COMPLETE' ? 'bg-emerald-100 text-emerald-800' :
+                                agreement.status === 'PENDING' ? 'bg-amber-100 text-amber-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {agreement.status?.toLowerCase().replace(/_/g, ' ')}
+                            </Badge>
                           </div>
                         </div>
+                        <div className="text-right">
+                          <div className="text-xl font-semibold text-[#130032]">
+                            {new Intl.NumberFormat('en-US', {
+                              style: 'currency',
+                              currency: 'USD'
+                            }).format(agreement.provisions?.annual_agreement_value || 0)}
+                          </div>
+                          <div className="text-sm text-[#130032]/60">Annual Value</div>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-[#130032]/40" />
-                        <div className="text-sm">
-                          <div className="font-medium text-[#130032]">Key Dates</div>
-                          <div className="text-[#130032]/60">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-[#130032]/40" />
+                          <div className="text-sm">
+                            <div className="font-medium text-[#130032]">Parties</div>
+                            <div className="text-[#130032]/60">
+                              {agreement.parties?.map((p: any) => p.name_in_agreement).join(', ')}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-[#130032]/40" />
+                          <div className="text-sm">
+                            <div className="font-medium text-[#130032]">Key Dates</div>
+                            <div className="text-[#130032]/60">
                             {agreement.provisions?.effective_date && agreement.provisions?.expiration_date ? 
                               `${new Date(agreement.provisions.effective_date).toLocaleDateString()} - ${new Date(agreement.provisions.expiration_date).toLocaleDateString()}` :
                               'No dates available'
                             }
                           </div>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-[#130032]/40" />
-                        <div className="text-sm">
-                          <div className="font-medium text-[#130032]">Jurisdiction</div>
-                          <div className="text-[#130032]/60">{agreement.provisions?.jurisdiction || 'N/A'}</div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-[#130032]/40" />
+                          <div className="text-sm">
+                            <div className="font-medium text-[#130032]">Jurisdiction</div>
+                            <div className="text-[#130032]/60">{agreement.provisions?.jurisdiction || 'N/A'}</div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
 
           {filteredAgreements.length > displayLimit && (
-            <div className="flex justify-center mt-4">
+              <div className="flex justify-center mt-4">
               <Button 
                 variant="outline" 
                 className="text-[#4C00FF] border-[#4C00FF] hover:bg-[#4C00FF]/10"
                 onClick={handleLoadMore}
               >
                 Load More ({filteredAgreements.length - displayLimit} remaining)
-              </Button>
-            </div>
-          )}
-        </div>
-      
-      {result?.result?.patterns && (
-          <div className="mt-6 pt-6 border-t border-[#130032]/10">
-            <h3 className="text-lg font-medium text-[#130032] mb-3">Detected Patterns</h3>
-            <pre className="bg-[#F8F3F0] p-4 rounded-lg text-sm text-[#130032]/80">
-            {JSON.stringify(result.result.patterns, null, 2)}
-          </pre>
+                </Button>
+              </div>
+            )}
+          </div>
+        
+        {result?.result?.patterns && (
+            <div className="mt-6 pt-6 border-t border-[#130032]/10">
+              <h3 className="text-lg font-medium text-[#130032] mb-3">Detected Patterns</h3>
+              <pre className="bg-[#F8F3F0] p-4 rounded-lg text-sm text-[#130032]/80">
+              {JSON.stringify(result.result.patterns, null, 2)}
+            </pre>
         </div>
       )}
       </div>
