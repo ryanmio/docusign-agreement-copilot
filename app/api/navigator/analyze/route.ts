@@ -33,34 +33,9 @@ export async function POST(request: Request) {
     console.log('🔄 Initializing Navigator client');
     const navigatorClient = new NavigatorClient(supabase);
 
-    // Construct filter parameters
-    const options: {
-      from_date?: string;
-      to_date?: string;
-      agreement_type?: string;
-    } = {};
-    
-    // If no date range specified and query mentions "last 6 months",
-    // add a default date range
-    if (!dateRange && query.toLowerCase().includes('last 6 months')) {
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      options.from_date = sixMonthsAgo.toISOString();
-      options.to_date = new Date().toISOString();
-    } else if (dateRange) {
-      if (dateRange.from) options.from_date = dateRange.from;
-      if (dateRange.to) options.to_date = dateRange.to;
-    }
-
-    if (types?.length) {
-      options.agreement_type = types[0]; // Navigator API only supports one type filter
-    }
-
-    console.log('🔍 Constructed filter options:', options);
-
-    // Get agreements with filters
+    // Get all agreements first
     console.log('📊 Fetching agreements from Navigator API...');
-    const agreements = await navigatorClient.getAgreements(user.id, options);
+    const agreements = await navigatorClient.getAgreements(user.id);
     console.log('📊 Navigator API response:', {
       hasItems: !!agreements.items,
       itemCount: agreements.items?.length || 0,
@@ -69,8 +44,35 @@ export async function POST(request: Request) {
 
     const agreementItems = agreements.items || [];
 
-    // Filter results by additional criteria not supported by the API
+    // Filter results by criteria
     let filteredItems = agreementItems;
+    
+    // Apply date range filter if specified
+    if (dateRange?.from && dateRange?.to) {
+      console.log('🔍 Filtering by date range:', dateRange);
+      filteredItems = filteredItems.filter((agreement: NavigatorAgreement) => {
+        const effectiveDate = agreement.provisions?.effective_date;
+        if (!effectiveDate) return false;
+        const date = new Date(effectiveDate);
+        return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
+      });
+    } else if (query.toLowerCase().includes('last 6 months')) {
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      filteredItems = filteredItems.filter((agreement: NavigatorAgreement) => {
+        const effectiveDate = agreement.provisions?.effective_date;
+        if (!effectiveDate) return false;
+        const date = new Date(effectiveDate);
+        return date >= sixMonthsAgo && date <= new Date();
+      });
+    }
+    
+    if (types?.length) {
+      console.log('🔍 Filtering by types:', types);
+      filteredItems = filteredItems.filter((agreement: NavigatorAgreement) =>
+        types.includes(agreement.type)
+      );
+    }
     
     if (parties?.length) {
       console.log('🔍 Filtering by parties:', parties);
@@ -95,10 +97,7 @@ export async function POST(request: Request) {
     let patterns = null;
     if (query.toLowerCase().includes('pattern') || query.toLowerCase().includes('trend')) {
       console.log('📈 Analyzing patterns...');
-      patterns = await navigatorClient.analyzePatterns(user.id, {
-        from_date: options.from_date || new Date(0).toISOString(),
-        to_date: options.to_date || new Date().toISOString()
-      });
+      patterns = await navigatorClient.analyzePatterns(user.id);
       console.log('📈 Pattern analysis complete:', { 
         hasPatterns: !!patterns,
         patternTypes: patterns ? Object.keys(patterns) : [] 
@@ -111,7 +110,8 @@ export async function POST(request: Request) {
       metadata: {
         totalAgreements: filteredItems.length,
         appliedFilters: {
-          ...options,
+          from_date: dateRange?.from,
+          to_date: dateRange?.to,
           parties,
           categories
         }
