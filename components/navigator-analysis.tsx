@@ -28,6 +28,10 @@ interface FilterState {
   minValue?: number;
   maxValue?: number;
   jurisdiction: string;
+  dateRange?: {
+    start?: string;  // ISO date string
+    end?: string;    // ISO date string
+  };
 }
 
 interface NavigatorAnalysisProps {
@@ -70,7 +74,11 @@ export function NavigatorAnalysis({
     partyName: '',
     type: '',
     category: '',
-    jurisdiction: ''
+    jurisdiction: '',
+    dateRange: result?.result?.metadata?.appliedFilters ? {
+      start: result.result.metadata.appliedFilters.from_date,
+      end: result.result.metadata.appliedFilters.to_date
+    } : undefined
   });
 
   // Add refs for inputs that need focus management
@@ -147,9 +155,17 @@ export function NavigatorAnalysis({
       const annualValue = agreement.provisions?.annual_agreement_value;
       const matchesValue = (!filters.minValue || (annualValue !== undefined && annualValue >= filters.minValue)) &&
         (!filters.maxValue || (annualValue !== undefined && annualValue <= filters.maxValue));
+
+      // Add date range filtering
+      const matchesDateRange = !filters.dateRange || (
+        agreement.provisions?.effective_date && filters.dateRange.start && filters.dateRange.end && (
+          new Date(agreement.provisions.effective_date) >= new Date(filters.dateRange.start) &&
+          new Date(agreement.provisions.effective_date) <= new Date(filters.dateRange.end)
+        )
+      );
       
       return matchesParty && matchesType && matchesCategory && 
-        matchesJurisdiction && matchesValue;
+        matchesJurisdiction && matchesValue && matchesDateRange;
     });
   }, [result?.result?.agreements, filters]);
 
@@ -271,6 +287,47 @@ export function NavigatorAnalysis({
                     placeholder="Max value..."
                     value={filters.maxValue || ''}
                     onChange={e => handleInputChange(e, 'maxValue', maxValueRef)}
+                    className="mt-1.5 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="date-range-start" className="text-[#130032]">Start Date</Label>
+                  <Input
+                    id="date-range-start"
+                    type="date"
+                    value={filters.dateRange?.start?.split('T')[0] || ''}
+                    onChange={e => {
+                      const newDateRange = e.target.value ? {
+                        start: `${e.target.value}T00:00:00Z`,
+                        end: filters.dateRange?.end
+                      } : undefined;
+                      setFilters(prev => ({
+                        ...prev,
+                        dateRange: newDateRange
+                      }));
+                    }}
+                    className="mt-1.5 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="date-range-end" className="text-[#130032]">End Date</Label>
+                  <Input
+                    id="date-range-end"
+                    type="date"
+                    value={filters.dateRange?.end?.split('T')[0] || ''}
+                    onChange={e => {
+                      const newDateRange = e.target.value ? {
+                        start: filters.dateRange?.start,
+                        end: `${e.target.value}T23:59:59Z`
+                      } : undefined;
+                      setFilters(prev => ({
+                        ...prev,
+                        dateRange: newDateRange
+                      }));
+                    }}
+                    className="mt-1.5 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
                   />
                 </div>
               </div>
@@ -285,7 +342,8 @@ export function NavigatorAnalysis({
                       partyName: '',
                       type: '',
                       category: '',
-                      jurisdiction: ''
+                      jurisdiction: '',
+                      dateRange: undefined
                     });
                   }}
                   className="text-sm"
@@ -436,6 +494,46 @@ export function NavigatorAnalysis({
                         className="mt-1.5 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
                       />
                     </div>
+
+                    <div>
+                      <Label htmlFor="date-range-start" className="text-[#130032]">Start Date</Label>
+                      <Input
+                        id="date-range-start"
+                        type="date"
+                        value={filters.dateRange?.start?.split('T')[0] || ''}
+                        onChange={e => {
+                          const newDateRange = e.target.value ? {
+                            start: `${e.target.value}T00:00:00Z`,
+                            end: filters.dateRange?.end
+                          } : undefined;
+                          setFilters(prev => ({
+                            ...prev,
+                            dateRange: newDateRange
+                          }));
+                        }}
+                        className="mt-1.5 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="date-range-end" className="text-[#130032]">End Date</Label>
+                      <Input
+                        id="date-range-end"
+                        type="date"
+                        value={filters.dateRange?.end?.split('T')[0] || ''}
+                        onChange={e => {
+                          const newDateRange = e.target.value ? {
+                            start: filters.dateRange?.start,
+                            end: `${e.target.value}T23:59:59Z`
+                          } : undefined;
+                          setFilters(prev => ({
+                            ...prev,
+                            dateRange: newDateRange
+                          }));
+                        }}
+                        className="mt-1.5 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
+                      />
+                    </div>
                   </div>
                   
                   <div className="flex justify-end pt-2">
@@ -448,7 +546,8 @@ export function NavigatorAnalysis({
                           partyName: '',
                           type: '',
                           category: '',
-                          jurisdiction: ''
+                          jurisdiction: '',
+                          dateRange: undefined
                         });
                       }}
                       className="text-[#4C00FF] border-[#4C00FF] hover:bg-[#4C00FF]/10"
