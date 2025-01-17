@@ -27,7 +27,7 @@ import { ReminderConfirmationPreview } from '@/components/preview/reminder-confi
 import { BulkOperationViewPreview } from '@/components/preview/bulk-operation-view';
 import { MarkdownEditor } from '@/components/markdown-editor';
 import { DocumentViewPreview } from '@/components/preview/document-view';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function ComponentSection({
   title,
@@ -76,8 +76,17 @@ function ComponentSection({
 }
 
 export default function PreviewPage() {
+  const [mounted, setMounted] = useState(false);
   const [editorMode, setEditorMode] = useState<'preview' | 'edit'>('preview');
   const [selectedTemplate, setSelectedTemplate] = useState('');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="min-h-screen" />;
+  }
 
   return (
     <div className="divide-y divide-[#CBC2FF]/30 px-8">
@@ -121,6 +130,7 @@ export default function PreviewPage() {
           ]}
         >
           <TemplateSelectorPreview
+            key="template-selector"
             value={selectedTemplate}
             onChange={setSelectedTemplate}
           />
@@ -430,6 +440,7 @@ export default function PreviewPage() {
           ]}
         >
           <MarkdownEditor
+            key="markdown-editor"
             markdown={mockContractMarkdown}
             mode={editorMode}
             onEdit={(toolCallId) => {
