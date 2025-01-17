@@ -208,10 +208,7 @@ export async function POST(req: Request) {
                -> Combine dateRange and party name filters
           4. Date filtering works on agreement.provisions.effective_date, so structure your filters accordingly
           5. All filtering happens client-side in the NavigatorAnalysis component, so you must pass filters in the initial state
-          6. For debugging or detailed analysis:
-             - Set isDebug: true to show API call details and raw results
-             - Use filters to narrow down the analysis by date range, parties, categories, or types
-          7. After analysis:
+          6. After analysis:
              - DO NOT repeat or describe the results shown in the UI
              - Only provide insights or suggest next steps based on the findings
           
@@ -287,10 +284,9 @@ export async function POST(req: Request) {
               categories: z.array(z.string()).optional(),
               types: z.array(z.string()).optional(),
               provisions: z.record(z.any()).optional()
-            }).optional(),
-            isDebug: z.boolean().optional().describe('Whether to show debug information')
+            }).optional()
           }),
-          execute: async ({ query, filters, isDebug = false }) => {
+          execute: async ({ query, filters }) => {
             try {
               // Get the base URL from the environment or use a default
               const baseUrl = process.env.VERCEL_URL 
@@ -326,12 +322,7 @@ export async function POST(req: Request) {
                 state: 'result',
                 result: {
                   query,
-                  apiCall: isDebug ? {
-                    endpoint: '/api/navigator/analyze',
-                    params: { query, ...filters }
-                  } : undefined,
                   result,
-                  isDebug,
                   completed: true
                 }
               };
