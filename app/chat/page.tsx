@@ -520,7 +520,6 @@ export default function ChatPage() {
               query={result.query}
               apiCall={result.apiCall}
               result={result.result}
-              isDebug={result.isDebug}
               onComplete={async (analysisResult) => {
                 try {
                   await handleToolResult(toolCallId, {
