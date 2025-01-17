@@ -32,10 +32,7 @@ export async function GET() {
       timestamp: new Date().toISOString()
     });
 
-    const agreements = await navigatorClient.getAgreements(session.user.id, {
-      from_date: thirtyDaysAgo.toISOString(),
-      to_date: thirtyDaysFromNow.toISOString()
-    });
+    const agreements = await navigatorClient.getAgreements(session.user.id);
 
     // Filter for agreements with expiration dates
     const priorityAgreements = agreements.items.filter((agreement: NavigatorAgreement) => 
