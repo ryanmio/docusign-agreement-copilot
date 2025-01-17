@@ -69,10 +69,10 @@ export const mockTemplatePreview = {
 
 export const mockMathResult = {
   expression: '2500 * 1.08 + 150',
-  result: 2850,
+  result: '$2,850',
   steps: [
-    '1. Multiply 2500 by 1.08 = 2700',
-    '2. Add 150 to 2700 = 2850'
+    'Multiply 2500 by 1.08',
+    'Add 150 to 2700'
   ]
 };
 
