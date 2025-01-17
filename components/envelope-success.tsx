@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 import { Check, Loader2, Mail } from 'lucide-react';
 import Link from 'next/link';
 
@@ -65,22 +66,27 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
   }, [envelopeId]);
 
   const getStatusColor = (status: string) => {
-    const colors = {
-      sent: 'bg-blue-100 text-blue-800',
-      delivered: 'bg-yellow-100 text-yellow-800',
-      completed: 'bg-green-100 text-green-800',
-      declined: 'bg-red-100 text-red-800',
-      voided: 'bg-gray-100 text-gray-800',
-    };
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    switch (status) {
+      case 'sent':
+        return 'bg-[#CBC2FF]/40 text-[#26065D]'
+      case 'delivered':
+        return 'bg-[#4C00FF]/10 text-[#4C00FF]'
+      case 'completed':
+        return 'bg-[#26065D]/10 text-[#26065D]'
+      case 'declined':
+      case 'voided':
+        return 'bg-[#FF5252]/10 text-[#FF5252]'
+      default:
+        return 'bg-[#130032]/10 text-[#130032]'
+    }
   };
 
   if (loading) {
     return (
-      <Card className="p-6">
-        <div className="flex items-center justify-center space-x-2">
-          <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
-          <span>Loading envelope status...</span>
+      <Card className="w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+        <div className="p-6 flex items-center justify-center space-x-2">
+          <Loader2 className="h-5 w-5 animate-spin text-[#130032]/40" />
+          <span className="text-[#130032]/60">Loading envelope status...</span>
         </div>
       </Card>
     );
@@ -88,62 +94,76 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
 
   if (error) {
     return (
-      <Card className="p-6 bg-red-50">
-        <div className="text-red-700">{error}</div>
+      <Card className="w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+        <div className="p-6 text-[#FF5252]">{error}</div>
       </Card>
     );
   }
 
   if (!envelope) {
     return (
-      <Card className="p-6 bg-yellow-50">
-        <div className="text-yellow-700">Envelope not found</div>
+      <Card className="w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+        <div className="p-6 text-[#FF5252]">Envelope not found</div>
       </Card>
     );
   }
 
   return (
-    <Card className="p-6">
-      <div className="space-y-6">
+    <Card className="w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+      <div className="p-6 space-y-6">
         {/* Success Header */}
-        <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-            <Check className="h-6 w-6 text-green-600" />
+        <div className="flex items-start space-x-4">
+          <div className="h-12 w-12 rounded-full bg-[#4C00FF]/10 flex items-center justify-center flex-shrink-0">
+            <Check className="h-6 w-6 text-[#4C00FF]" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold">Template sent successfully!</h3>
-            <p className="text-sm text-gray-500">The envelope has been created and sent to recipients</p>
+            <h3 className="text-[#130032] tracking-[-0.02em] text-2xl font-light">
+              Envelope sent successfully!
+            </h3>
+            <p className="text-[#130032]/60 text-sm tracking-[-0.01em] mt-1">
+              The envelope has been created and sent to recipients
+            </p>
           </div>
         </div>
 
         {/* Status */}
-        <div className="flex items-center justify-between border-t border-b py-3">
-          <span className="text-sm font-medium">Status</span>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(envelope.status)}`}>
+        <div className="flex items-center justify-between py-4 border-y border-[#130032]/10">
+          <span className="text-[#130032] font-medium">Status</span>
+          <Badge
+            variant="secondary"
+            className={`${getStatusColor(envelope.status)} px-4 py-1 rounded-full text-xs font-medium`}
+          >
             {envelope.status}
-          </span>
+          </Badge>
         </div>
 
         {/* Recipients */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium">Recipients</h4>
-          {envelope.recipients.map((recipient) => (
-            <div
-              key={recipient.id}
-              className="flex items-center justify-between p-3 border rounded-lg"
-            >
-              <div className="flex items-center space-x-3">
-                <Mail className="h-5 w-5 text-gray-400" />
-                <div>
-                  <div className="font-medium">{recipient.name}</div>
-                  <div className="text-sm text-gray-500">{recipient.email}</div>
+          <h4 className="text-[#130032] font-medium mb-4">Recipients</h4>
+          <div className="space-y-3">
+            {envelope.recipients.map((recipient) => (
+              <div
+                key={recipient.id}
+                className="flex items-center justify-between p-4 bg-[#CBC2FF]/10 rounded-lg"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center">
+                    <Mail className="h-4 w-4 text-[#130032]/40" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-[#130032]">{recipient.name}</div>
+                    <div className="text-sm text-[#130032]/60">{recipient.email}</div>
+                  </div>
                 </div>
+                <Badge
+                  variant="secondary"
+                  className={`${getStatusColor(recipient.status)} px-3 py-1 rounded-full text-xs font-medium`}
+                >
+                  {recipient.status}
+                </Badge>
               </div>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(recipient.status || 'pending')}`}>
-                {recipient.status || 'pending'}
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Actions */}
@@ -151,11 +171,13 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
           <Button
             variant="outline"
             onClick={() => window.location.reload()}
+            className="text-[#4C00FF] border-[#4C00FF] hover:bg-[#4C00FF]/10"
           >
             Send Another
           </Button>
           <Button
             asChild
+            className="bg-[#4C00FF] hover:bg-[#4C00FF]/90 text-white"
           >
             <Link href={`/documents/${envelope.id}`}>
               View Details
