@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { mockTemplates } from '@/lib/preview-data';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { Search } from 'lucide-react';
 
 interface TemplateSelectorPreviewProps {
   value?: string;
@@ -26,14 +29,15 @@ export function TemplateSelectorPreview({ value = '', onChange = () => {} }: Tem
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        <input
+    <div className="w-full max-w-2xl mx-auto space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#130032]/40" />
+        <Input
           type="text"
           placeholder="Search templates..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="ds-input flex-1 border-gray-300"
+          className="pl-9 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
         />
       </div>
 
@@ -42,28 +46,36 @@ export function TemplateSelectorPreview({ value = '', onChange = () => {} }: Tem
           <LoadingSpinner label="Loading templates..." />
         </div>
       ) : filteredTemplates.length === 0 ? (
-        <div className="p-4 text-center text-gray-500">
+        <div className="p-4 text-center text-[#130032]/60">
           No templates found
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {filteredTemplates.map((template) => (
-            <button
+            <Card
               key={template.templateId}
               onClick={() => onChange(template.templateId)}
-              className={`p-4 rounded-lg text-left transition-colors ${
+              className={`p-4 cursor-pointer transition-all ${
                 value === template.templateId 
-                  ? 'bg-[#4C00FF] text-white' 
-                  : 'border border-gray-200 hover:border-[#4C00FF] hover:shadow-sm'
+                  ? 'bg-[#4C00FF] border-none shadow-[0_2px_4px_rgba(76,0,255,0.2)]' 
+                  : 'border-[#130032]/10 hover:border-[#4C00FF] hover:shadow-[0_2px_4px_rgba(19,0,50,0.1)]'
               }`}
             >
-              <div className="font-medium">{template.name}</div>
+              <div className={`font-medium ${
+                value === template.templateId ? 'text-white' : 'text-[#130032]'
+              }`}>
+                {template.name}
+              </div>
               {template.description && (
-                <div className={`text-sm ${value === template.templateId ? 'text-white/90' : 'text-gray-500'}`}>
+                <div className={`text-sm mt-1 ${
+                  value === template.templateId 
+                    ? 'text-white/90' 
+                    : 'text-[#130032]/60'
+                }`}>
                   {template.description}
                 </div>
               )}
-            </button>
+            </Card>
           ))}
         </div>
       )}

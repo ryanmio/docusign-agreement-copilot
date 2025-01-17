@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { UserIcon } from "lucide-react";
+import { User } from "lucide-react";
 
 interface TemplatePreviewProps {
   templateId: string;
@@ -24,37 +24,63 @@ export function TemplatePreview({
   onBack,
 }: TemplatePreviewProps) {
   return (
-    <Card className="p-6 space-y-4">
-      <div className="space-y-2">
-        <h3 className="text-lg font-semibold">{templateName}</h3>
-        <p className="text-sm text-gray-500">{description}</p>
-      </div>
-
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium">Required Signers:</h4>
-        <div className="space-y-2">
-          {roles.map((role) => (
-            <div
-              key={role.roleId}
-              className="flex items-center space-x-2 text-sm text-gray-600"
-            >
-              <UserIcon className="h-4 w-4" />
-              <span>{role.roleName}</span>
-            </div>
-          ))}
+    <Card className="w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div>
+          <h3 className="text-[#130032] tracking-[-0.02em] text-2xl font-semibold mb-2">
+            {templateName}
+          </h3>
+          <p className="text-[#130032]/60 tracking-[-0.01em]">
+            {description}
+          </p>
         </div>
-      </div>
 
-      <div className="flex justify-end space-x-2 pt-4">
-        {onBack && (
-          <Button variant="outline" onClick={onBack}>
-            Back
-          </Button>
+        {/* Signers */}
+        {roles && roles.length > 0 && (
+          <div className="space-y-4">
+            <h4 className="text-[#130032] font-medium">
+              Required Signers:
+            </h4>
+            <div className="space-y-3">
+              {roles.map((role) => (
+                <div 
+                  key={role.roleId}
+                  className="flex items-center space-x-3"
+                >
+                  <div className="h-8 w-8 rounded-full bg-[#4C00FF]/10 flex items-center justify-center">
+                    <User className="h-4 w-4 text-[#4C00FF]" />
+                  </div>
+                  <span className="text-[#130032] font-medium">
+                    {role.roleName}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
-        {onProceed && (
-          <Button onClick={onProceed}>
-            Proceed to Recipients
-          </Button>
+
+        {/* Buttons */}
+        {(onBack || onProceed) && (
+          <div className="flex justify-end space-x-3 pt-4">
+            {onBack && (
+              <Button 
+                variant="outline" 
+                onClick={onBack}
+                className="text-[#4C00FF] border-[#4C00FF] hover:bg-[#4C00FF]/10"
+              >
+                Back
+              </Button>
+            )}
+            {onProceed && (
+              <Button 
+                onClick={onProceed}
+                className="bg-[#4C00FF] hover:bg-[#4C00FF]/90 text-white"
+              >
+                Proceed to Recipients
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </Card>
