@@ -20,16 +20,10 @@ export async function GET() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    const patterns = await navigator.analyzePatterns(session.user.id, {
-      from_date: thirtyDaysAgo.toISOString(),
-      to_date: new Date().toISOString(),
-    });
+    const patterns = await navigator.analyzePatterns(session.user.id);
 
     // Also test raw agreements endpoint
-    const agreements = await navigator.getAgreements(session.user.id, {
-      from_date: thirtyDaysAgo.toISOString(),
-      to_date: new Date().toISOString(),
-    });
+    const agreements = await navigator.getAgreements(session.user.id);
 
     return NextResponse.json({
       status: 'success',
