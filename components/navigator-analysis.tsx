@@ -50,6 +50,7 @@ interface NavigatorAnalysisProps {
         appliedFilters: {
           from_date: string;
           to_date: string;
+          parties?: string[];
         };
       };
     };
@@ -71,14 +72,11 @@ export function NavigatorAnalysis({
   const [isLoading, setIsLoading] = useState(!result);
   const [accordionValue, setAccordionValue] = useState<string>("");
   const [filters, setFilters] = useState<FilterState>({
-    partyName: '',
+    partyName: result?.result?.metadata?.appliedFilters?.parties?.[0] || '',
     type: '',
     category: '',
     jurisdiction: '',
-    dateRange: result?.result?.metadata?.appliedFilters ? {
-      start: result.result.metadata.appliedFilters.from_date,
-      end: result.result.metadata.appliedFilters.to_date
-    } : undefined
+    dateRange: undefined
   });
 
   // Add refs for inputs that need focus management
@@ -135,13 +133,25 @@ export function NavigatorAnalysis({
   const filteredAgreements = useMemo(() => {
     if (!result?.result?.agreements) return [];
     
+    console.log('Filtering agreements with filters:', filters);
+    console.log('Raw agreements:', result.result.agreements);
+    
     return result.result.agreements.filter(agreement => {
       const matchesParty = !filters.partyName || 
         agreement.parties.some((p: any) => {
           if (!p.name_in_agreement) return false;
-          return p.name_in_agreement.toLowerCase().includes(filters.partyName.toLowerCase());
+          const partyName = p.name_in_agreement.toLowerCase();
+          const filterName = filters.partyName.toLowerCase();
+          console.log('Comparing party names:', { partyName, filterName });
+          return partyName.includes(filterName) || filterName.includes(partyName);
         });
       
+      console.log('Agreement party match result:', { 
+        title: agreement.title, 
+        matchesParty,
+        parties: agreement.parties.map((p: any) => p.name_in_agreement)
+      });
+
       const matchesType = !filters.type || 
         (agreement.type && agreement.type.toLowerCase() === filters.type.toLowerCase());
       
@@ -169,15 +179,21 @@ export function NavigatorAnalysis({
     });
   }, [result?.result?.agreements, filters]);
 
-  const FilterControls = () => {
-    const activeFilterCount = [
-      filters.partyName,
-      filters.type,
-      filters.category,
-      filters.jurisdiction,
-      filters.minValue,
-      filters.maxValue
+  const getActiveFilterCount = (filterState: FilterState) => {
+    return [
+      filterState.partyName,
+      filterState.type,
+      filterState.category,
+      filterState.jurisdiction,
+      filterState.minValue,
+      filterState.maxValue,
+      filterState.dateRange?.start,
+      filterState.dateRange?.end
     ].filter(Boolean).length;
+  };
+
+  const FilterControls = () => {
+    const activeFilterCount = getActiveFilterCount(filters);
 
     const handleInputClick = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -402,9 +418,9 @@ export function NavigatorAnalysis({
                 <div className="flex items-center gap-3">
                   <Filter className="h-5 w-5 text-[#4C00FF]" />
                   <span className="text-[#130032] font-medium">Filter Results</span>
-                  {Object.values(filters).filter(Boolean).length > 0 && (
+                  {getActiveFilterCount(filters) > 0 && (
                     <Badge variant="secondary" className="bg-[#4C00FF]/10 text-[#4C00FF] font-medium">
-                      {Object.values(filters).filter(Boolean).length} active
+                      {getActiveFilterCount(filters)} active
                     </Badge>
                   )}
                 </div>
@@ -566,10 +582,10 @@ export function NavigatorAnalysis({
                 Found Agreements ({filteredAgreements.length} of {agreements.length})
               </h3>
               <span className="text-sm text-[#130032]/60">
-                {result?.result?.metadata?.appliedFilters ? 
-            `From ${new Date(result.result.metadata.appliedFilters.from_date || Date.now()).toLocaleDateString()} to ${new Date(result.result.metadata.appliedFilters.to_date || Date.now()).toLocaleDateString()}`
-            : undefined
-          }
+                {filters.dateRange ? 
+                  `From ${new Date(filters.dateRange.start || Date.now()).toLocaleDateString()} to ${new Date(filters.dateRange.end || Date.now()).toLocaleDateString()}`
+                  : undefined
+                }
               </span>
             </div>
 
@@ -710,10 +726,10 @@ export function NavigatorAnalysis({
                   Found Agreements ({filteredAgreements.length} of {result.result.agreements.length})
                 </h3>
                 <span className="text-sm text-[#130032]/60">
-                  {result?.result?.metadata?.appliedFilters ? 
-                `From ${new Date(result.result.metadata.appliedFilters.from_date || Date.now()).toLocaleDateString()} to ${new Date(result.result.metadata.appliedFilters.to_date || Date.now()).toLocaleDateString()}`
-                : undefined
-              }
+                  {filters.dateRange ? 
+                    `From ${new Date(filters.dateRange.start || Date.now()).toLocaleDateString()} to ${new Date(filters.dateRange.end || Date.now()).toLocaleDateString()}`
+                    : undefined
+                  }
                 </span>
               </div>
 

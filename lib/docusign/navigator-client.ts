@@ -34,6 +34,11 @@ export interface NavigatorAgreement {
   };
 }
 
+interface GetAgreementsOptions {
+  limit?: number;
+  ctoken?: string;
+}
+
 export class NavigatorClient {
   private docuSignClient: DocuSignClient;
   public navigatorBasePath: string;
@@ -48,20 +53,12 @@ export class NavigatorClient {
    * Returns true if agreements exist, false if empty
    */
   async hasAgreements(userId: string): Promise<boolean> {
-    const agreements = await this.getAgreements(userId, {
-      from_date: new Date(0).toISOString(), // From beginning of time
-      to_date: new Date().toISOString()     // To now
-    });
-    
+    const agreements = await this.getAgreements(userId);
     const items = Array.isArray(agreements) ? agreements : agreements.items || [];
     return items.length > 0;
   }
 
-  async getAgreements(userId: string, options?: {
-    from_date?: string;
-    to_date?: string;
-    agreement_type?: string;
-  }) {
+  async getAgreements(userId: string, options?: GetAgreementsOptions) {
     // Get a valid token using DocuSignClient's token management
     const token = await this.docuSignClient.getValidToken(userId);
     const userInfo = await this.docuSignClient.getUserInfo(userId);
@@ -72,9 +69,8 @@ export class NavigatorClient {
     }
 
     const queryParams = new URLSearchParams();
-    if (options?.from_date) queryParams.append('from_date', options.from_date);
-    if (options?.to_date) queryParams.append('to_date', options.to_date);
-    if (options?.agreement_type) queryParams.append('agreement_type', options.agreement_type);
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    if (options?.ctoken) queryParams.append('ctoken', options.ctoken);
 
     console.log('🔍 Debug: Making Navigator API request:', {
       url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
@@ -178,16 +174,13 @@ export class NavigatorClient {
     return response.json();
   }
 
-  async analyzePatterns(userId: string, options: {
-    from_date: string;
-    to_date: string;
-  }): Promise<{
+  async analyzePatterns(userId: string): Promise<{
     totalAgreements: number;
     byDayOfWeek: Record<string, number>;
     byType: Record<string, number>;
     byCategory: Record<string, number>;
   }> {
-    const agreements = await this.getAgreements(userId, options);
+    const agreements = await this.getAgreements(userId);
     
     const analysis = {
       totalAgreements: 0,

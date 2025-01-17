@@ -199,14 +199,19 @@ export async function POST(req: Request) {
              - Relationships between parties
              - Common provisions and terms
              - Upcoming renewals and deadlines
-          3. Examples of queries:
-             - "Show me all agreements with Acme Corp from the last 6 months"
-             - "Find patterns in vendor agreements expiring this year"
-             - "What categories of contracts do we typically send on Mondays?"
-          4. For debugging or detailed analysis:
+          3. Examples of queries and how to handle them:
+             - "Show me all agreements from 2024"
+               -> Set dateRange filter: { start: "2024-01-01T00:00:00Z", end: "2024-12-31T23:59:59Z" }
+             - "Show me agreements from the last 6 months"
+               -> Calculate dates dynamically and set dateRange filter
+             - "Find agreements with Acme Corp from Q1 2024"
+               -> Combine dateRange and party name filters
+          4. Date filtering works on agreement.provisions.effective_date, so structure your filters accordingly
+          5. All filtering happens client-side in the NavigatorAnalysis component, so you must pass filters in the initial state
+          6. For debugging or detailed analysis:
              - Set isDebug: true to show API call details and raw results
              - Use filters to narrow down the analysis by date range, parties, categories, or types
-          5. After analysis:
+          7. After analysis:
              - DO NOT repeat or describe the results shown in the UI
              - Only provide insights or suggest next steps based on the findings
           
