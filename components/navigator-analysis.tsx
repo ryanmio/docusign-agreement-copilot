@@ -73,7 +73,10 @@ export function NavigatorAnalysis({
     type: '',
     category: '',
     jurisdiction: '',
-    dateRange: undefined
+    dateRange: result?.result?.metadata?.appliedFilters?.from_date ? {
+      start: result.result.metadata.appliedFilters.from_date,
+      end: result.result.metadata.appliedFilters.to_date
+    } : undefined
   });
 
   // Add refs for inputs that need focus management
