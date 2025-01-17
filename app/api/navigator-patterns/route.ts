@@ -19,9 +19,7 @@ export async function GET() {
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
-    const agreements = await navigatorClient.getAgreements(session.user.id, {
-      from_date: ninetyDaysAgo.toISOString()
-    });
+    const agreements = await navigatorClient.getAgreements(session.user.id);
 
     // Initialize pattern tracking
     const dayCategory: Record<string, Record<string, number>> = {};
