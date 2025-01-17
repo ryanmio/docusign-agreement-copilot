@@ -208,10 +208,10 @@ export function NavigatorAnalysis({
                 <div key="type">
                   <Label htmlFor="type">Type</Label>
                   <Select value={filters.type} onValueChange={value => setFilters(f => ({ ...f, type: value === 'all' ? '' : value }))}>
-                    <SelectTrigger className="mt-1.5 border-[#130032]/20">
+                    <SelectTrigger className="mt-1.5 border-[#130032]/20 bg-white">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="all">All Types</SelectItem>
                       {uniqueValues.types.map((type, index) => (
                         <SelectItem key={`type-${type}-${index}`} value={type}>{type}</SelectItem>
@@ -223,10 +223,10 @@ export function NavigatorAnalysis({
                 <div key="category">
                   <Label htmlFor="category">Category</Label>
                   <Select value={filters.category} onValueChange={value => setFilters(f => ({ ...f, category: value === 'all' ? '' : value }))}>
-                    <SelectTrigger className="mt-1.5 border-[#130032]/20">
+                    <SelectTrigger className="mt-1.5 border-[#130032]/20 bg-white">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="all">All Categories</SelectItem>
                       {uniqueValues.categories.map((category, index) => (
                         <SelectItem key={`category-${category}-${index}`} value={category}>{category}</SelectItem>
@@ -238,10 +238,10 @@ export function NavigatorAnalysis({
                 <div key="jurisdiction">
                   <Label htmlFor="jurisdiction">Jurisdiction</Label>
                   <Select value={filters.jurisdiction} onValueChange={value => setFilters(f => ({ ...f, jurisdiction: value === 'all' ? '' : value }))}>
-                    <SelectTrigger className="mt-1.5 border-[#130032]/20">
+                    <SelectTrigger className="mt-1.5 border-[#130032]/20 bg-white">
                       <SelectValue placeholder="All Jurisdictions" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="all">All Jurisdictions</SelectItem>
                       {uniqueValues.jurisdictions.map((jurisdiction, index) => (
                         <SelectItem key={`jurisdiction-${jurisdiction}-${index}`} value={jurisdiction}>{jurisdiction}</SelectItem>
@@ -369,10 +369,10 @@ export function NavigatorAnalysis({
                     <div>
                       <Label htmlFor="type" className="text-[#130032]">Type</Label>
                       <Select value={filters.type} onValueChange={value => setFilters(f => ({ ...f, type: value === 'all' ? '' : value }))}>
-                        <SelectTrigger className="mt-1.5 border-[#130032]/20">
+                        <SelectTrigger className="mt-1.5 border-[#130032]/20 bg-white">
                           <SelectValue placeholder="All Types" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white">
                           <SelectItem value="all">All Types</SelectItem>
                           {uniqueValues.types.map((type, index) => (
                             <SelectItem key={`type-${type}-${index}`} value={type}>{type}</SelectItem>
@@ -384,10 +384,10 @@ export function NavigatorAnalysis({
                     <div>
                       <Label htmlFor="category" className="text-[#130032]">Category</Label>
                       <Select value={filters.category} onValueChange={value => setFilters(f => ({ ...f, category: value === 'all' ? '' : value }))}>
-                        <SelectTrigger className="mt-1.5 border-[#130032]/20">
+                        <SelectTrigger className="mt-1.5 border-[#130032]/20 bg-white">
                           <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white">
                           <SelectItem value="all">All Categories</SelectItem>
                           {uniqueValues.categories.map((category, index) => (
                             <SelectItem key={`category-${category}-${index}`} value={category}>{category}</SelectItem>
@@ -399,10 +399,10 @@ export function NavigatorAnalysis({
                     <div>
                       <Label htmlFor="jurisdiction" className="text-[#130032]">Jurisdiction</Label>
                       <Select value={filters.jurisdiction} onValueChange={value => setFilters(f => ({ ...f, jurisdiction: value === 'all' ? '' : value }))}>
-                        <SelectTrigger className="mt-1.5 border-[#130032]/20">
+                        <SelectTrigger className="mt-1.5 border-[#130032]/20 bg-white">
                           <SelectValue placeholder="All Jurisdictions" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white">
                           <SelectItem value="all">All Jurisdictions</SelectItem>
                           {uniqueValues.jurisdictions.map((jurisdiction, index) => (
                             <SelectItem key={`jurisdiction-${jurisdiction}-${index}`} value={jurisdiction}>{jurisdiction}</SelectItem>
