@@ -68,6 +68,7 @@ export function NavigatorAnalysis({
 }: NavigatorAnalysisProps) {
   const [isLoading, setIsLoading] = useState(!result);
   const [accordionValue, setAccordionValue] = useState<string>("");
+  const [displayLimit, setDisplayLimit] = useState(5);
   const [filters, setFilters] = useState<FilterState>({
     partyName: result?.result?.metadata?.appliedFilters?.parties?.[0] || '',
     type: '',
@@ -178,6 +179,15 @@ export function NavigatorAnalysis({
         matchesJurisdiction && matchesValue && matchesDateRange;
     });
   }, [result?.result?.agreements, filters]);
+
+  // Get paginated agreements
+  const paginatedAgreements = useMemo(() => {
+    return filteredAgreements.slice(0, displayLimit);
+  }, [filteredAgreements, displayLimit]);
+
+  const handleLoadMore = () => {
+    setDisplayLimit(prev => prev + 5);
+  };
 
   const getActiveFilterCount = (filterState: FilterState) => {
     return [
@@ -421,7 +431,7 @@ export function NavigatorAnalysis({
           </div>
 
           <div className="space-y-4">
-            {filteredAgreements.map((agreement: any) => (
+            {paginatedAgreements.map((agreement: any) => (
               <Card key={agreement.id} className="border border-[#130032]/10">
                 <div className="p-4">
                   <div className="space-y-4">
@@ -501,10 +511,14 @@ export function NavigatorAnalysis({
             ))}
           </div>
 
-          {filteredAgreements.length > 5 && (
+          {filteredAgreements.length > displayLimit && (
             <div className="flex justify-center mt-4">
-              <Button variant="outline" className="text-[#4C00FF] border-[#4C00FF] hover:bg-[#4C00FF]/10">
-                Load More
+              <Button 
+                variant="outline" 
+                className="text-[#4C00FF] border-[#4C00FF] hover:bg-[#4C00FF]/10"
+                onClick={handleLoadMore}
+              >
+                Load More ({filteredAgreements.length - displayLimit} remaining)
               </Button>
             </div>
           )}
