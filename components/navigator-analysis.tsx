@@ -533,7 +533,10 @@ export function NavigatorAnalysis({
                           <div className="text-sm">
                             <div className="font-medium text-[#130032]">Key Dates</div>
                             <div className="text-[#130032]/60">
-                              {new Date(agreement.effective_date || Date.now()).toLocaleDateString()} - {new Date(agreement.expiry_date || Date.now()).toLocaleDateString()}
+                              {agreement.provisions?.effective_date && agreement.provisions?.expiration_date ? 
+                                `${new Date(agreement.provisions.effective_date).toLocaleDateString()} - ${new Date(agreement.provisions.expiration_date).toLocaleDateString()}` :
+                                'No dates available'
+                              }
                             </div>
                           </div>
                         </div>
@@ -674,7 +677,10 @@ export function NavigatorAnalysis({
                             <div className="text-sm">
                               <div className="font-medium text-[#130032]">Key Dates</div>
                               <div className="text-[#130032]/60">
-                                {new Date(agreement.effective_date || Date.now()).toLocaleDateString()} - {new Date(agreement.expiry_date || Date.now()).toLocaleDateString()}
+                                {agreement.provisions?.effective_date && agreement.provisions?.expiration_date ? 
+                                  `${new Date(agreement.provisions.effective_date).toLocaleDateString()} - ${new Date(agreement.provisions.expiration_date).toLocaleDateString()}` :
+                                  'No dates available'
+                                }
                               </div>
                             </div>
                           </div>
