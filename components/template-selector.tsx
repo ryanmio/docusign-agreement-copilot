@@ -16,7 +16,6 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
   const [error, setError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
   const [search, setSearch] = useState('');
-  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     loadTemplates();
@@ -28,14 +27,9 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       
-      console.log('Fetching templates...');
       const response = await fetch(`/api/templates?${params}`);
-      console.log('Response status:', response.status);
-      
       const data = await response.json();
-      console.log('Templates response:', data);
       
-      setDebugInfo(data); // Store full response for debugging
       setTemplates(data.templates || []);
       
       if (!response.ok) {
@@ -55,24 +49,14 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
         await onChange(templateId);
       } catch (error) {
         console.error('Failed to select template:', error);
-        // Show error UI
       }
     });
   };
 
   if (error) {
     return (
-      <div className="space-y-4">
-        <div className="p-4 text-red-500">
-          Error: {error}
-        </div>
-        {/* Debug information */}
-        <div className="p-4 bg-[#F8F3F0] rounded-md">
-          <h3 className="font-medium mb-2">Debug Information:</h3>
-          <pre className="text-xs overflow-auto">
-            {JSON.stringify(debugInfo, null, 2)}
-          </pre>
-        </div>
+      <div className="p-4 text-red-500">
+        Error: {error}
       </div>
     );
   }
@@ -94,17 +78,8 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
           <LoadingSpinner label="Loading templates..." />
         </div>
       ) : templates.length === 0 ? (
-        <div className="space-y-4">
-          <div className="p-4 text-center text-gray-500">
-            No templates found
-          </div>
-          {/* Debug information */}
-          <div className="p-4 bg-[#F8F3F0] rounded-md">
-            <h3 className="font-medium mb-2">Debug Information:</h3>
-            <pre className="text-xs overflow-auto">
-              {JSON.stringify(debugInfo, null, 2)}
-            </pre>
-          </div>
+        <div className="p-4 text-center text-gray-500">
+          No templates found
         </div>
       ) : (
         <div className="grid gap-4">
@@ -112,7 +87,7 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
             <button
               key={template.templateId}
               onClick={() => handleTemplateClick(template.templateId)}
-              className={`p-4 rounded-lg text-left transition-colors ${
+              className={`p-4 rounded-lg text-left transition-colors bg-white ${
                 value === template.templateId 
                   ? 'bg-[#4C00FF] text-white' 
                   : 'border border-gray-200 hover:border-[#4C00FF] hover:shadow-sm'

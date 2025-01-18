@@ -24,7 +24,7 @@ export function TemplatePreview({
   onBack,
 }: TemplatePreviewProps) {
   return (
-    <Card className="w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+    <Card className="w-full max-w-2xl mx-auto bg-white border border-gray-200">
       <div className="p-6 space-y-6">
         {/* Header */}
         <div>
