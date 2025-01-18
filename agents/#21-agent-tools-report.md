@@ -160,26 +160,7 @@ It takes the following arguments:
 `;
 ```
 
-## Security Considerations
-
-1. Permission Model
-   - Granular action control
-   - Resource-level permissions
-   - Context isolation
-
-2. API Access
-   - JWT authentication
-   - Scoped access tokens
-   - Rate limiting
-
-3. Validation
-   - Input sanitization
-   - Parameter validation
-   - Error boundaries
-
 ## Implementation Plan
-
-## Stripe Agent Tools Research Notes
 
 ## Recommended DocuSign Agent Tools
 
@@ -190,12 +171,14 @@ It takes the following arguments:
      - envelopeId: string
      - showActions: boolean
    - Use case: Document status and management
+   - Recommended name: `getEnvelopeDetails`
 
 2. `displayPdfViewer`
    - Purpose: Preview document content
    - Parameters:
      - url: string
    - Use case: Document review and verification
+   - Recommended name: `previewDocument`
 
 3. `signDocument`
    - Purpose: Generate signing session
@@ -203,6 +186,7 @@ It takes the following arguments:
      - envelopeId: string
      - returnUrl?: string
    - Use case: Document signing flow
+   - Recommended name: `createSigningSession`
 
 4. `sendReminder`
    - Purpose: Send signing reminders
@@ -210,6 +194,7 @@ It takes the following arguments:
      - envelopeId: string
      - message?: string
    - Use case: Follow-up on pending signatures
+   - Recommended name: Keep as is
 
 ### Template Operations
 5. `displayTemplateSelector`
@@ -218,12 +203,14 @@ It takes the following arguments:
      - preselectedId?: string
      - showSearch?: boolean
    - Use case: Template selection
+   - Recommended name: `listTemplates`
 
 6. `previewTemplate`
    - Purpose: View template details
    - Parameters:
      - templateId: string
    - Use case: Template review
+   - Recommended name: Keep as is
 
 7. `sendTemplate`
    - Purpose: Send template-based envelope
@@ -232,6 +219,7 @@ It takes the following arguments:
      - subject: string
      - recipients: Array<Recipient>
    - Use case: Template-based sending
+   - Recommended name: `createEnvelopeFromTemplate`
 
 8. `getTemplateTabs`
    - Purpose: Get template form fields
@@ -239,6 +227,7 @@ It takes the following arguments:
      - templateId: string
      - roleName: string
    - Use case: Field management
+   - Recommended name: `getTemplateFields`
 
 ### Recipient Management
 9. `collectRecipients`
@@ -248,6 +237,7 @@ It takes the following arguments:
      - mode: 'template' | 'custom'
    - Use case: Recipient collection
    - Note: Combines template and custom collection
+   - Recommended name: `defineRecipients`
 
 ### Custom Document Operations
 10. `displayContractPreview`
@@ -256,6 +246,7 @@ It takes the following arguments:
       - markdown: string
       - mode: 'preview' | 'edit'
     - Use case: Custom contract review
+    - Recommended name: `previewCustomContract`
 
 11. `sendCustomEnvelope`
     - Purpose: Send custom document
@@ -264,6 +255,7 @@ It takes the following arguments:
       - recipients: Array<Recipient>
       - message?: string
     - Use case: Custom document sending
+    - Recommended name: `createCustomEnvelope`
 
 ### Bulk Operations
 12. `displayBulkOperation`
@@ -271,6 +263,7 @@ It takes the following arguments:
     - Parameters:
       - operationId: string
     - Use case: Bulk send tracking
+    - Recommended name: `getBulkSendStatus`
 
 13. `createBulkSend`
     - Purpose: Initialize bulk send
@@ -278,12 +271,14 @@ It takes the following arguments:
       - templateId: string
       - recipients: Array<BulkRecipient>
     - Use case: Bulk sending setup
+    - Recommended name: Keep as is
 
 14. `startBulkSend`
     - Purpose: Begin bulk operation
     - Parameters:
       - operationId: string
     - Use case: Bulk send execution
+    - Recommended name: Keep as is
 
 ### List Operations
 15. `listEnvelopes`
@@ -293,6 +288,34 @@ It takes the following arguments:
       - page?: number
       - filters?: EnvelopeFilters
     - Use case: Envelope management
+    - Recommended name: Keep as is
+
+### Contract Intelligence Operations
+16. `navigatorAnalysis`
+    - Purpose: Analyze agreements using DocuSign AI
+    - Parameters:
+      - query: string
+      - filters?: {
+          dateRange?: DateRange
+          parties?: string[]
+          categories?: string[]
+          types?: string[]
+        }
+    - Use case: Contract analysis and insights
+    - Recommended name: `analyzeContracts`
+
+### Contract Calculation Operations
+17. `calculateMath`
+    - Purpose: Perform contract-related calculations
+    - Parameters:
+      - expression: string
+      - context: {
+          currency?: string
+          precision?: number
+          type: 'amount' | 'percentage' | 'proration'
+        }
+    - Use case: Financial calculations in contracts
+    - Recommended name: `calculateContractValue`
 
 ### Implementation Notes
 
@@ -303,18 +326,118 @@ It takes the following arguments:
    - TypeScript type safety
 
 2. Excluded Tools
-   - Navigator analysis (app-specific)
-   - Priority dashboard (UI feature)
-   - Math calculations (not core)
+   - Priority dashboard (UI-specific feature)
+   - Any pure UI components without business logic
 
-3. Additions Needed
-   - Envelope search
-   - Advanced filtering
-   - Batch operations
-   - Status webhooks
+## Recommended Additional Tools (Hackathon Priority)
 
-4. Security Focus
-   - Permission-based access
-   - Input validation
-   - Rate limiting
-   - Audit logging
+### 1. Enhanced Search (Split Approach)
+
+#### A. Navigator Search (Already Implemented)
+`analyzeContracts` (formerly `navigatorAnalysis`)
+- Purpose: Deep contract content analysis
+- Parameters:
+  - query: string (natural language)
+  - filters?: {
+    dateRange?: DateRange
+    parties?: string[]
+    categories?: string[]
+    types?: string[]
+    jurisdiction?: string
+    value?: { min?: number, max?: number }
+  }
+- Value: Contract intelligence and pattern analysis
+- Already implemented with rich UI
+
+#### B. eSignature Search (New Priority)
+`searchEnvelopes`
+- Purpose: Envelope and signing workflow search
+- Parameters:
+  - query: string (simple text search)
+  - filters?: {
+    status?: EnvelopeStatus[]
+    signerEmail?: string
+    dueDate?: DateRange
+    templateId?: string
+    completionProgress?: number
+  }
+- Value: Quick access to signing workflows
+- Implementation: New focused search UI
+- Complexity: Medium (2-3 hours)
+- Key Differences from Navigator:
+  - Simpler UI focused on signing status
+  - Real-time envelope tracking
+  - Signer-centric filters
+  - Template usage tracking
+
+### 2. Template Cloning
+`cloneTemplate`
+- Purpose: Quick template reuse
+- Parameters:
+  - templateId: string
+  - newName: string
+  - recipientRoles?: string[]
+- Value: Huge time-saver for template variations
+- Implementation: Use existing DocuSign API
+- Complexity: Low (1-2 hours)
+
+### 3. Basic Reporting
+`generateActivityReport`
+- Purpose: Simple activity summary
+- Parameters:
+  - dateRange: DateRange
+  - type: 'completion' | 'pending'
+- Value: Quick insights for users
+- Implementation: Aggregate existing envelope data
+- Complexity: Medium (2-3 hours)
+
+### 4. Batch Reminders
+`sendBatchReminders`
+- Purpose: Bulk reminder sending
+- Parameters:
+  - envelopeIds: string[]
+  - message?: string
+- Value: Efficiency for managing multiple documents
+- Implementation: Extend existing reminder tool
+- Complexity: Low (1-2 hours)
+
+### 5. `createSigningRoom`
+- Purpose: Create a persistent, shared space for multi-party real estate transactions
+- Value: High impact - solves coordination complexity
+- Complexity: Medium (8-10 hours for full implementation)
+- Parameters:
+  ```typescript
+  {
+    type: 'lease' | 'listing' | 'purchase',
+    participants: Array<{
+      role: 'agent' | 'tenant' | 'landlord' | 'buyer' | 'seller',
+      email: string,
+      name: string,
+      access: 'full' | 'sign-only' | 'view-only'
+    }>,
+    metadata: {
+      property?: {
+        address: string,
+        unit?: string,
+        type: 'residential' | 'commercial',
+        details: Record<string, any>
+      },
+      terms?: {
+        startDate?: string,
+        duration?: string,
+        amount?: number,
+        specialConditions?: string[]
+      }
+    },
+    templates?: Array<{
+      id: string,
+      name: string,
+      role: string
+    }>
+  }
+  ```
+- Builds on:
+  - `createSigningSession` for embedded signing
+  - `listEnvelopes` for status tracking
+  - `sendReminder` for notifications
+  - Planned search tools for filtering
