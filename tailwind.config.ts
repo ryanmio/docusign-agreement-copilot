@@ -113,10 +113,40 @@ const config = {
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out'
-  		}
+  		},
+  		typography: {
+  			DEFAULT: {
+  				css: {
+  					maxWidth: 'none',
+  					color: 'inherit',
+  					p: {
+  						marginTop: '0.5em',
+  						marginBottom: '0.5em',
+  					},
+  					ul: {
+  						marginTop: '0.5em',
+  						marginBottom: '0.5em',
+  					},
+  					li: {
+  						marginTop: '0',
+  						marginBottom: '0',
+  					},
+  					pre: {
+  						marginTop: '0',
+  						marginBottom: '0',
+  						paddingTop: '0',
+  						paddingBottom: '0',
+  						backgroundColor: 'transparent',
+  					},
+  				},
+  			},
+  		},
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require('@tailwindcss/typography')
+  ],
 } satisfies Config;
 
 export default config;
