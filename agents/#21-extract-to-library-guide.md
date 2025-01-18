@@ -47,6 +47,195 @@ export const displayPdfViewer: Tool = {
 };
 ```
 
+### Phase 2.5: Status Provider Pattern (1.5 hours)
+1. Create base interfaces for status tracking:
+```typescript
+// core/providers/status.ts
+export interface EnvelopeStatus {
+  envelopeId: string;
+  status: string;
+  recipients: Array<{
+    email: string;
+    name: string;
+    status: string;
+  }>;
+  lastUpdated: Date;
+}
+
+export interface StatusProvider {
+  subscribe(envelopeId: string): Observable<EnvelopeStatus>;
+  getStatus(envelopeId: string): Promise<EnvelopeStatus>;
+  getStatuses(filters: StatusFilter): Promise<EnvelopeStatus[]>;
+}
+
+export interface StatusFilter {
+  status?: string[];
+  fromDate?: Date;
+  toDate?: Date;
+  limit?: number;
+  offset?: number;
+}
+```
+
+2. Create Supabase implementation:
+```typescript
+// integrations/supabase/SupabaseStatusProvider.ts
+export class SupabaseStatusProvider implements StatusProvider {
+  constructor(private supabase: SupabaseClient) {}
+
+  subscribe(envelopeId: string): Observable<EnvelopeStatus> {
+    return new Observable(subscriber => {
+      // Initial fetch
+      this.getStatus(envelopeId).then(status => subscriber.next(status));
+      
+      // Real-time subscription
+      const subscription = this.supabase
+        .channel('envelope-updates')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'envelopes',
+          filter: `docusign_envelope_id=eq.${envelopeId}`
+        }, 
+        payload => {
+          this.getStatus(envelopeId).then(status => subscriber.next(status));
+        })
+        .subscribe();
+
+      // Cleanup
+      return () => {
+        subscription.unsubscribe();
+      };
+    });
+  }
+
+  async getStatus(envelopeId: string): Promise<EnvelopeStatus> {
+    const { data, error } = await this.supabase
+      .from('envelopes')
+      .select('*, recipients(*)')
+      .eq('docusign_envelope_id', envelopeId)
+      .single();
+
+    if (error) throw error;
+    return this.mapToEnvelopeStatus(data);
+  }
+
+  async getStatuses(filters: StatusFilter): Promise<EnvelopeStatus[]> {
+    let query = this.supabase
+      .from('envelopes')
+      .select('*, recipients(*)');
+
+    // Apply filters
+    if (filters.status?.length) {
+      query = query.in('status', filters.status);
+    }
+    // ... other filters
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data.map(this.mapToEnvelopeStatus);
+  }
+
+  private mapToEnvelopeStatus(data: any): EnvelopeStatus {
+    return {
+      envelopeId: data.docusign_envelope_id,
+      status: data.status,
+      recipients: data.recipients,
+      lastUpdated: new Date(data.updated_at)
+    };
+  }
+}
+```
+
+3. Create polling fallback:
+```typescript
+// integrations/polling/PollingStatusProvider.ts
+export class PollingStatusProvider implements StatusProvider {
+  constructor(
+    private client: DocuSignClient,
+    private pollInterval: number = 5000
+  ) {}
+
+  subscribe(envelopeId: string): Observable<EnvelopeStatus> {
+    return new Observable(subscriber => {
+      const poll = async () => {
+        try {
+          const status = await this.getStatus(envelopeId);
+          subscriber.next(status);
+        } catch (error) {
+          subscriber.error(error);
+        }
+      };
+
+      // Initial poll
+      poll();
+      
+      // Set up polling interval
+      const interval = setInterval(poll, this.pollInterval);
+
+      // Cleanup
+      return () => clearInterval(interval);
+    });
+  }
+
+  async getStatus(envelopeId: string): Promise<EnvelopeStatus> {
+    const envelope = await this.client.envelopes.get(envelopeId);
+    return this.mapToEnvelopeStatus(envelope);
+  }
+
+  // ... implementation
+}
+```
+
+4. Update React components to use provider:
+```typescript
+// react/hooks/useEnvelopeStatus.ts
+export function useEnvelopeStatus(envelopeId: string) {
+  const provider = useStatusProvider();
+  const [status, setStatus] = useState<EnvelopeStatus>();
+  const [error, setError] = useState<Error>();
+
+  useEffect(() => {
+    const subscription = provider
+      .subscribe(envelopeId)
+      .subscribe({
+        next: setStatus,
+        error: setError
+      });
+
+    return () => subscription.unsubscribe();
+  }, [envelopeId, provider]);
+
+  return { status, error };
+}
+```
+
+5. Create provider context:
+```typescript
+// react/context/StatusProviderContext.tsx
+const StatusProviderContext = createContext<StatusProvider>(
+  new PollingStatusProvider(defaultClient)
+);
+
+export function StatusProviderProvider({
+  provider,
+  children
+}: {
+  provider: StatusProvider;
+  children: React.ReactNode;
+}) {
+  return (
+    <StatusProviderContext.Provider value={provider}>
+      {children}
+    </StatusProviderContext.Provider>
+  );
+}
+
+export function useStatusProvider() {
+  return useContext(StatusProviderContext);
+}
+```
+
 ### Phase 3: Extract React Components (3 hours)
 1. Move each component to `@docusign-agent/react`:
 ```typescript

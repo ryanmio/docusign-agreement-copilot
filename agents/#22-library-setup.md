@@ -12,56 +12,62 @@
    pnpm init
    ```
 
-2. Configure Package:
+2. Configure Workspace:
    ```json
    {
-     "name": "@docusign/agent-tools",
+     "name": "docusign-agent-tools",
+     "private": true,
+     "workspaces": [
+       "packages/*"
+     ]
+   }
+   ```
+
+3. Create Package Structure:
+   ```bash
+   mkdir -p packages/core
+   mkdir -p packages/react
+   mkdir -p packages/integrations
+   ```
+
+4. Configure Packages:
+   ```json
+   // packages/core/package.json
+   {
+     "name": "@docusign-agent-tools/core",
      "version": "0.0.1",
      "private": false,
      "scripts": {
        "build": "tsup",
        "dev": "tsup --watch",
        "lint": "eslint src/",
-       "clean": "rm -rf dist",
        "test": "vitest"
-     },
-     "peerDependencies": {
-       "react": "^18.0.0",
-       "react-dom": "^18.0.0",
-       "@vercel/ai": "^1.0.0"
      }
    }
-   ```
 
-3. Set Up TypeScript:
-   ```json
+   // packages/react/package.json
    {
-     "compilerOptions": {
-       "target": "es2017",
-       "module": "esnext",
-       "lib": ["dom", "esnext"],
-       "jsx": "react-jsx",
-       "moduleResolution": "node",
-       "strict": true,
-       "declaration": true,
-       "esModuleInterop": true,
-       "skipLibCheck": true
+     "name": "@docusign-agent-tools/react",
+     "version": "0.0.1",
+     "private": false,
+     "peerDependencies": {
+       "react": "^18.0.0",
+       "react-dom": "^18.0.0"
      },
-     "include": ["src"],
-     "exclude": ["node_modules", "dist"]
+     "dependencies": {
+       "@docusign-agent-tools/core": "workspace:*"
+     }
    }
-   ```
 
-4. Create Initial Structure:
-   ```
-   src/
-   ├── auth/          # Authentication hooks & context
-   ├── components/    # UI components
-   ├── hooks/         # React hooks
-   ├── tools/         # AI tools
-   ├── providers/     # Data layer interfaces
-   ├── types/         # TypeScript types
-   └── index.ts       # Public API
+   // packages/integrations/package.json
+   {
+     "name": "@docusign-agent-tools/integrations",
+     "version": "0.0.1",
+     "private": false,
+     "dependencies": {
+       "@docusign-agent-tools/core": "workspace:*"
+     }
+   }
    ```
 
 **PHASE 2: Agreement Copilot Preparation**
@@ -131,12 +137,12 @@
 
    ## Installation
    \`\`\`bash
-   npm install @docusign/agent-tools
+   npm install @docusign-agent-tools/core @docusign-agent-tools/react
    \`\`\`
 
    ## Quick Start
    \`\`\`typescript
-   import { DocuSignProvider } from '@docusign/agent-tools';
+   import { DocuSignProvider } from '@docusign-agent-tools/core';
    \`\`\`
    ```
 
