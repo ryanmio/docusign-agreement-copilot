@@ -18,9 +18,9 @@ This cheat sheet provides step-by-step instructions for adding new tools to the 
 
 2. **Tool Types**
 There are three types of tools you can create:
-- **Server-side automatic**: Execute without user interaction
-- **Client-side automatic**: Run in the browser without user input
-- **User interaction tools**: Require user input (like forms)
+- **Server-side chat tools**: Execute during AI chat completion (in route.ts)
+- **Client-side UI tools**: Called directly by components (in tools.ts)
+- **User interaction tools**: Can exist in either context, requiring user input (like forms)
 
 3. **Tool States**
 Tools can be in one of three states:
@@ -28,56 +28,150 @@ Tools can be in one of three states:
 - `call`: Tool is ready for execution
 - `result`: Tool execution is complete
 
-4. **Configuration Check**
+4. **Configuration Example**
 ```typescript
 // app/api/chat/route.ts
-import { tools } from '@/ai/tools';
-
-export const runtime = 'edge';
-
-const config = {
+const result = streamText({
+  model: openai('gpt-4o'),
+  maxSteps: 10,
   experimental_toolCallStreaming: true,
-  tools: tools  // Make sure your tool is added here
-};
+  messages: [
+    {
+      role: 'system',
+      content: `You are a helpful assistant that helps users manage their Docusign documents and agreements.
+
+      IMPORTANT RULES FOR TOOL USAGE:
+      1. Always explain what you're going to do BEFORE calling any tool
+      2. After a tool displays information or UI, DO NOT describe what was just shown
+      3. Only provide next steps or ask for specific actions
+      4. Never repeat information that a tool has displayed`
+    },
+    ...messages
+  ],
+  tools: {
+    // Tools defined here
+  }
+});
 ```
 
-## Adding a New Tool: Two Required Steps
+## Understanding Tool Patterns
 
-### Step 1: Add Tool to System Prompt
-In `app/api/chat/route.ts`, add instructions for when the AI should use your tool:
+### 1. Server-Side Chat Tools
+- **Location**: `app/api/chat/route.ts`
+- **Purpose**: Used by AI during chat completion
+- **Auth**: Uses `createRouteHandlerClient`
+- **Format**: Uses `tool()` wrapper
+- **Example**:
+```typescript
+// app/api/chat/route.ts
+const result = streamText({
+  model: openai('gpt-4o'),
+  maxSteps: 10,
+  experimental_toolCallStreaming: true,
+  messages: [...],
+  tools: {
+    calculateMath: tool({
+      description: '...',
+      parameters: z.object({...}),
+      execute: async (args) => {
+        const cookieStore = cookies();
+        const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+        // Server-side execution
+      }
+    })
+  }
+});
+```
+
+### 2. Client-Side UI Tools
+- **Location**: `ai/tools.ts`
+- **Purpose**: Direct component interactions
+- **Auth**: Uses `createClientComponentClient`
+- **Format**: Direct object without tool wrapper
+- **Example**:
+```typescript
+// ai/tools.ts
+export const tools = {
+  // Existing tools...
+  yourNewTool: {
+    // 1. Basic Info
+    name: 'yourNewTool',
+    description: 'Clear description of what your tool does',
+    
+    // 2. Parameters (must match your type definition)
+    parameters: YourNewToolParams,
+    
+    // 3. Execution Logic
+    execute: async (params) => {
+      try {
+        // Handle authentication if needed
+        const supabase = createClientComponentClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          throw new Error('User not authenticated');
+        }
+
+        // Validate input
+        const validatedData = YourNewToolParams.parse(params);
+        
+        // Process data
+        const result = await processData(validatedData);
+        
+        // Return result (must match YourNewToolResult type)
+        return {
+          success: true,
+          data: result
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Tool execution failed'
+        };
+      }
+    }
+  }
+} as const;
+```
+
+### 3. Dual-Location Tools
+Some tools may need to exist in both locations because they:
+- Serve different contexts (AI chat vs direct UI)
+- Use different auth methods
+- Have similar functionality but different implementations
+- Example: displayDocumentDetails exists in both places with different auth
+
+## Adding a New Tool: Required Steps
+
+### Step 1: Determine Tool Location
+Decide where your tool belongs based on its purpose:
+- AI chat interaction → `route.ts`
+- Direct UI interaction → `tools.ts`
+- Both contexts → Implement in both files
+
+### Step 2: Add Tool to System Prompt
+If it's a chat tool, add instructions in `app/api/chat/route.ts`:
 ```typescript
 content: `You are a helpful assistant that helps users manage their DocuSign documents and agreements.
 // Existing tool instructions...
-When users ask about [specific use case], use the [yourNewTool] tool to [action].
-
-// Example:
-When users ask about priorities, urgent items, or what needs attention, 
-use the displayPriorityDashboard tool to show them a prioritized view 
-of their agreements.`
+When users ask about [specific use case], use the [yourNewTool] tool to [action].`
 ```
 
-### Step 2: Register Tool Implementation
-In `app/api/chat/route.ts`, add your tool to the tools object:
+### Step 3: Implement Tool
+In the appropriate file(s):
 ```typescript
-tools: {
-  // Existing tools...
-  yourNewTool: tool({
-    name: 'yourNewTool',
-    description: 'Clear description of what your tool does',
-    parameters: z.object({
-      // Your tool's parameters
-    }),
-    execute: async (args) => {
-      // Your tool's logic
-    }
-  })
-}
+yourNewTool: tool({
+  description: 'Clear description of what your tool does',
+  parameters: z.object({
+    // Your tool's parameters
+  }),
+  execute: async (args) => {
+    // Your tool's logic with appropriate auth client
+  }
+})
 ```
 
-IMPORTANT: Both steps are required! The system prompt tells the AI when to use the tool, 
-and the tool registration makes it available for use.
-
-## Step 3: Create Tool Component
+### Step 4: Create Tool Component
 **File**: `components/your-new-tool.tsx`
 
 1. **For Form-based Tools**:
@@ -196,64 +290,57 @@ export function YourNewTool({ toolCallId, data, onSelect, onBack }: YourNewToolP
 }
 ```
 
-## Step 4: Add Tool Definition
+### Step 5: Add Tool Definition
 **File**: `ai/tools.ts`
 ```typescript
-import { tool } from 'ai/rsc';
 import { z } from 'zod';
 import { YourNewToolParams } from '@/types/tools';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-export const yourNewTool = tool({
-  // 1. Basic Info
-  name: 'yourNewTool',
-  description: 'Clear description of what your tool does',
-  
-  // 2. Parameters (must match your type definition)
-  parameters: YourNewToolParams,
-  
-  // 3. Execution Logic
-  execute: async (params, { toolCallId }) => {
-    try {
-      // Handle authentication if needed
-      const supabase = createClientComponentClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+export const tools = {
+  // Existing tools...
+  yourNewTool: {
+    // 1. Basic Info
+    name: 'yourNewTool',
+    description: 'Clear description of what your tool does',
+    
+    // 2. Parameters (must match your type definition)
+    parameters: YourNewToolParams,
+    
+    // 3. Execution Logic
+    execute: async (params) => {
+      try {
+        // Handle authentication if needed
+        const supabase = createClientComponentClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          throw new Error('User not authenticated');
+        }
 
-      // Validate input
-      const validatedData = YourNewToolParams.parse(params);
-      
-      // Process data
-      const result = await processData(validatedData);
-      
-      // Return result (must match YourNewToolResult type)
-      return {
-        completed: false, // Set to true only when no more user input needed
-        data: result,
-        toolCallId
-      };
-    } catch (error) {
-      return {
-        completed: false,
-        error: error instanceof Error ? error.message : 'Tool execution failed',
-        toolCallId
-      };
+        // Validate input
+        const validatedData = YourNewToolParams.parse(params);
+        
+        // Process data
+        const result = await processData(validatedData);
+        
+        // Return result (must match YourNewToolResult type)
+        return {
+          success: true,
+          data: result
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Tool execution failed'
+        };
+      }
     }
   }
-});
-
-// Add to tools array
-export const tools = [
-  recipientFormTool,
-  templateSelectorTool,
-  yourNewTool,  // Add your tool here
-] as const;
+} as const;
 ```
 
-## Step 5: Add Tool Handler
+### Step 6: Add Tool Handler
 **File**: `app/chat/page.tsx`
 ```typescript
 import { useCallback } from 'react';
@@ -272,83 +359,30 @@ export default function ChatPage() {
 
   // 2. Handle tool invocations
   const handleToolInvocation = useCallback((toolInvocation: ToolInvocation) => {
-    const { toolName, toolCallId, state, result } = toolInvocation;
+    const { toolName, toolCallId, state } = toolInvocation;
 
-    // Handle states
-    if (state === 'error' || result?.error) {
-      return <ErrorDisplay error={result?.error || 'Tool error'} />;
-    }
-
-    if (state === 'partial-call') {
-      return <LoadingState />;
-    }
-
-    if (result?.completed) {
-      return null;
-    }
-
-    // Handle specific tools
     switch (toolName) {
       case 'yourNewTool':
         return (
           <YourNewTool
             toolCallId={toolCallId}
-            initialData={result?.data}
+            data={state.data}
             onSubmit={async (data) => {
-              try {
-                // Update tool result
-                await handleToolResult(toolCallId, {
-                  ...result,
-                  ...data,
-                  completed: true
-                });
-                
-                // Add user message
-                await append({
-                  role: 'user',
-                  content: `Action completed: ${data.summary}`
-                });
-              } catch (error) {
-                console.error('Tool error:', error);
-                await handleToolResult(toolCallId, {
-                  error: error instanceof Error ? error.message : 'Tool execution failed'
-                });
-              }
-            }}
-            onBack={async () => {
-              try {
-                await handleToolResult(toolCallId, {
-                  ...result,
-                  goBack: true,
-                  completed: true
-                });
-                await append({
-                  role: 'user',
-                  content: 'go back'
-                });
-              } catch (error) {
-                console.error('Back action failed:', error);
-              }
+              await handleToolResult(toolCallId, data);
             }}
           />
         );
+      // ... other tool cases
     }
-  }, [handleToolResult, append]);
+  }, [handleToolResult]);
 
-  // 3. Render chat interface
   return (
-    <div className="flex flex-col h-full">
+    <div>
       {messages.map((message) => (
-        <div key={message.id}>
-          {/* Render message content */}
-          {message.content}
-          
-          {/* Render tool invocations */}
-          {message.toolInvocations?.map((toolInvocation) => 
-            handleToolInvocation(toolInvocation)
-          )}
-        </div>
+        // ... message rendering
       ))}
+      {/* Tool invocation handling */}
+      {currentToolInvocation && handleToolInvocation(currentToolInvocation)}
     </div>
   );
 }

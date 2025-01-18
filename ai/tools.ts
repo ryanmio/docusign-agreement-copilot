@@ -1,3 +1,34 @@
+/**
+ * Client-Side UI Tools Implementation
+ * 
+ * This file contains tools that are used directly by UI components for immediate interactions,
+ * outside of the AI chat completion flow.
+ * 
+ * Key Characteristics:
+ * - Uses createClientComponentClient for client-side Supabase operations
+ * - Tools are called directly by UI components
+ * - Immediate execution and response (no streaming)
+ * - Used for direct user interactions like displaying data or forms
+ * 
+ * These tools are different from the ones in app/api/chat/route.ts which are:
+ * - Used in the AI chat completion flow
+ * - Called by the AI model during chat streaming
+ * - Part of the server-side route handler
+ * 
+ * Example Usage:
+ * - Displaying document details directly in a component
+ * - Showing template selectors
+ * - Managing form state for recipient collection
+ * 
+ * Note on Tool Duplication:
+ * Some tools (like displayDocumentDetails) exist in both this file and route.ts.
+ * This is intentional because they serve different purposes:
+ * - Tools here: Called directly by UI components when they need to display or interact with data
+ * - Tools in route.ts: Same functionality but called by the AI during chat conversations
+ * The duplication is necessary because they operate in different contexts (client vs server)
+ * and use different authentication methods (client vs route handler).
+ */
+
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { DocuSignEnvelopes } from '@/lib/docusign/envelopes';
 import { z } from 'zod';

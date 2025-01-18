@@ -1,3 +1,32 @@
+/**
+ * Chat API Route Handler with AI Tools Integration
+ * 
+ * This file contains the server-side implementation of the chat API endpoint and its associated tools.
+ * These tools are specifically designed for use with the AI chat completion flow using Vercel's AI SDK.
+ * 
+ * Key Characteristics:
+ * - Uses createRouteHandlerClient for server-side Supabase operations
+ * - Tools are defined here because they're part of the chat completion flow
+ * - Tools are executed during AI streaming responses
+ * - Handles authentication and session management for the chat context
+ * 
+ * Flow:
+ * 1. User sends message to this API route
+ * 2. Route handler calls OpenAI with available tools
+ * 3. AI model chooses which tools to call during chat completion
+ * 4. Results stream back to the client
+ * 
+ * This is different from the client-side tools in ai/tools.ts which are for direct UI interactions
+ * outside of the chat flow.
+ * 
+ * Note on Tool Duplication:
+ * Some tools (like displayDocumentDetails) exist in both this file and ai/tools.ts.
+ * This is intentional because they serve different purposes:
+ * - Tools here: Called by the AI during chat completion, using server-side auth
+ * - Tools in tools.ts: Called directly by UI components, using client-side auth
+ * They may have similar names and purposes but operate in different contexts with different auth methods.
+ */
+
 import { openai } from '@ai-sdk/openai';
 import { streamText, tool } from 'ai';
 import { z } from 'zod';
