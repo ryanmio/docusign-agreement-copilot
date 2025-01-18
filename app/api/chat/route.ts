@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: 'system',
-          content: `You are a helpful assistant that helps users manage their DocuSign documents and agreements.
+          content: `You are a helpful assistant that helps users manage their Docusign documents and agreements.
 
           IMPORTANT RULES FOR TOOL USAGE:
           1. Always explain what you're going to do BEFORE calling any tool
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
           - Have a clear title
           - Include all necessary sections (parties, terms, conditions, etc.)
           - Use appropriate legal language and structure
-          - Include a signature section with DocuSign anchor tags
+          - Include a signature section with Docusign anchor tags
           - IMPORTANT: DO NOT output the contract content in chat messages
           
           3. IMPORTANT - Signature Anchor Tags:
@@ -215,6 +215,7 @@ export async function POST(req: Request) {
              - DO NOT repeat or describe the results shown in the UI
              - Only provide insights or suggest next steps based on the findings
           
+          Docusign should always be written as Docusign, not DocuSign.
           If a tool call fails, inform the user and suggest retrying or contacting support.`
         },
         ...messages
@@ -406,8 +407,8 @@ export async function POST(req: Request) {
               }
 
               if (!envelopes || envelopes.length === 0) {
-                console.error('No envelope found with DocuSign ID:', envelopeId);
-                throw new Error(`No envelope found with DocuSign ID: ${envelopeId}`);
+                console.error('No envelope found with Docusign ID:', envelopeId);
+                throw new Error(`No envelope found with Docusign ID: ${envelopeId}`);
               }
 
               const envelope = envelopes[0];
@@ -450,7 +451,7 @@ export async function POST(req: Request) {
                 throw new Error('User not authenticated');
               }
 
-              // Fetch templates from DocuSign
+              // Fetch templates from Docusign
               const docusign = new DocuSignEnvelopes(supabase);
               const { templates } = await docusign.listTemplates(session.user.id);
 
@@ -466,7 +467,7 @@ export async function POST(req: Request) {
           }
         }),
         previewTemplate: tool({
-          description: 'Display a preview of a DocuSign template with its details and required roles',
+          description: 'Display a preview of a Docusign template with its details and required roles',
           parameters: z.object({
             templateId: z.string().describe('The ID of the template to preview'),
             showBackButton: z.boolean().optional().describe('Whether to show the back button')
@@ -480,7 +481,7 @@ export async function POST(req: Request) {
                 throw new Error('User not authenticated');
               }
 
-              // Get template details from DocuSign
+              // Get template details from Docusign
               const docusign = new DocuSignEnvelopes(supabase);
               const template = await docusign.getTemplate(session.user.id, templateId);
 
@@ -570,7 +571,7 @@ export async function POST(req: Request) {
                 throw new Error('User not authenticated');
               }
 
-              // Get envelopes from DocuSign
+              // Get envelopes from Docusign
               const docusign = new DocuSignEnvelopes(supabase);
               const thirtyDaysAgo = new Date();
               thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -585,7 +586,7 @@ export async function POST(req: Request) {
 
               // Helper to extract recipients from envelope
               const getRecipients = (envelope: any) => {
-                // DocuSign might return recipients in different formats
+                // Docusign might return recipients in different formats
                 if (!envelope.recipients) return [];
                 
                 // If recipients is an object with signers, carbonCopies etc.
@@ -748,7 +749,7 @@ export async function POST(req: Request) {
                 throw new Error('User not authenticated');
               }
 
-              // Send the template using DocuSign
+              // Send the template using Docusign
               const docusign = new DocuSignEnvelopes(supabase);
               const docusignResponse = await docusign.createEnvelopeFromTemplate(
                 session.user.id,
@@ -786,7 +787,7 @@ export async function POST(req: Request) {
                 console.error('Database error:', envelopeError);
                 return {
                   success: true,
-                  warning: 'Envelope created in DocuSign but failed to store in database',
+                  warning: 'Envelope created in Docusign but failed to store in database',
                   envelopeId: docusignResponse.envelopeId
                 };
               }
@@ -935,7 +936,7 @@ export async function POST(req: Request) {
                 };
               }
 
-              // Get signing URL using existing DocuSign client
+              // Get signing URL using existing Docusign client
               const docusign = new DocuSignEnvelopes(supabase);
               const signingUrl = await docusign.getSigningUrl(
                 session.user.id, 
@@ -965,7 +966,7 @@ export async function POST(req: Request) {
           }
         }),
         sendReminder: tool({
-          description: 'Send a reminder for a DocuSign envelope',
+          description: 'Send a reminder for a Docusign envelope',
           parameters: z.object({
             envelopeId: z.string().describe('The ID of the envelope to send reminder for'),
             message: z.string().optional().describe('Optional custom reminder message')
@@ -981,7 +982,7 @@ export async function POST(req: Request) {
                 throw new Error('User not authenticated');
               }
 
-              // Send reminder using DocuSign client
+              // Send reminder using Docusign client
               const docusign = new DocuSignEnvelopes(supabase);
               const result = await docusign.sendReminder(session.user.id, envelopeId, message);
 
@@ -1003,7 +1004,7 @@ export async function POST(req: Request) {
         displayContractPreview: tool({
           description: 'Display a contract in markdown format for preview and editing. Use this after generating contract content to show it to the user.',
           parameters: z.object({
-            markdown: z.string().describe('The contract content in markdown format with DocuSign anchor tags'),
+            markdown: z.string().describe('The contract content in markdown format with Docusign anchor tags'),
             mode: z.enum(['preview', 'edit']).default('preview').describe('The initial display mode')
           }),
           execute: async ({ markdown, mode }) => {
@@ -1037,7 +1038,7 @@ export async function POST(req: Request) {
           }
         }),
         sendCustomEnvelope: tool({
-          description: 'Send a custom contract as a DocuSign envelope',
+          description: 'Send a custom contract as a Docusign envelope',
           parameters: z.object({
             markdown: z.string().describe('The contract content in markdown format'),
             recipients: z.array(z.object({
@@ -1145,7 +1146,7 @@ export async function POST(req: Request) {
                 // Convert to base64 (hide from logs)
                 const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
                 
-                // Send envelope using DocuSign (with cleaner logging)
+                // Send envelope using Docusign (with cleaner logging)
                 const docusign = new DocuSignEnvelopes(supabase);
                 const envelopeDefinition = {
                   emailSubject: "Custom Contract",
@@ -1221,7 +1222,7 @@ export async function POST(req: Request) {
                   console.error('Database error:', envelopeError);
                   return {
                     success: true,
-                    warning: 'Envelope created in DocuSign but failed to store in database',
+                    warning: 'Envelope created in Docusign but failed to store in database',
                     envelopeId: docusignResponse.envelopeId,
                     status: 'sent'
                   };

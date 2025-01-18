@@ -168,7 +168,7 @@ export const tools = {
     }
   },
   previewTemplate: {
-    description: 'Display a preview of a DocuSign template with its details and required roles',
+    description: 'Display a preview of a Docusign template with its details and required roles',
     parameters: z.object({
       templateId: z.string().describe('The ID of the template to preview'),
       showBackButton: z.boolean().optional().describe('Whether to show the back button')
@@ -201,7 +201,7 @@ export const tools = {
     }
   },
   collectTemplateRecipients: {
-    description: 'Collect recipient information for sending a DocuSign template',
+    description: 'Collect recipient information for sending a Docusign template',
     parameters: z.object({
       templateId: z.string().describe('The ID of the template to collect recipients for'),
       roles: z.array(z.object({
@@ -403,7 +403,7 @@ export const tools = {
   },
   sendReminder: {
     name: 'sendReminder',
-    description: 'Send a reminder for a DocuSign envelope',
+    description: 'Send a reminder for a Docusign envelope',
     parameters: z.object({
       envelopeId: z.string().describe('The ID of the envelope to send reminder for'),
       message: z.string().optional().describe('Optional custom reminder message')
@@ -483,7 +483,7 @@ export const tools = {
     name: 'displayContractPreview',
     description: 'Display a contract in markdown format for preview and editing. Use this after generating contract content to show it to the user.',
     parameters: z.object({
-      markdown: z.string().describe('The contract content in markdown format with DocuSign anchor tags'),
+      markdown: z.string().describe('The contract content in markdown format with Docusign anchor tags'),
       mode: z.enum(['preview', 'edit']).default('preview').describe('The initial display mode')
     }),
     execute: async ({ markdown, mode }: { markdown: string; mode: 'preview' | 'edit' }) => {
