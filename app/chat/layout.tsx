@@ -15,7 +15,7 @@ export default async function ChatLayout({
   }
 
   return (
-    <div className="container mx-auto">
+    <div className="w-full">
       {children}
     </div>
   );
