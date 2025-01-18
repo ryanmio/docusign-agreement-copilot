@@ -139,6 +139,7 @@
   - [ ] Add error simulation tests
   - [ ] Implement performance monitoring
   - [ ] Document edge cases and limitations
+  - [ ] Remove unused validation and testing routes and endpoints
 
 ## Phase 4: Polish & Submission (Week 4) ✨
 - [x] Auto-Scroll to bottom
@@ -146,15 +147,16 @@
 - [x] Create project logo
 - [x] Create homepage to chat page transition
 - [x] Style remaining components like Docusign
+- [x] Restyle header
 - [ ] Optimize conversation starters for productivity
-- [ ] Restyle header
 - [ ] Check to make sure "Docusign" doesnt have camel-case capital S
 - [ ] Update system instructions per https://x.com/weswinder/status/1860035463152828471
 - [ ] Compare to Stripe https://stripe.dev/blog/adding-payments-to-your-agentic-workflows
-- [ ] Metered billing
+- [ ] Metered billing?
 - [ ] Other models?
 - [ ] Reorder the preview tools page
 - [ ] Test new user onboarding
+- [ ] Update metadata for sharing and stuff
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README
