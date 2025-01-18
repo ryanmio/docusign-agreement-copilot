@@ -550,53 +550,55 @@ export default function ChatPage() {
   }, [handleChatSubmit]);
 
   return (
-    <div className="h-[calc(100vh-64px)] bg-[#F7F7F7] w-full relative">
-      <div className="w-full h-full flex flex-col">
-        <div ref={messagesContainerRef} className="flex-1 overflow-auto space-y-6 pb-32 pt-8 px-6">
-          {messages.length === 0 && (
-            <ConversationStarters
-              onSelect={async (prompt) => {
-                await append({
-                  role: 'user',
-                  content: prompt
-                });
-              }}
-            />
-          )}
-          
-          {messages.map(message => (
-            <div key={message.id} className="space-y-4">
-              {message.content && (
-                <div className={`p-4 rounded-lg ${
-                  message.role === 'user' 
-                    ? 'bg-[#CBC2FF]' 
-                    : 'bg-white border border-gray-100 shadow-sm'
-                }`}>
-                  <div className={`prose prose-sm max-w-none ${
+    <div className="h-[calc(100vh-70px)] bg-[#F7F7F7] w-full relative overflow-auto">
+      <div className="w-full h-full flex flex-col items-center">
+        <div ref={messagesContainerRef} className="w-full flex justify-center">
+          <div className="w-full max-w-[900px] space-y-6 pb-32 pt-8 px-6">
+            {messages.length === 0 && (
+              <ConversationStarters
+                onSelect={async (prompt) => {
+                  await append({
+                    role: 'user',
+                    content: prompt
+                  });
+                }}
+              />
+            )}
+            
+            {messages.map(message => (
+              <div key={message.id} className="space-y-4">
+                {message.content && (
+                  <div className={`p-4 rounded-lg ${
                     message.role === 'user' 
-                      ? 'text-[#130032]' 
-                      : 'text-[#130032]'
+                      ? 'bg-[#CBC2FF]' 
+                      : 'bg-white border border-gray-100 shadow-sm'
                   }`}>
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                    <div className={`prose prose-sm max-w-none ${
+                      message.role === 'user' 
+                        ? 'text-[#130032]' 
+                        : 'text-[#130032]'
+                    }`}>
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {message.toolInvocations?.map(toolInvocation => (
-                <div key={toolInvocation.toolCallId}>
-                  {handleToolInvocation(toolInvocation)}
-                </div>
-              ))}
-            </div>
-          ))}
+                {message.toolInvocations?.map(toolInvocation => (
+                  <div key={toolInvocation.toolCallId}>
+                    {handleToolInvocation(toolInvocation)}
+                  </div>
+                ))}
+              </div>
+            ))}
 
-          {isLoading && (
-            <div className="p-4 flex justify-center">
-              <LoadingSpinner label="Thinking..." />
-            </div>
-          )}
+            {isLoading && (
+              <div className="p-4 flex justify-center">
+                <LoadingSpinner label="Thinking..." />
+              </div>
+            )}
 
-          <div ref={messagesEndRef} className="h-1" />
+            <div ref={messagesEndRef} className="h-1" />
+          </div>
         </div>
 
         {showScrollButton && (
@@ -623,34 +625,36 @@ export default function ChatPage() {
         )}
 
         <div className="fixed bottom-0 left-0 right-0 w-full bg-gradient-to-t from-[#F7F7F7] via-[#F7F7F7] to-transparent pb-6" style={{ bottom: 0 }}>
-          <div className="w-full px-6">
-            <form onSubmit={handleFormSubmit} className="max-w-3xl mx-auto flex items-center gap-2 bg-white rounded-full border shadow-sm px-6 py-3">
-              <input
-                value={input}
-                onChange={handleInputChange}
-                placeholder="What do you want to get done today?"
-                className="flex-1 text-lg outline-none text-[#130032] placeholder:text-gray-400 bg-transparent"
-              />
-              <button 
-                type="submit" 
-                className="rounded-full bg-[#4C00FF] text-white hover:bg-[#26065D] transition-colors w-10 h-10 flex items-center justify-center shrink-0"
-                disabled={isLoading}
-              >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
+          <div className="w-full flex justify-center">
+            <div className="w-full max-w-[900px] px-6">
+              <form onSubmit={handleFormSubmit} className="flex items-center gap-2 bg-white rounded-full border shadow-sm px-6 py-3">
+                <input
+                  value={input}
+                  onChange={handleInputChange}
+                  placeholder="What do you want to get done today?"
+                  className="flex-1 text-lg outline-none text-[#130032] placeholder:text-gray-400 bg-transparent"
+                />
+                <button 
+                  type="submit" 
+                  className="rounded-full bg-[#4C00FF] text-white hover:bg-[#26065D] transition-colors w-10 h-10 flex items-center justify-center shrink-0"
+                  disabled={isLoading}
                 >
-                  <path d="m5 12 14-7-7 14v-7L5 12Z"/>
-                </svg>
-              </button>
-            </form>
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <path d="m5 12 14-7-7 14v-7L5 12Z"/>
+                  </svg>
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
