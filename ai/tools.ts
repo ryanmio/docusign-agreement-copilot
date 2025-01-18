@@ -18,6 +18,7 @@ interface PriorityEnvelope {
     status: string;
   }>;
   urgencyReason: string;
+  purgeState?: 'unpurged' | 'documents_and_metadata_queued' | 'documents_queued' | 'metadata_queued' | 'purged';
 }
 
 interface PrioritySection {
@@ -317,13 +318,24 @@ export const tools = {
 
       // Get envelopes from DocuSign
       const docusign = new DocuSignEnvelopes(supabase);
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
       const { envelopes } = await docusign.listStatusChanges(user.id, {
-        from_date: thirtyDaysAgo.toISOString(),
-        include: ['recipients', 'expiration'],
+        from_date: ninetyDaysAgo.toISOString(),
+        include: ['recipients', 'expiration', 'purge_state'],
         status: ['sent', 'delivered', 'declined', 'voided']
+      });
+
+      // Log ALL envelopes and their states
+      console.log('Total envelopes received:', envelopes.length);
+      envelopes.forEach(env => {
+        console.log('Envelope:', {
+          id: env.envelopeId,
+          subject: env.emailSubject,
+          status: env.status,
+          purgeState: env.purgeState
+        });
       });
 
       // Helper to determine urgency reason
@@ -346,6 +358,17 @@ export const tools = {
       const thisWeekEnvelopes: PriorityEnvelope[] = [];
 
       envelopes.forEach(envelope => {
+        // Only show envelopes that are not being purged
+        if (envelope.purgeState && envelope.purgeState !== 'unpurged') {
+          console.log('Skipping envelope due to purge state:', {
+            id: envelope.envelopeId,
+            subject: envelope.emailSubject,
+            status: envelope.status,
+            purgeState: envelope.purgeState
+          });
+          return;
+        }
+
         const priorityEnvelope: PriorityEnvelope = {
           envelopeId: envelope.envelopeId,
           subject: envelope.emailSubject,
@@ -356,13 +379,14 @@ export const tools = {
             name: r.name,
             status: r.status
           })),
-          urgencyReason: getUrgencyReason(envelope)
+          urgencyReason: getUrgencyReason(envelope),
+          purgeState: envelope.purgeState
         };
 
         // Categorize based on status and expiration
         if (
+          envelope.status === 'voided' || 
           envelope.status === 'declined' ||
-          envelope.status === 'voided' ||
           (envelope.expirationDateTime && new Date(envelope.expirationDateTime).getTime() - new Date().getTime() <= 48 * 60 * 60 * 1000)
         ) {
           urgentEnvelopes.push(priorityEnvelope);

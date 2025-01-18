@@ -573,12 +573,12 @@ export async function POST(req: Request) {
 
               // Get envelopes from Docusign
               const docusign = new DocuSignEnvelopes(supabase);
-              const thirtyDaysAgo = new Date();
-              thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+              const ninetyDaysAgo = new Date();
+              ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
               const { envelopes } = await docusign.listStatusChanges(session.user.id, {
-                from_date: thirtyDaysAgo.toISOString(),
-                include: ['recipients', 'expiration'],
+                from_date: ninetyDaysAgo.toISOString(),
+                include: ['recipients', 'expiration', 'purge_state'],
                 status: ['sent', 'delivered', 'declined', 'voided']
               });
 
@@ -613,6 +613,21 @@ export async function POST(req: Request) {
 
                 return [];
               };
+
+              // Log ALL envelopes and their states
+              console.log('Total envelopes received:', envelopes.length);
+              envelopes.forEach(env => {
+                console.log('Envelope:', {
+                  id: env.envelopeId,
+                  subject: env.emailSubject,
+                  status: env.status,
+                  purgeState: env.purgeState
+                });
+              });
+
+              // Filter out purged envelopes first
+              const activeEnvelopes = envelopes.filter(env => !env.purgeState || env.purgeState === 'unpurged');
+              console.log('Active envelopes after purge filtering:', activeEnvelopes.length);
 
               // Helper to determine urgency reason
               const getUrgencyReason = (envelope: any) => {
@@ -666,7 +681,7 @@ export async function POST(req: Request) {
                 urgencyReason: string;
               }> = [];
 
-              envelopes.forEach(envelope => {
+              activeEnvelopes.forEach(envelope => {
                 const priorityEnvelope = {
                   envelopeId: envelope.envelopeId,
                   subject: envelope.emailSubject,
@@ -678,8 +693,8 @@ export async function POST(req: Request) {
 
                 // Categorize based on status and expiration
                 if (
+                  envelope.status === 'voided' || 
                   envelope.status === 'declined' ||
-                  envelope.status === 'voided' ||
                   (envelope.expirationDateTime && new Date(envelope.expirationDateTime).getTime() - new Date().getTime() <= 48 * 60 * 60 * 1000)
                 ) {
                   urgentEnvelopes.push(priorityEnvelope);

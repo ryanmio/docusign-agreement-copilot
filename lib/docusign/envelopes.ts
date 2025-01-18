@@ -183,6 +183,7 @@ interface Envelope {
   emailSubject: string;
   expirationDateTime?: string;
   recipients: EnvelopeRecipient[];
+  purgeState?: 'unpurged' | 'documents_and_metadata_queued' | 'documents_queued' | 'metadata_queued' | 'purged';
 }
 
 interface ListStatusChangesResponse {
@@ -760,6 +761,11 @@ export class DocuSignEnvelopes {
       queryParams.append('status', options.status.join(','));
     }
 
+    console.log('DocuSign API Request:', {
+      url: `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes`,
+      params: Object.fromEntries(queryParams.entries())
+    });
+
     const response = await fetch(
       `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes?${queryParams.toString()}`,
       {
@@ -777,7 +783,21 @@ export class DocuSignEnvelopes {
       throw new Error(`Failed to list envelope status changes: ${errorData}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('DocuSign API Response:', {
+      totalCount: data.totalCount,
+      resultSetSize: data.resultSetSize,
+      envelopesCount: data.envelopes?.length,
+      envelopes: data.envelopes?.map((env: any) => ({
+        id: env.envelopeId,
+        subject: env.emailSubject,
+        status: env.status,
+        purgeState: env.purgeState,
+        created: env.createdDateTime
+      }))
+    });
+
+    return data;
   }
 
   async updateRecipientForEmbeddedSigning(userId: string, envelopeId: string, recipientId: string, recipientInfo: any) {
