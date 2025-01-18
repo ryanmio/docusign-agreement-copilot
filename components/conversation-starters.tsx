@@ -43,7 +43,7 @@ export function ConversationStarters({ onSelect }: ConversationStartersProps) {
           <Button
             variant="outline"
             onClick={() => onSelect(suggestedAction.action)}
-            className="text-left border rounded-xl px-4 py-3.5 text-sm flex-1 gap-1 sm:flex-col w-full h-auto justify-start items-start hover:bg-accent"
+            className="text-left bg-white border rounded-xl px-4 py-3.5 text-sm flex-1 gap-1 sm:flex-col w-full h-auto justify-start items-start hover:bg-accent"
           >
             <span className="font-medium">{suggestedAction.title}</span>
             <span className="text-muted-foreground">
