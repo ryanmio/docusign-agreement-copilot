@@ -16,7 +16,8 @@ A modular, reusable library for building DocuSign-powered applications with AI c
 ├── ai/                  # AI tool definitions
 │   ├── tools/           # Individual tool definitions
 │   └── toolkit/         # Tool composition
-└── supabase/           # Supabase integration
+└── integrations/        # Optional integrations
+    └── supabase/       # Supabase provider implementation
 ```
 
 ## Data Provider Pattern
@@ -25,10 +26,18 @@ A modular, reusable library for building DocuSign-powered applications with AI c
 ```typescript
 // providers/envelope.ts
 export interface EnvelopeProvider {
-  getEnvelope(envelopeId: string): Promise<EnvelopeData>;
+  // Core envelope operations
+  getEnvelope(id: string): Promise<EnvelopeData>;
+  listEnvelopes(filters?: EnvelopeFilters): Promise<EnvelopeData[]>;
+  saveEnvelope(data: EnvelopeData): Promise<void>;
+  
+  // Document operations
   listDocuments(envelopeId: string): Promise<DocumentData[]>;
+  getDocument(envelopeId: string, documentId: string): Promise<DocumentData>;
+  
+  // Recipient operations
   listRecipients(envelopeId: string): Promise<RecipientData[]>;
-  saveEnvelope(envelope: EnvelopeData): Promise<void>;
+  updateRecipient(envelopeId: string, recipientId: string, data: RecipientData): Promise<void>;
 }
 
 // providers/auth.ts
@@ -44,36 +53,27 @@ export interface TemplateProvider {
 }
 ```
 
-### 2. Supabase Implementation (@docusign-agent/supabase)
+### 2. Supabase Implementation (@docusign-agent/integrations/supabase)
 ```typescript
-// SupabaseEnvelopeProvider.ts
+// providers/SupabaseEnvelopeProvider.ts
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { EnvelopeProvider } from '@docusign-agent/core';
 
 export class SupabaseEnvelopeProvider implements EnvelopeProvider {
-  constructor(private supabase = createClientComponentClient()) {}
+  constructor(private supabase: SupabaseClient) {}
 
-  async getEnvelope(envelopeId: string): Promise<EnvelopeData> {
+  async getEnvelope(id: string): Promise<EnvelopeData> {
     const { data, error } = await this.supabase
       .from('envelopes')
-      .select('*, recipients(*)')
-      .eq('id', envelopeId)
+      .select('*')
+      .eq('id', id)
       .single();
     
     if (error) throw new Error('Failed to fetch envelope');
     return this.mapToEnvelopeData(data);
   }
-}
 
-// SupabaseAuthProvider.ts
-export class SupabaseAuthProvider implements AuthProvider {
-  constructor(private supabase = createClientComponentClient()) {}
-
-  async getCurrentUser(): Promise<UserData | null> {
-    const { data: { user }, error } = await this.supabase.auth.getUser();
-    if (error) throw new Error('Failed to get user');
-    return user ? this.mapToUserData(user) : null;
-  }
+  // ... implement other methods
 }
 ```
 
@@ -86,10 +86,10 @@ export class EnvelopeOperations {
     private provider: EnvelopeProvider
   ) {}
 
-  async getEnvelopeDetails(envelopeId: string): Promise<EnvelopeDetails> {
-    const envelope = await this.provider.getEnvelope(envelopeId);
-    const documents = await this.provider.listDocuments(envelopeId);
-    const recipients = await this.provider.listRecipients(envelopeId);
+  async getEnvelopeDetails(id: string): Promise<EnvelopeDetails> {
+    const envelope = await this.provider.getEnvelope(id);
+    const documents = await this.provider.listDocuments(id);
+    const recipients = await this.provider.listRecipients(id);
 
     return {
       envelopeId: envelope.envelopeId,
@@ -149,21 +149,21 @@ export const getEnvelopeDetails: Tool<EnvelopeProvider> = {
 
 ### 1. Install New Packages
 ```bash
-npm install @docusign-agent/core @docusign-agent/react @docusign-agent/ai @docusign-agent/supabase
+npm install @docusign-agent/core @docusign-agent/react @docusign-agent/ai @docusign-agent/integrations-supabase
 ```
 
 ### 2. Configure Providers
 ```typescript
 // app/providers.tsx
-import { SupabaseEnvelopeProvider, SupabaseAuthProvider } from '@docusign-agent/supabase';
+import { SupabaseEnvelopeProvider } from '@docusign-agent/integrations-supabase';
 import { ProviderContext } from '@docusign-agent/react';
 
 export function Providers({ children }) {
-  const envelopeProvider = new SupabaseEnvelopeProvider();
-  const authProvider = new SupabaseAuthProvider();
+  const supabase = createClientComponentClient();
+  const provider = new SupabaseEnvelopeProvider(supabase);
 
   return (
-    <ProviderContext.Provider value={{ envelopeProvider, authProvider }}>
+    <ProviderContext.Provider value={{ provider }}>
       {children}
     </ProviderContext.Provider>
   );
@@ -175,14 +175,11 @@ export function Providers({ children }) {
 // ai/tools.ts
 import { getEnvelopeDetails } from '@docusign-agent/ai';
 import { EnvelopeDetailsView } from '@docusign-agent/react';
-import { SupabaseEnvelopeProvider } from '@docusign-agent/supabase';
-
-const provider = new SupabaseEnvelopeProvider();
 
 export const tools = {
   getEnvelopeDetails: {
     ...getEnvelopeDetails,
-    execute: async (args, { client }) => {
+    execute: async (args, { client, provider }) => {
       const result = await getEnvelopeDetails.execute(args, { client, provider });
       return {
         component: EnvelopeDetailsView,
@@ -195,36 +192,3 @@ export const tools = {
   }
 };
 ```
-
-## Complexity Assessment
-
-### Effort Required: 3-4 days
-
-1. **Core Package & Providers (1 day)**
-   - Define provider interfaces
-   - Implement core operations
-   - Write types
-
-2. **React Package (1-2 days)**
-   - Create provider context
-   - Update hooks for provider support
-   - Build UI components
-
-3. **AI Package (0.5 days)**
-   - Update tool interfaces for providers
-   - Implement tool executors
-
-4. **Supabase Integration (0.5 days)**
-   - Implement provider classes
-   - Update Agreement Copilot
-
-### Key Benefits
-1. Clean separation from Supabase
-2. Reusable components
-3. Better type safety
-4. Simplified maintenance
-
-Would you like me to:
-1. Detail the implementation for another tool?
-2. Create a more detailed timeline?
-3. Start implementing the core package?

@@ -441,3 +441,97 @@ It takes the following arguments:
   - `listEnvelopes` for status tracking
   - `sendReminder` for notifications
   - Planned search tools for filtering
+
+## Decoupling from Supabase
+
+### Overview
+While our demo uses Supabase, the library is designed to be database-agnostic. This section explains how we achieve this separation.
+
+### 1. Provider Interface Design
+```typescript
+// @docusign-agent/core/src/providers/envelope.ts
+export interface EnvelopeProvider {
+  // Core envelope operations
+  getEnvelope(id: string): Promise<EnvelopeData>;
+  listEnvelopes(filters?: EnvelopeFilters): Promise<EnvelopeData[]>;
+  saveEnvelope(data: EnvelopeData): Promise<void>;
+  
+  // Document operations
+  listDocuments(envelopeId: string): Promise<DocumentData[]>;
+  getDocument(envelopeId: string, documentId: string): Promise<DocumentData>;
+  
+  // Recipient operations
+  listRecipients(envelopeId: string): Promise<RecipientData[]>;
+  updateRecipient(envelopeId: string, recipientId: string, data: RecipientData): Promise<void>;
+}
+```
+
+### 2. Supabase Implementation (Demo Only)
+```typescript
+// agreement-copilot/src/providers/supabase-envelope.ts
+export class SupabaseEnvelopeProvider implements EnvelopeProvider {
+  constructor(private supabase: SupabaseClient) {}
+
+  async getEnvelope(id: string): Promise<EnvelopeData> {
+    const { data, error } = await this.supabase
+      .from('envelopes')
+      .select('*')
+      .eq('id', id)
+      .single();
+      
+    if (error) throw new Error('Failed to fetch envelope');
+    return this.mapToEnvelopeData(data);
+  }
+  
+  // ... implement other methods
+}
+```
+
+### 3. Tool Implementation (Library)
+```typescript
+// @docusign-agent/ai/src/tools/getEnvelopeDetails.ts
+export const getEnvelopeDetails = {
+  name: 'getEnvelopeDetails',
+  description: 'Get envelope details',
+  parameters: z.object({
+    envelopeId: z.string()
+  }),
+  execute: async ({ envelopeId }, { provider }: { provider: EnvelopeProvider }) => {
+    // No Supabase dependency here
+    return provider.getEnvelope(envelopeId);
+  }
+};
+```
+
+### 4. Demo Integration
+```typescript
+// agreement-copilot/src/app/api/chat/route.ts
+import { SupabaseEnvelopeProvider } from '@/providers/supabase-envelope';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+
+export async function POST(req: Request) {
+  const supabase = createRouteHandlerClient({ cookies });
+  const provider = new SupabaseEnvelopeProvider(supabase);
+  
+  const tools = createTools({ provider }); // Inject provider into tools
+  
+  // ... rest of route handler
+}
+```
+
+### Benefits
+1. **Clean Separation**: Core library has no Supabase dependencies
+2. **Flexibility**: Users can implement their own storage solutions
+3. **Testing**: Easy to mock providers for testing
+4. **Maintainability**: Clear boundaries between library and implementation
+
+### Implementation Notes
+- Provider interfaces live in `@docusign-agent/core`
+- Supabase implementation lives in demo app or optional integration package
+- Tools accept provider through configuration
+- No direct Supabase imports in core library code
+
+Would you like me to:
+1. Compare this with the library proposal for consistency?
+2. Add more implementation details?
+3. Expand on any specific section?
