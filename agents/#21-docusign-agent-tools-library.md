@@ -1,194 +1,193 @@
 # DocuSign Agent Tools Library
 
 ## Overview
-A modular, reusable library for building DocuSign-powered applications with AI capabilities. The library provides core DocuSign operations, React hooks and components, and AI tool definitions.
+A modular, reusable library for building DocuSign-powered applications with AI capabilities. Based on the Stripe toolkit pattern, providing a consistent structure for both data operations and UI components.
 
 ## Package Structure
 ```
 @docusign-agent/
-├── core/                 # Core DocuSign operations & types
-│   ├── types/           # Shared TypeScript types
-│   ├── client/          # DocuSign API client
-│   └── providers/       # Data provider interfaces
-├── react/               # React hooks & components
-│   ├── hooks/           # Data fetching hooks
-│   └── components/      # UI components
-├── ai/                  # AI tool definitions
-│   ├── tools/           # Individual tool definitions
-│   └── toolkit/         # Tool composition
-└── integrations/        # Optional integrations
-    └── supabase/       # Supabase provider implementation
+├── core/           # Core toolkit, types, and tools
+├── react/          # React components
+└── integrations/   # Optional integrations
+    └── supabase/  # Supabase implementation
 ```
 
-## Data Provider Pattern
+## Core Structure
 
-### 1. Provider Interfaces (@docusign-agent/core)
+### 1. Toolkit Class
 ```typescript
-// providers/envelope.ts
-export interface EnvelopeProvider {
-  // Core envelope operations
-  getEnvelope(id: string): Promise<EnvelopeData>;
-  listEnvelopes(filters?: EnvelopeFilters): Promise<EnvelopeData[]>;
-  saveEnvelope(data: EnvelopeData): Promise<void>;
-  
-  // Document operations
-  listDocuments(envelopeId: string): Promise<DocumentData[]>;
-  getDocument(envelopeId: string, documentId: string): Promise<DocumentData>;
-  
-  // Recipient operations
-  listRecipients(envelopeId: string): Promise<RecipientData[]>;
-  updateRecipient(envelopeId: string, recipientId: string, data: RecipientData): Promise<void>;
-}
+export class DocuSignAgentToolkit {
+  private tools: Record<string, Tool> = {};
 
-// providers/auth.ts
-export interface AuthProvider {
-  getCurrentUser(): Promise<UserData | null>;
-  getAccessToken(): Promise<string>;
-}
-
-// providers/template.ts
-export interface TemplateProvider {
-  listTemplates(): Promise<TemplateData[]>;
-  getTemplate(templateId: string): Promise<TemplateData>;
-}
-```
-
-### 2. Supabase Implementation (@docusign-agent/integrations/supabase)
-```typescript
-// providers/SupabaseEnvelopeProvider.ts
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { EnvelopeProvider } from '@docusign-agent/core';
-
-export class SupabaseEnvelopeProvider implements EnvelopeProvider {
-  constructor(private supabase: SupabaseClient) {}
-
-  async getEnvelope(id: string): Promise<EnvelopeData> {
-    const { data, error } = await this.supabase
-      .from('envelopes')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) throw new Error('Failed to fetch envelope');
-    return this.mapToEnvelopeData(data);
-  }
-
-  // ... implement other methods
-}
-```
-
-### 3. Core Operations with Providers
-```typescript
-// operations/envelopes.ts
-export class EnvelopeOperations {
   constructor(
-    private client: DocuSignClient,
-    private provider: EnvelopeProvider
-  ) {}
+    private provider: DocuSignProvider,
+    private config: {
+      actions?: Actions;
+      context?: {
+        account?: string;
+        baseUrl?: string;
+      };
+    }
+  ) {
+    // Register default tools
+    this.registerTool(getEnvelopeDetails);
+    this.registerTool(displayPdfViewer);
+    // ... other tools
+  }
 
-  async getEnvelopeDetails(id: string): Promise<EnvelopeDetails> {
-    const envelope = await this.provider.getEnvelope(id);
-    const documents = await this.provider.listDocuments(id);
-    const recipients = await this.provider.listRecipients(id);
+  registerTool(tool: Tool) {
+    if (this.isToolAllowed(tool)) {
+      this.tools[tool.method] = tool;
+    }
+  }
 
-    return {
-      envelopeId: envelope.envelopeId,
-      status: envelope.status,
-      created: envelope.createdDateTime,
-      sent: envelope.sentDateTime,
-      documents,
-      recipients
-    };
+  private isToolAllowed(tool: Tool): boolean {
+    if (!this.config.actions) return true;
+    // Check if tool's required actions are allowed
+    return true; // Implement permission check
+  }
+
+  getTools(): Record<string, Tool> {
+    return this.tools;
   }
 }
 ```
 
-### 4. React Hooks with Provider Context
+### 2. Provider Interface
 ```typescript
-// hooks/useEnvelopeDetails.ts
-import { useContext } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ProviderContext } from '../context';
+export interface DocuSignProvider {
+  // Core operations
+  getResource(type: 'envelope' | 'template' | 'document', id: string): Promise<any>;
+  listResources(type: 'envelope' | 'template' | 'document', filters?: any): Promise<any[]>;
+  saveResource(type: 'envelope' | 'template' | 'document', data: any): Promise<void>;
+}
+```
 
-export const useEnvelopeDetails = (
-  envelopeId: string,
-  options?: {
-    onError?: (error: Error) => void;
-    onSuccess?: (data: EnvelopeDetails) => void;
-  }
-) => {
-  const { envelopeProvider, docusignClient } = useContext(ProviderContext);
-  const operations = new EnvelopeOperations(docusignClient, envelopeProvider);
+### 3. Tool Structure
+```typescript
+export interface Tool {
+  method: string;      // Method name (e.g., 'displayPdfViewer')
+  name: string;        // Display name
+  description: string; // Prompt template
+  parameters: z.ZodSchema;
+  actions: {           // Required permissions
+    [resource: string]: {
+      [action: string]: boolean;
+    };
+  };
+  execute: (args: any, context: { provider: DocuSignProvider }) => Promise<any>;
+}
+```
 
-  return useQuery({
-    queryKey: ['envelope', envelopeId],
-    queryFn: () => operations.getEnvelopeDetails(envelopeId),
-    ...options
-  });
+## Tool Implementations
+
+### 1. Display PDF Viewer
+```typescript
+export const displayPdfViewer: Tool = {
+  method: 'displayPdfViewer',
+  name: 'Display PDF Viewer',
+  description: 'Preview document content',
+  parameters: z.object({
+    url: z.string()
+  }),
+  actions: {
+    documents: { read: true }
+  },
+  execute: async ({ url }, { provider }) => ({
+    component: PDFViewer,
+    props: { url }
+  })
 };
 ```
 
-### 5. AI Tools with Provider Support
+### 2. Get Envelope Details
 ```typescript
-// tools/getEnvelopeDetails.ts
-export const getEnvelopeDetails: Tool<EnvelopeProvider> = {
-  name: 'getEnvelopeDetails',
-  description: 'Retrieve and display detailed information about a document envelope',
+export const getEnvelopeDetails: Tool = {
+  method: 'getEnvelopeDetails',
+  name: 'Get Envelope Details',
+  description: 'Display envelope and document details',
   parameters: z.object({
     envelopeId: z.string(),
     showActions: z.boolean().optional()
   }),
-  execute: async ({ envelopeId, showActions }, { client, provider }) => {
-    const operations = new EnvelopeOperations(client, provider);
-    return operations.getEnvelopeDetails(envelopeId);
+  actions: {
+    envelopes: { read: true }
+  },
+  execute: async ({ envelopeId }, { provider }) => {
+    const data = await provider.getResource('envelope', envelopeId);
+    return {
+      component: EnvelopeDetails,
+      props: { data }
+    };
   }
 };
 ```
 
-## Migration Plan for Agreement Copilot
+## React Components
 
-### 1. Install New Packages
-```bash
-npm install @docusign-agent/core @docusign-agent/react @docusign-agent/ai @docusign-agent/integrations-supabase
-```
-
-### 2. Configure Providers
+### PDF Viewer
 ```typescript
-// app/providers.tsx
-import { SupabaseEnvelopeProvider } from '@docusign-agent/integrations-supabase';
-import { ProviderContext } from '@docusign-agent/react';
+interface PDFViewerProps {
+  url: string;
+  height?: string | number;
+  scale?: number;
+  onError?: (error: LoadError) => void;
+  className?: string;
+}
 
-export function Providers({ children }) {
-  const supabase = createClientComponentClient();
-  const provider = new SupabaseEnvelopeProvider(supabase);
-
+export function PDFViewer({ 
+  url, 
+  height = '750px',
+  scale = 1.2,
+  onError,
+  className 
+}: PDFViewerProps) {
   return (
-    <ProviderContext.Provider value={{ provider }}>
-      {children}
-    </ProviderContext.Provider>
+    <div className={className} style={{ height }}>
+      <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
+        <Viewer
+          fileUrl={url}
+          defaultScale={scale}
+          onError={onError}
+        />
+      </Worker>
+    </div>
   );
 }
 ```
 
-### 3. Update Tool Usage
-```typescript
-// ai/tools.ts
-import { getEnvelopeDetails } from '@docusign-agent/ai';
-import { EnvelopeDetailsView } from '@docusign-agent/react';
+## Usage in Application
 
-export const tools = {
-  getEnvelopeDetails: {
-    ...getEnvelopeDetails,
-    execute: async (args, { client, provider }) => {
-      const result = await getEnvelopeDetails.execute(args, { client, provider });
-      return {
-        component: EnvelopeDetailsView,
-        props: {
-          ...result,
-          showActions: args.showActions
-        }
-      };
-    }
+### 1. Setup
+```typescript
+import { DocuSignAgentToolkit } from '@docusign-agent/core';
+import { SupabaseProvider } from '@docusign-agent/integrations/supabase';
+
+// Initialize provider
+const provider = new SupabaseProvider(supabaseClient);
+
+// Create toolkit
+const toolkit = new DocuSignAgentToolkit(provider, {
+  actions: {
+    envelopes: { read: true },
+    documents: { read: true }
   }
-};
+});
+
+// Get tools for AI
+const tools = toolkit.getTools();
 ```
+
+### 2. Use in AI Component
+```typescript
+export function AIChatComponent() {
+  return (
+    <AI
+      api="/api/chat"
+      tools={tools}
+      messages={[
+        { role: "system", content: "I am a DocuSign assistant..." }
+      ]}
+    />
+  );
+}
