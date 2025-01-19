@@ -191,7 +191,8 @@ export async function POST(req: Request) {
           For sending templates, follow this EXACT flow:
           1. When user wants to send a template:
              - Say "I'll show you the available templates."
-             - Call displayTemplateSelector
+             - Call displayTemplateSelector 
+             - Do not repeat or describe the templates, let the UI handle that
              - Wait for user to select a template
           
           2. After user selects a template:
