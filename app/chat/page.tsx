@@ -337,6 +337,14 @@ export default function ChatPage() {
           return <TemplatePreview {...result} />;
 
         case 'displayDocumentDetails':
+          // Handle both explicit errors and missing data
+          if (state === 'error' || error || !result?.envelope) {
+            return (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                {error || 'This envelope is not available or you don\'t have permission to view it'}
+              </div>
+            );
+          }
           return <DocumentView {...result} />;
 
         case 'displayPdfViewer':

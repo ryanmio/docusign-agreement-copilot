@@ -404,63 +404,78 @@ export async function POST(req: Request) {
             showActions: z.boolean().optional().describe('Whether to show action buttons like void and resend')
           }),
           execute: async ({ envelopeId, showActions }) => {
-            console.log('Starting displayDocumentDetails execution:', { envelopeId, showActions });
+            console.log('[API] Starting displayDocumentDetails execution:', { envelopeId, showActions });
             try {
-              console.log('Creating Supabase client');
+              console.log('[API] Creating Supabase client');
               const cookieStore = cookies();
               const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
               
-              console.log('Getting user session');
+              console.log('[API] Getting user session');
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-              console.log('Session data:', { userId: session?.user?.id });
+              console.log('[API] Session data:', { userId: session?.user?.id });
               if (sessionError) {
-                console.error('Session error:', sessionError);
-                throw sessionError;
+                console.error('[API] Session error:', sessionError);
+                return {
+                  state: 'error',
+                  error: 'Authentication error'
+                };
               }
 
               if (!session?.user) {
-                console.error('No user found in session');
-                throw new Error('User not authenticated');
+                console.error('[API] No user found in session');
+                return {
+                  state: 'error',
+                  error: 'User not authenticated'
+                };
               }
 
               // Fetch envelope data
-              console.log('Fetching envelope data:', { envelopeId, userId: session.user.id });
+              console.log('[API] Fetching envelope data:', { envelopeId, userId: session.user.id });
               const { data: envelopes, error: envelopeError } = await supabase
                 .from('envelopes')
                 .select('*, recipients(*)')
                 .eq('docusign_envelope_id', envelopeId)
                 .eq('user_id', session.user.id);
 
+              console.log('[API] Envelope query result:', { hasEnvelopes: !!envelopes, envelopeCount: envelopes?.length, error: envelopeError });
+
               if (envelopeError) {
-                console.error('Error loading envelope:', envelopeError);
-                throw new Error('Error loading envelope details');
+                console.error('[API] Error loading envelope:', envelopeError);
+                return {
+                  state: 'error',
+                  error: 'Error loading envelope details'
+                };
               }
 
               if (!envelopes || envelopes.length === 0) {
-                console.error('No envelope found with Docusign ID:', envelopeId);
-                throw new Error(`No envelope found with Docusign ID: ${envelopeId}`);
+                console.error('[API] No envelope found with Docusign ID:', envelopeId);
+                return {
+                  state: 'error',
+                  error: 'This envelope is not available or you don\'t have permission to view it'
+                };
               }
 
               const envelope = envelopes[0];
-              console.log('Envelope data loaded:', { id: envelope.id, status: envelope.status });
+              console.log('[API] Envelope data loaded:', { id: envelope.id, status: envelope.status });
 
               // Fetch documents
-              console.log('Fetching documents:', { docusignEnvelopeId: envelope.docusign_envelope_id });
+              console.log('[API] Fetching documents:', { docusignEnvelopeId: envelope.docusign_envelope_id });
               const docusign = new DocuSignEnvelopes(supabase);
               const documents = await docusign.listDocuments(session.user.id, envelope.docusign_envelope_id);
-              console.log('Documents loaded:', documents);
+              console.log('[API] Documents loaded:', documents);
 
-              const result = { 
-                envelopeId, 
-                showActions: showActions ?? true,
+              return { 
                 envelope,
-                documents
+                documents,
+                envelopeId, 
+                showActions: showActions ?? true
               };
-              console.log('displayDocumentDetails result:', result);
-              return result;
             } catch (error) {
-              console.error('Error in displayDocumentDetails:', error);
-              throw error;
+              console.error('[API] Error in displayDocumentDetails:', error);
+              return {
+                state: 'error',
+                error: error instanceof Error ? error.message : 'An unexpected error occurred'
+              };
             }
           }
         }),
