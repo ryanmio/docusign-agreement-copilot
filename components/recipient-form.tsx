@@ -84,40 +84,46 @@ export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: Recipient
           <p className="text-[#130032]/60 tracking-[-0.01em]">Enter the name and email for each recipient</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {recipients.map((recipient, index) => (
-            <div key={index} className="space-y-3">
-              <h3 className="font-medium text-sm text-[#130032] tracking-[-0.01em]">{recipient.roleName}</h3>
-              
-              <div className="space-y-3">
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Name"
-                    value={recipient.name}
-                    onChange={(e) => updateRecipient(index, 'name', e.target.value)}
-                    className="ds-input w-full"
-                  />
-                  {recipient.error?.name && (
-                    <div className="text-sm text-red-500 mt-1">{recipient.error.name}</div>
-                  )}
-                </div>
+        <div className="grid gap-6 justify-items-center w-full">
+          <div className={`grid gap-6 w-full ${
+            recipients.length === 1 ? 'grid-cols-1 max-w-md mx-auto' :
+            recipients.length === 2 ? 'grid-cols-2 max-w-2xl' :
+            'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
+          }`}>
+            {recipients.map((recipient, index) => (
+              <div key={index} className="space-y-3 w-full">
+                <h3 className="font-medium text-sm text-[#130032] tracking-[-0.01em]">{recipient.roleName}</h3>
+                
+                <div className="space-y-3">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Name"
+                      value={recipient.name}
+                      onChange={(e) => updateRecipient(index, 'name', e.target.value)}
+                      className="ds-input w-full"
+                    />
+                    {recipient.error?.name && (
+                      <div className="text-sm text-red-500 mt-1">{recipient.error.name}</div>
+                    )}
+                  </div>
 
-                <div>
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    value={recipient.email}
-                    onChange={(e) => updateRecipient(index, 'email', e.target.value)}
-                    className="ds-input w-full"
-                  />
-                  {recipient.error?.email && (
-                    <div className="text-sm text-red-500 mt-1">{recipient.error.email}</div>
-                  )}
+                  <div>
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={recipient.email}
+                      onChange={(e) => updateRecipient(index, 'email', e.target.value)}
+                      className="ds-input w-full"
+                    />
+                    {recipient.error?.email && (
+                      <div className="text-sm text-red-500 mt-1">{recipient.error.email}</div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         <div className="flex justify-end">
