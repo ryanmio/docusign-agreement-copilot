@@ -122,13 +122,14 @@ export function SigningView({ signingUrl, onComplete, onCancel }: SigningViewPro
         if (containerRef.current) {
           signing.mount('#docusign-focused-container');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error initializing DocuSign:', err);
-        if (mounted) {
+        // Only set error state for non-service worker errors
+        if (mounted && !(err instanceof Error && err.message.includes('mockServiceWorker.js'))) {
           setError(err instanceof Error ? err.message : 'Failed to initialize DocuSign');
           setStatus('error');
-          setLoading(false);
         }
+        setLoading(false);
       }
     };
 
