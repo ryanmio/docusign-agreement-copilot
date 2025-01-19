@@ -78,8 +78,8 @@ export function RecipientForm({ roles, toolCallId, onSubmit, onBack }: Recipient
   return (
     <div className="w-full max-w-[900px] mx-auto">
       <div className="space-y-1 mb-6">
-        <h2 className="text-[1.75rem] font-light text-[#130032] leading-[1.25] tracking-[-0.01em]">Add Recipients</h2>
-        <p className="text-[#130032]/60">Enter the name and email for each recipient</p>
+        <h2 className="text-[#130032] tracking-[-0.02em] text-2xl font-semibold">Add Recipients</h2>
+        <p className="text-[#130032]/60 tracking-[-0.01em]">Enter the name and email for each recipient</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
