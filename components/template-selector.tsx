@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { TemplateResponse } from '@/types/envelopes';
 import { useToolTransition } from '@/hooks/use-tool-transition';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 interface TemplateSelectorProps {
   value: string | undefined;
@@ -62,47 +65,58 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
   }
 
   return (
-    <div className={`space-y-4 ${isTransitioning ? 'opacity-50 pointer-events-none' : ''}`}>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="Search templates..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="ds-input flex-1 border-gray-300"
-        />
-      </div>
+    <Card className="w-full max-w-2xl mx-auto bg-white border border-gray-200">
+      <div className="p-6 space-y-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#130032]/40" />
+          <Input
+            type="text"
+            placeholder="Search templates..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
+          />
+        </div>
 
-      {loading ? (
-        <div className="p-4 flex justify-center">
-          <LoadingSpinner label="Loading templates..." />
-        </div>
-      ) : templates.length === 0 ? (
-        <div className="p-4 text-center text-gray-500">
-          No templates found
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {templates.map((template) => (
-            <button
-              key={template.templateId}
-              onClick={() => handleTemplateClick(template.templateId)}
-              className={`p-4 rounded-lg text-left transition-colors bg-white ${
-                value === template.templateId 
-                  ? 'bg-[#4C00FF] text-white' 
-                  : 'border border-gray-200 hover:border-[#4C00FF] hover:shadow-sm'
-              }`}
-            >
-              <div className="font-medium">{template.name}</div>
-              {template.description && (
-                <div className={`text-sm ${value === template.templateId ? 'text-white/90' : 'text-gray-500'}`}>
-                  {template.description}
+        {loading ? (
+          <div className="p-4 flex justify-center">
+            <LoadingSpinner label="Loading templates..." />
+          </div>
+        ) : templates.length === 0 ? (
+          <div className="p-4 text-center text-[#130032]/60">
+            No templates found
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {templates.map((template) => (
+              <Card
+                key={template.templateId}
+                onClick={() => handleTemplateClick(template.templateId)}
+                className={`p-4 cursor-pointer transition-all ${
+                  value === template.templateId 
+                    ? 'bg-[#4C00FF] border-none shadow-[0_2px_4px_rgba(76,0,255,0.2)]' 
+                    : 'border-[#130032]/10 hover:border-[#4C00FF] hover:shadow-[0_2px_4px_rgba(19,0,50,0.1)]'
+                }`}
+              >
+                <div className={`font-medium ${
+                  value === template.templateId ? 'text-white' : 'text-[#130032]'
+                }`}>
+                  {template.name}
                 </div>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+                {template.description && (
+                  <div className={`text-sm mt-1 ${
+                    value === template.templateId 
+                      ? 'text-white/90' 
+                      : 'text-[#130032]/60'
+                  }`}>
+                    {template.description}
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </Card>
   );
 } 
