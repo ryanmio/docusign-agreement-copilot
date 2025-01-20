@@ -2,6 +2,7 @@
 
 import React, { useCallback } from 'react';
 import { useChat, Message, UseChatHelpers, CreateMessage } from 'ai/react';
+import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { DocumentView } from '@/components/document-view';
 import { BulkOperationView } from '@/components/bulk-operation-view';
@@ -94,6 +95,7 @@ function ContractPreviewTool({
 
 export default function ChatPage() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [messagesContainerRef, messagesEndRef, scrollToBottom] = useScrollToBottom<HTMLDivElement>();
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const initialMessageSent = React.useRef(false);
@@ -120,8 +122,7 @@ export default function ChatPage() {
   React.useEffect(() => {
     if (initialMessageSent.current) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const message = params.get('message');
+    const message = searchParams.get('message');
     
     if (message) {
       initialMessageSent.current = true;
@@ -136,7 +137,7 @@ export default function ChatPage() {
         content: decodedMessage
       });
     }
-  }, [append]);
+  }, [append, searchParams]);
 
   // Add scroll listener to show/hide button
   React.useEffect(() => {
