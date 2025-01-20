@@ -283,14 +283,14 @@ export function AgreementChart({ dimension, metric, chartType = 'pie' }: Agreeme
                 value={item.dimension} 
                 className="rounded-lg [&_span]:flex"
               >
-                <div className="flex items-center gap-2 text-xs">
-                  <span
-                    className="flex h-3 w-3 shrink-0 rounded-sm"
+                  <div className="flex items-center gap-2 text-xs">
+                    <span
+                      className="flex h-3 w-3 shrink-0 rounded-sm"
                     style={{ backgroundColor: item.fill }}
-                  />
+                    />
                   {item.dimension}
-                </div>
-              </SelectItem>
+                  </div>
+                </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -332,16 +332,16 @@ export function AgreementChart({ dimension, metric, chartType = 'pie' }: Agreeme
                   if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox) || activeIndex === -1) return null
                   
                   const { cx, cy } = viewBox as { cx: number; cy: number };
-                  return (
+                    return (
                     <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
                       <tspan x={cx} y={cy - 8} className="fill-[#130032] text-2xl font-bold">
                         {formatMetricValue(chartData[activeIndex].value, metric)}
-                      </tspan>
+                        </tspan>
                       <tspan x={cx} y={cy + 16} className="fill-[#130032]/60 text-sm">
                         {formatMetricLabel(metric)}
-                      </tspan>
-                    </text>
-                  )
+                        </tspan>
+                      </text>
+                    )
                 }}
               />
             </Pie>

@@ -106,8 +106,9 @@
   - [x] Add manual filtering
   - [x] Add AI filtering
   - [x] Add expiration date range filtering
-  - [ ] Add jurisdiction filtering
-  - [ ] Add value filtering
+  - [x] Add jurisdiction filtering
+  - [x] Add value filtering
+  - [x] Basic reporting charts
 
 - [ ] Priority Enhancement
   - [ ] Enhance Priority Dashboard with AI insights
