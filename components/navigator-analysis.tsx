@@ -6,6 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -18,7 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Filter, ChevronDown, ChevronUp, Building2, Calendar, MapPin } from 'lucide-react';
+import { Filter, ChevronDown, ChevronUp, Building2, Calendar, MapPin, MoreVertical, Eye, Send, XCircle } from 'lucide-react';
 
 interface FilterState {
   partyName: string;
@@ -63,6 +69,7 @@ interface NavigatorAnalysisProps {
     completed: boolean;
   };
   onComplete?: (result: any) => Promise<void>;
+  onAction?: (envelopeId: string, action: 'view' | 'remind' | 'void') => Promise<void>;
 }
 
 export function NavigatorAnalysis({ 
@@ -70,7 +77,8 @@ export function NavigatorAnalysis({
   query,
   apiCall,
   result,
-  onComplete
+  onComplete,
+  onAction
 }: NavigatorAnalysisProps) {
   const [isLoading, setIsLoading] = useState(!result);
   const [accordionValue, setAccordionValue] = useState<string>("");
@@ -537,14 +545,54 @@ export function NavigatorAnalysis({
                             )}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-xl font-semibold text-[#130032]">
-                            {new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: 'USD'
-                            }).format(agreement.provisions?.annual_agreement_value || 0)}
+                        <div className="flex items-start gap-4">
+                          <div className="text-right">
+                            <div className="text-xl font-semibold text-[#130032]">
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: 'USD'
+                              }).format(agreement.provisions?.annual_agreement_value || 0)}
+                            </div>
+                            <div className="text-sm text-[#130032]/60">Annual Value</div>
                           </div>
-                          <div className="text-sm text-[#130032]/60">Annual Value</div>
+                          {agreement.source_name === "ESign" && agreement.source_id && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAction?.(agreement.source_id, 'view');
+                                  }}
+                                >
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Envelope
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAction?.(agreement.source_id, 'remind');
+                                  }}
+                                >
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send Reminder
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAction?.(agreement.source_id, 'void');
+                                  }}
+                                >
+                                  <XCircle className="mr-2 h-4 w-4" />
+                                  Void Envelope
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
                       </div>
 

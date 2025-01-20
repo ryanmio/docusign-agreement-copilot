@@ -553,6 +553,35 @@ export default function ChatPage() {
                   });
                 }
               }}
+              onAction={async (envelopeId, action) => {
+                try {
+                  await handleToolResult(toolCallId, {
+                    ...result,
+                    completed: true
+                  });
+                  let message = '';
+                  switch (action) {
+                    case 'view':
+                      message = `I want to view envelope ${envelopeId}`;
+                      break;
+                    case 'remind':
+                      message = `I want to send a reminder for envelope ${envelopeId}`;
+                      break;
+                    case 'void':
+                      message = `I want to void envelope ${envelopeId}`;
+                      break;
+                  }
+                  await append({
+                    role: 'user',
+                    content: message
+                  });
+                } catch (error) {
+                  console.error('Failed to handle envelope action:', error);
+                  await handleToolResult(toolCallId, {
+                    error: error instanceof Error ? error.message : 'Failed to process action'
+                  });
+                }
+              }}
             />
           );
 
