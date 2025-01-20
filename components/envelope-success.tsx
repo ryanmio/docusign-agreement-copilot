@@ -93,7 +93,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
 
   if (loading) {
     return (
-      <Card className="w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+      <Card className="w-full max-w-2xl mx-auto bg-white border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
         <div className="p-6 flex items-center justify-center space-x-2">
           <Loader2 className="h-5 w-5 animate-spin text-[#130032]/40" />
           <span className="text-[#130032]/60">Loading envelope status...</span>
@@ -104,7 +104,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
 
   if (error) {
     return (
-      <Card className="w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+      <Card className="w-full max-w-2xl mx-auto bg-white border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
         <div className="p-6 text-[#FF5252]">{error}</div>
       </Card>
     );
@@ -112,14 +112,14 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
 
   if (!envelope) {
     return (
-      <Card className="w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+      <Card className="w-full max-w-2xl mx-auto bg-white border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
         <div className="p-6 text-[#FF5252]">Envelope not found</div>
       </Card>
     );
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+    <Card className="w-full max-w-2xl mx-auto bg-white border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
       <div className="p-6 space-y-6">
         {/* Success Header */}
         <div className="flex items-start space-x-4">
