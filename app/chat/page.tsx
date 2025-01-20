@@ -95,7 +95,6 @@ function ContractPreviewTool({
 
 export default function ChatPage() {
   const { toast } = useToast();
-  const searchParams = useSearchParams();
   const [messagesContainerRef, messagesEndRef, scrollToBottom] = useScrollToBottom<HTMLDivElement>();
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const initialMessageSent = React.useRef(false);
@@ -118,11 +117,12 @@ export default function ChatPage() {
     }
   } as ExtendedChatOptions);
 
-  // Handle initial message from URL
+  // Handle initial message from URL in useEffect
   React.useEffect(() => {
     if (initialMessageSent.current) return;
-
-    const message = searchParams.get('message');
+    
+    const params = new URLSearchParams(window.location.search);
+    const message = params.get('message');
     
     if (message) {
       initialMessageSent.current = true;
@@ -137,7 +137,7 @@ export default function ChatPage() {
         content: decodedMessage
       });
     }
-  }, [append, searchParams]);
+  }, [append]);
 
   // Add scroll listener to show/hide button
   React.useEffect(() => {
