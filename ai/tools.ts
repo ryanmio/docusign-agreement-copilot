@@ -630,7 +630,17 @@ export const tools = {
         roleName: z.string()
       })).optional()
     }),
-    execute: async (params) => {
+    execute: async (params: {
+      emailSubject: string;
+      emailBlurb?: string;
+      expirationHours: number;
+      templateId?: string;
+      templateRoles?: Array<{
+        email: string;
+        name: string;
+        roleName: string;
+      }>;
+    }) => {
       try {
         const supabase = createClientComponentClient();
         const { data: { user } } = await supabase.auth.getUser();
