@@ -382,7 +382,7 @@ export function NavigatorAnalysis({
   // Production mode display
     if (isLoading) {
       return (
-        <Card className="w-full max-w-4xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+        <Card className="w-full max-w-4xl mx-auto bg-white border border-gray-200">
           <div className="p-6">
             <div className="text-[#130032] tracking-[-0.02em] text-2xl font-light mb-4">{query}</div>
           <div className="flex justify-center">
@@ -396,7 +396,7 @@ export function NavigatorAnalysis({
     const agreements = result?.result?.agreements || [];
     if (!agreements.length) {
       return (
-        <Card className="w-full max-w-4xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+        <Card className="w-full max-w-4xl mx-auto bg-white border border-gray-200">
           <div className="p-6">
             <div className="text-[#130032] tracking-[-0.02em] text-2xl font-light mb-4">{query}</div>
             <div className="text-[#130032]/60">No agreements found for this query.</div>
@@ -406,7 +406,7 @@ export function NavigatorAnalysis({
     }
 
     return (
-      <Card className="w-full max-w-4xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+      <Card className="w-full max-w-4xl mx-auto bg-white border border-gray-200">
         <div className="p-6">
           <div className="text-[#130032] tracking-[-0.02em] text-2xl font-light mb-6">{query}</div>
           
