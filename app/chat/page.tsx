@@ -22,6 +22,7 @@ import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { MarkdownEditor } from '@/components/markdown-editor';
 import { NavigatorAnalysis } from '@/components/navigator-analysis';
+import { AgreementChart } from '@/components/chart-pie-interactive';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -520,6 +521,14 @@ export default function ChatPage() {
               toolCallId={toolCallId}
               onToolResult={handleToolResult}
               onAppend={append}
+            />
+          );
+
+        case 'chartAnalysis':
+          return (
+            <AgreementChart
+              dimension={result.dimension}
+              metric={result.metric}
             />
           );
 

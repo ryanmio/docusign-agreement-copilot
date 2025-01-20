@@ -60,22 +60,44 @@ const fetcher = async (url: string) => {
   if (data.metadata?.totalAgreements) {
     console.log('📊 Total agreements:', data.metadata.totalAgreements);
     
-    // Create a map to count agreements by category
-    const categoryMap = new Map<string, number>();
+    // Create a map to count by dimension
+    const dimensionMap = new Map<string, number>();
     
-    // Count agreements by category
+    // Count agreements by dimension
     data.agreements?.forEach((agreement: any) => {
-      const category = agreement.category || 'Uncategorized';
-      categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+      // Get the value for the requested dimension
+      let dimensionValue = agreement[dimension] || 'Unknown';
+      
+      // Handle special cases
+      switch(dimension) {
+        case 'party_name':
+          // Get party names from the agreement
+          dimensionValue = agreement.parties?.[0]?.name || 'Unknown Party';
+          break;
+        case 'category':
+          dimensionValue = agreement.category || 'Uncategorized';
+          break;
+        case 'type':
+          dimensionValue = agreement.type || 'Unknown Type';
+          break;
+        case 'status':
+          dimensionValue = agreement.status || 'Unknown Status';
+          break;
+        case 'jurisdiction':
+          dimensionValue = agreement.jurisdiction || 'Unknown Jurisdiction';
+          break;
+      }
+      
+      dimensionMap.set(dimensionValue, (dimensionMap.get(dimensionValue) || 0) + 1);
     });
 
-    console.log('📊 Category counts:', Object.fromEntries(categoryMap));
+    console.log(`📊 ${formatDimensionLabel(dimension)} counts:`, Object.fromEntries(dimensionMap));
 
     // Transform into the expected format
     const result = {
-      values: Array.from(categoryMap.entries()).map(([category, count]) => {
+      values: Array.from(dimensionMap.entries()).map(([value, count]) => {
         const result: Record<string, string | number> = {};
-        result[dimension] = category;
+        result[dimension] = value;
         result[metric] = count;
         return result;
       })

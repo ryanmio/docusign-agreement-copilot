@@ -549,6 +549,26 @@ export const tools = {
       };
     }
   },
+  chartAnalysis: {
+    name: 'chartAnalysis',
+    description: 'Display an interactive pie chart analyzing agreements by a dimension and metric',
+    parameters: z.object({
+      dimension: z.enum(['category', 'party_name', 'jurisdiction', 'type', 'status'])
+        .describe('The dimension to analyze (e.g. category, party_name)'),
+      metric: z.enum(['value', 'count', 'avg_value'])
+        .describe('The metric to measure (e.g. value, count)')
+    }),
+    execute: async ({ dimension, metric }: { 
+      dimension: 'category' | 'party_name' | 'jurisdiction' | 'type' | 'status';
+      metric: 'value' | 'count' | 'avg_value';
+    }) => {
+      return {
+        dimension,
+        metric,
+        completed: false
+      };
+    }
+  },
   navigatorAnalysis: {
     name: 'navigatorAnalysis',
     description: 'Analyze agreements using natural language queries. Convert user questions into Navigator API calls and display results.',
