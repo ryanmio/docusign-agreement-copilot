@@ -6,61 +6,61 @@ import { useRouter } from 'next/navigation'
 
 const capabilities = [
   {
-    category: "Templates & Documents",
+    category: "Send & Sign",
     items: [
       {
-        title: "Send a document for signature",
-        message: "I want to send a document for signature"
+        title: "Send template to recipients",
+        message: "I need to send our standard NDA template to a new client"
       },
-      {
-        title: "Create a new agreement from scratch",
-        message: "Help me create a new agreement from scratch"
-      },
-      {
-        title: "Use an existing template",
-        message: "I want to use one of my existing templates"
-      },
-      {
-        title: "Track document status",
-        message: "Show me the status of my documents"
-      }
-    ]
-  },
-  {
-    category: "Bulk Operations",
-    items: [
       {
         title: "Send documents in bulk",
-        message: "I need to send multiple documents for signature"
+        message: "I need to send multiple documents for signature at once"
       },
       {
-        title: "Monitor bulk sending progress",
-        message: "Show me the progress of my bulk sending operations"
+        title: "Monitor bulk send progress",
+        message: "Show me the status of my bulk sending operation"
       },
       {
-        title: "View bulk operation history",
-        message: "Show me my past bulk operations"
+        title: "Sign a document",
+        message: "I need to sign a document that's waiting for my signature"
       }
     ]
   },
   {
-    category: "Document Management",
+    category: "Track & Manage",
     items: [
       {
+        title: "Check urgent agreements",
+        message: "Which agreements need my attention today?"
+      },
+      {
+        title: "View renewal deadlines",
+        message: "Show me agreements that need renewal soon"
+      },
+      {
+        title: "Send signing reminders",
+        message: "I want to view documents waiting for signature and send reminders"
+      },
+      {
         title: "View document details",
-        message: "Show me details about my documents"
+        message: "Show me the details and status of my recent agreements"
+      }
+    ]
+  },
+  {
+    category: "AI Analysis",
+    items: [
+      {
+        title: "Analyze agreements",
+        message: "Help me analyze the terms in my recent agreements"
       },
       {
-        title: "Download signed documents",
-        message: "I want to download my signed documents"
+        title: "Find related documents",
+        message: "Find all agreements related to a specific vendor"
       },
       {
-        title: "Void documents",
-        message: "I need to void a document"
-      },
-      {
-        title: "Send reminders",
-        message: "Send reminders for pending signatures"
+        title: "Detect patterns",
+        message: "What are the common patterns in our agreement workflows?"
       }
     ]
   }
