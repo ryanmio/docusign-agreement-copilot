@@ -1,5 +1,13 @@
 Exploring next-gen agreement interfaces for AI agents
 
+## Docusign Stack
+- **eSignature API**
+  - Used for almost all operations
+- **Docusign Connect Webhook**
+  - Provides real-time updates on envelope status
+- **Navigator API**
+  - Facilitates document analysis and search
+
 ## Development Notes
 
 ### Known Issues

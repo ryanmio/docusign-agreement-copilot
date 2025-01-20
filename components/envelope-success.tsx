@@ -28,6 +28,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
   const [envelope, setEnvelope] = useState<Envelope | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pollCount, setPollCount] = useState(0);
 
   useEffect(() => {
     const supabase = createClientComponentClient();
@@ -48,7 +49,15 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
         // Continue polling if the envelope is not in a final state
         const finalStates = ['completed', 'declined', 'voided'];
         if (!finalStates.includes(envelope.status)) {
-          timer = setTimeout(fetchEnvelope, 5000); // Poll every 5 seconds
+          // Use shorter intervals for first few polls, then increase
+          const pollInterval = pollCount < 3 ? 1000 : // 1 second for first 3 attempts
+                             pollCount < 6 ? 2000 : // 2 seconds for next 3 attempts
+                             5000; // 5 seconds thereafter
+          
+          timer = setTimeout(() => {
+            setPollCount(count => count + 1);
+            fetchEnvelope();
+          }, pollInterval);
         }
       } catch (err) {
         console.error('Error fetching envelope:', err);
@@ -58,6 +67,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
       }
     };
 
+    // Start polling immediately
     fetchEnvelope();
 
     return () => {
