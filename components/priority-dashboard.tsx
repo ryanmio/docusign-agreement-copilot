@@ -31,7 +31,7 @@ interface PriorityDashboardProps {
 
 export function PriorityDashboard({ sections, onAction, toolCallId }: PriorityDashboardProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 3;
 
   return (
     <Card className="w-full max-w-4xl mx-auto bg-white border border-gray-200">
