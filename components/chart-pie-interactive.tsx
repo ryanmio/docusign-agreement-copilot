@@ -250,7 +250,16 @@ export function AgreementChart({ dimension, metric, chartType = 'pie' }: Agreeme
   }
 
   return (
-    <Card className="bg-white shadow-sm border border-[#130032]/10">
+    <Card data-chart={id} className="bg-white shadow-sm border border-[#130032]/10">
+      <ChartStyle
+        id={id}
+        config={chartConfig}
+      />
+      <style jsx global>{`
+        [data-chart="${id}"] .recharts-sector {
+          cursor: pointer;
+        }
+      `}</style>
       <CardHeader className="flex-row items-start space-y-0 pb-0">
         <div className="grid gap-1">
           <CardTitle className="text-[#130032] text-xl tracking-tight">
@@ -310,6 +319,7 @@ export function AgreementChart({ dimension, metric, chartType = 'pie' }: Agreeme
               strokeWidth={2}
               stroke="#fff"
               activeIndex={activeIndex}
+              onClick={(_, index) => setActiveDimension(chartData[index].dimension)}
               activeShape={({ outerRadius = 0, ...props }: PieSectorDataItem) => (
                 <g>
                   <Sector {...props} outerRadius={outerRadius + 8} />
