@@ -35,14 +35,23 @@ export async function POST(request: Request) {
 
     // Get all agreements first
     console.log('📊 Fetching agreements from Navigator API...');
-    const agreements = await navigatorClient.getAgreements(user.id);
-    console.log('📊 Navigator API response:', {
-      hasItems: !!agreements.items,
-      itemCount: agreements.items?.length || 0,
-      metadata: agreements.response_metadata
-    });
+    let allAgreements: any[] = [];
+    let pageToken: string | undefined;
+    
+    do {
+      const options = pageToken ? { ctoken: pageToken } : undefined;
+      const agreements = await navigatorClient.getAgreements(user.id, options);
+      allAgreements = [...allAgreements, ...(agreements.items || [])];
+      pageToken = agreements.response_metadata?.page_token_next;
+      
+      console.log('📊 Fetched page of agreements:', {
+        pageSize: agreements.items?.length || 0,
+        totalSoFar: allAgreements.length,
+        hasNextPage: !!pageToken
+      });
+    } while (pageToken);
 
-    const agreementItems = agreements.items || [];
+    const agreementItems = allAgreements;
     
     // Filter results by criteria
     let filteredItems = agreementItems;
