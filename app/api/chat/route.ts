@@ -256,6 +256,28 @@ export async function POST(req: Request) {
           7. After analysis:
              - DO NOT repeat or describe the results shown in the UI
              - Only provide insights or suggest next steps based on the findings
+
+          When users want to visualize agreement data:
+          1. Use the chartAnalysis tool to show interactive charts
+          2. Currently only pie charts are supported. If the user requests a different chart type, tell them that is still in development and offer pie instead.
+          3. You can analyze these dimensions:
+             - category (agreement categories)
+             - party_name (first party on agreements)
+             - type (agreement types)
+             - status (agreement statuses)
+             - jurisdiction (agreement jurisdictions)
+          4. With these metrics:
+             - count (number of agreements)
+             - value (total annual value)
+             - avg_value (average annual value)
+          5. Examples of queries and how to handle them:
+             - "Show me a pie chart of agreements by category"
+               -> chartAnalysis({ dimension: "category", metric: "count", chartType: "pie" })
+             - "Show total value by party"
+               -> chartAnalysis({ dimension: "party_name", metric: "value", chartType: "pie" })
+          6. After showing the chart:
+             - DO NOT describe what the chart shows
+             - Only suggest next steps or other analyses to try
           
           Docusign should always be written as Docusign, not DocuSign.
           If a tool call fails, inform the user and suggest retrying or contacting support.`
@@ -318,19 +340,23 @@ export async function POST(req: Request) {
           }
         }),
         chartAnalysis: tool({
-          description: 'Display an interactive pie chart analyzing agreements by a dimension and metric',
+          description: 'Display an interactive pie chart analyzing agreements by a dimension and metric. Use this when the user wants to visualize agreement data.\n\nSupported dimensions:\n- category (agreement categories)\n- party_name (first party on each agreement)\n- type (agreement types)\n- status (agreement statuses)\n- jurisdiction (agreement jurisdictions)\n\nSupported metrics:\n- count (number of agreements)\n- value (total annual value)\n- avg_value (average annual value)',
           parameters: z.object({
             dimension: z.enum(['category', 'party_name', 'jurisdiction', 'type', 'status'])
               .describe('The dimension to analyze (e.g. category, party_name)'),
-            metric: z.enum(['value', 'count', 'avg_value'])
-              .describe('The metric to measure (e.g. value, count)')
+            metric: z.enum(['count', 'value', 'avg_value'])
+              .describe('The metric to measure (e.g. count, value, avg_value)'),
+            chartType: z.enum(['pie']).default('pie')
+              .describe('The type of chart to display (currently only pie charts are supported)')
           }),
-          execute: async ({ dimension, metric }) => {
+          execute: async (params) => {
+            const { dimension, metric, chartType } = params;
             return {
               dimension,
               metric,
+              chartType,
               completed: false
-            };
+            }
           }
         }),
         navigatorAnalysis: tool({

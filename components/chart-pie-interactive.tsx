@@ -13,6 +13,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 interface AgreementChartProps {
   dimension: string    // e.g. 'category', 'party_name'
   metric: string      // e.g. 'value', 'count'
+  chartType?: 'pie'   // Currently only pie is supported
 }
 
 interface ApiResponse {
@@ -66,13 +67,13 @@ const fetcher = async (url: string) => {
     // Count agreements by dimension
     data.agreements?.forEach((agreement: any) => {
       // Get the value for the requested dimension
-      let dimensionValue = agreement[dimension] || 'Unknown';
+      let dimensionValue: string;
       
       // Handle special cases
       switch(dimension) {
         case 'party_name':
-          // Get party names from the agreement
-          dimensionValue = agreement.parties?.[0]?.name || 'Unknown Party';
+          // Get first party name from agreement
+          dimensionValue = agreement.parties?.[0]?.name_in_agreement || 'Unknown Party';
           break;
         case 'category':
           dimensionValue = agreement.category || 'Uncategorized';
@@ -81,14 +82,22 @@ const fetcher = async (url: string) => {
           dimensionValue = agreement.type || 'Unknown Type';
           break;
         case 'status':
-          dimensionValue = agreement.status || 'Unknown Status';
+          dimensionValue = agreement.status?.toLowerCase().replace(/_/g, ' ') || 'Unknown Status';
           break;
         case 'jurisdiction':
-          dimensionValue = agreement.jurisdiction || 'Unknown Jurisdiction';
+          dimensionValue = agreement.provisions?.jurisdiction || 'Unknown Jurisdiction';
           break;
+        default:
+          dimensionValue = agreement[dimension] || `Unknown ${formatDimensionLabel(dimension)}`;
       }
       
-      dimensionMap.set(dimensionValue, (dimensionMap.get(dimensionValue) || 0) + 1);
+      // For value metrics, use the annual agreement value
+      let metricValue = 1; // Default for count
+      if (metric === 'value' || metric === 'avg_value') {
+        metricValue = agreement.provisions?.annual_agreement_value || 0;
+      }
+      
+      dimensionMap.set(dimensionValue, (dimensionMap.get(dimensionValue) || 0) + metricValue);
     });
 
     console.log(`📊 ${formatDimensionLabel(dimension)} counts:`, Object.fromEntries(dimensionMap));
@@ -143,8 +152,19 @@ function formatMetricValue(value: number, metric: string): string {
   return value.toLocaleString()
 }
 
-export function AgreementChart({ dimension, metric }: AgreementChartProps) {
-  const id = `agreement-${dimension}-${metric}`
+export function AgreementChart({ dimension, metric, chartType = 'pie' }: AgreementChartProps) {
+  // Validate chart type
+  if (chartType !== 'pie') {
+    return (
+      <Card className="p-6">
+        <div className="text-amber-500">
+          Only pie charts are currently supported. Requested type: {chartType}
+        </div>
+      </Card>
+    )
+  }
+
+  const id = `agreement-${dimension}-${metric}-${chartType}`
   
   const { data, isLoading, error } = useSWR<ApiResponse>(
     `/api/navigator/analyze?dimension=${dimension}&metric=${metric}`,
@@ -239,16 +259,16 @@ export function AgreementChart({ dimension, metric }: AgreementChartProps) {
                 value={item.dimension} 
                 className="rounded-lg [&_span]:flex"
               >
-                <div className="flex items-center gap-2 text-xs">
-                  <span
-                    className="flex h-3 w-3 shrink-0 rounded-sm"
-                    style={{
+                  <div className="flex items-center gap-2 text-xs">
+                    <span
+                      className="flex h-3 w-3 shrink-0 rounded-sm"
+                      style={{
                       backgroundColor: item.fill
-                    }}
-                  />
+                      }}
+                    />
                   {item.dimension}
-                </div>
-              </SelectItem>
+                  </div>
+                </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -279,16 +299,16 @@ export function AgreementChart({ dimension, metric }: AgreementChartProps) {
                 content={({ viewBox }) => {
                   if (!viewBox || !("cx" in viewBox) || activeIndex === -1) return null
                   
-                  return (
-                    <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                      <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-3xl font-bold">
+                    return (
+                      <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                        <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-3xl font-bold">
                         {formatMetricValue(chartData[activeIndex].value, metric)}
-                      </tspan>
-                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 24} className="fill-muted-foreground">
+                        </tspan>
+                        <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 24} className="fill-muted-foreground">
                         {formatMetricLabel(metric)}
-                      </tspan>
-                    </text>
-                  )
+                        </tspan>
+                      </text>
+                    )
                 }}
               />
             </Pie>

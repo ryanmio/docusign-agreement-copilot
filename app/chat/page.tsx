@@ -526,9 +526,10 @@ export default function ChatPage() {
 
         case 'chartAnalysis':
           return (
-            <AgreementChart
-              dimension={result.dimension}
+            <AgreementChart 
+              dimension={result.dimension} 
               metric={result.metric}
+              chartType={result.chartType || 'pie'}
             />
           );
 
