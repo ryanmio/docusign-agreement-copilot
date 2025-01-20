@@ -78,7 +78,7 @@ const EditMode = memo(({
     <textarea
       value={content}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full h-96 font-mono p-4 border rounded-lg"
+      className="w-full h-96 font-mono p-4 bg-white border border-[#130032]/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4C00FF]/20 focus:border-[#4C00FF]"
     />
     <div className="flex justify-end space-x-2">
       {onBack && (
@@ -127,7 +127,7 @@ export const MarkdownEditor = memo(({
   }, [mode, editableMarkdown, markdown]);
   
   return (
-    <div className="space-y-4 border rounded-lg p-4">
+    <div className="space-y-4 bg-white border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)] rounded-lg p-4">
       {mode === 'edit' ? (
         <EditMode
           content={editableMarkdown}
