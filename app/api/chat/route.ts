@@ -240,9 +240,20 @@ export async function POST(req: Request) {
                -> Calculate dates dynamically and set dateRange filter
              - "Find agreements with Acme Corp from Q1 2024"
                -> Combine dateRange and party name filters
-          4. Date filtering works on agreement.provisions.effective_date, so structure your filters accordingly
-          5. All filtering happens client-side in the NavigatorAnalysis component, so you must pass filters in the initial state
-          6. After analysis:
+             - "Show me agreements expiring in the next 30 days"
+               -> Set expirationDateRange filter: { start: "now", end: "now+30days" }
+             - "Find renewals due this quarter"
+               -> Set expirationDateRange for current quarter
+          4. Date filtering works on:
+             - agreement.provisions.effective_date for dateRange filters
+             - agreement.provisions.expiration_date for expirationDateRange filters
+          5. For renewal queries:
+             - Always use expirationDateRange instead of dateRange
+             - Calculate appropriate date ranges based on the query
+             - Consider urgency (e.g., "soon" = next 30 days)
+             - Show expiration dates prominently in results
+          6. All filtering happens client-side in the NavigatorAnalysis component
+          7. After analysis:
              - DO NOT repeat or describe the results shown in the UI
              - Only provide insights or suggest next steps based on the findings
           
@@ -312,6 +323,10 @@ export async function POST(req: Request) {
             query: z.string().describe('The natural language query from the user'),
             filters: z.object({
               dateRange: z.object({
+                from: z.string().optional(),
+                to: z.string().optional()
+              }).optional(),
+              expirationDateRange: z.object({
                 from: z.string().optional(),
                 to: z.string().optional()
               }).optional(),

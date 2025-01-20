@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log('📝 Request body:', body);
     
-    const { query, dateRange, parties, categories, types, provisions } = body;
+    const { query, dateRange, expirationDateRange, parties, categories, types, provisions } = body;
 
     // Initialize Navigator client
     console.log('🔄 Initializing Navigator client');
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     });
 
     const agreementItems = agreements.items || [];
-
+    
     // Filter results by criteria
     let filteredItems = agreementItems;
     
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         return date >= sixMonthsAgo && date <= new Date();
       });
     }
-    
+
     if (types?.length) {
       console.log('🔍 Filtering by types:', types);
       filteredItems = filteredItems.filter((agreement: NavigatorAgreement) =>
@@ -88,11 +88,6 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('📊 Post-filter results:', {
-      originalCount: agreementItems.length,
-      filteredCount: filteredItems.length
-    });
-
     // Analyze patterns if requested
     let patterns = null;
     if (query.toLowerCase().includes('pattern') || query.toLowerCase().includes('trend')) {
@@ -105,13 +100,15 @@ export async function POST(request: Request) {
     }
 
     const response = {
-      agreements: filteredItems,
+      agreements: agreementItems, // Send ALL agreements
       patterns,
       metadata: {
-        totalAgreements: filteredItems.length,
+        totalAgreements: agreementItems.length,
         appliedFilters: {
           from_date: dateRange?.from,
           to_date: dateRange?.to,
+          expiration_from: expirationDateRange?.from,
+          expiration_to: expirationDateRange?.to,
           parties,
           categories
         }

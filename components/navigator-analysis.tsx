@@ -31,6 +31,10 @@ interface FilterState {
     start?: string;  // ISO date string
     end?: string;    // ISO date string
   };
+  expirationDateRange?: {
+    start?: string;  // ISO date string
+    end?: string;    // ISO date string
+  };
 }
 
 interface NavigatorAnalysisProps {
@@ -47,9 +51,12 @@ interface NavigatorAnalysisProps {
       metadata: {
         totalAgreements: number;
         appliedFilters: {
-          from_date: string;
-          to_date: string;
+          from_date?: string;
+          to_date?: string;
+          expiration_from?: string;
+          expiration_to?: string;
           parties?: string[];
+          categories?: string[];
         };
       };
     };
@@ -76,6 +83,10 @@ export function NavigatorAnalysis({
     dateRange: result?.result?.metadata?.appliedFilters?.from_date ? {
       start: result.result.metadata.appliedFilters.from_date,
       end: result.result.metadata.appliedFilters.to_date
+    } : undefined,
+    expirationDateRange: result?.result?.metadata?.appliedFilters?.expiration_from ? {
+      start: result.result.metadata.appliedFilters.expiration_from,
+      end: result.result.metadata.appliedFilters.expiration_to
     } : undefined
   });
 
@@ -138,8 +149,8 @@ export function NavigatorAnalysis({
     
     return result.result.agreements.filter(agreement => {
       const matchesParty = !filters.partyName || 
-        agreement.parties.some((p: any) => {
-          if (!p.name_in_agreement) return false;
+        (agreement.parties || []).some((p: any) => {
+          if (!p?.name_in_agreement) return false;
           const partyName = p.name_in_agreement.toLowerCase();
           const filterName = filters.partyName.toLowerCase();
           console.log('Comparing party names:', { partyName, filterName });
@@ -149,8 +160,8 @@ export function NavigatorAnalysis({
       console.log('Agreement party match result:', { 
         title: agreement.title, 
         matchesParty,
-        parties: agreement.parties.map((p: any) => p.name_in_agreement)
-        });
+        parties: (agreement.parties || []).map((p: any) => p?.name_in_agreement)
+      });
       
       const matchesType = !filters.type || 
         (agreement.type && agreement.type.toLowerCase() === filters.type.toLowerCase());
@@ -168,14 +179,21 @@ export function NavigatorAnalysis({
 
       // Add date range filtering
       const matchesDateRange = !filters.dateRange || (
-        agreement.provisions?.effective_date && filters.dateRange.start && filters.dateRange.end && (
-          new Date(agreement.provisions.effective_date) >= new Date(filters.dateRange.start) &&
-          new Date(agreement.provisions.effective_date) <= new Date(filters.dateRange.end)
+        agreement.provisions?.effective_date && (
+          (!filters.dateRange?.start || new Date(agreement.provisions.effective_date) >= new Date(filters.dateRange.start)) &&
+          (!filters.dateRange?.end || new Date(agreement.provisions.effective_date) <= new Date(filters.dateRange.end))
+        )
+      );
+
+      const matchesExpirationRange = !filters.expirationDateRange || (
+        agreement.provisions?.expiration_date && (
+          (!filters.expirationDateRange?.start || new Date(agreement.provisions.expiration_date) >= new Date(filters.expirationDateRange.start)) &&
+          (!filters.expirationDateRange?.end || new Date(agreement.provisions.expiration_date) <= new Date(filters.expirationDateRange.end))
         )
       );
       
       return matchesParty && matchesType && matchesCategory && 
-        matchesJurisdiction && matchesValue && matchesDateRange;
+        matchesJurisdiction && matchesValue && matchesDateRange && matchesExpirationRange;
     });
   }, [result?.result?.agreements, filters]);
 
@@ -197,7 +215,9 @@ export function NavigatorAnalysis({
       filterState.minValue,
       filterState.maxValue,
       filterState.dateRange?.start,
-      filterState.dateRange?.end
+      filterState.dateRange?.end,
+      filterState.expirationDateRange?.start,
+      filterState.expirationDateRange?.end
     ].filter(Boolean).length;
   };
 
@@ -351,6 +371,46 @@ export function NavigatorAnalysis({
                     className="mt-1.5 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="expiration-start" className="text-[#130032]">Expiration Start</Label>
+                  <Input
+                    id="expiration-start"
+                    type="date"
+                    value={filters.expirationDateRange?.start?.split('T')[0] || ''}
+                    onChange={e => {
+                      const newDateRange = e.target.value ? {
+                        start: `${e.target.value}T00:00:00Z`,
+                        end: filters.expirationDateRange?.end
+                      } : undefined;
+                      setFilters(prev => ({
+                        ...prev,
+                        expirationDateRange: newDateRange
+                      }));
+                    }}
+                    className="mt-1.5 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="expiration-end" className="text-[#130032]">Expiration End</Label>
+                  <Input
+                    id="expiration-end"
+                    type="date"
+                    value={filters.expirationDateRange?.end?.split('T')[0] || ''}
+                    onChange={e => {
+                      const newDateRange = e.target.value ? {
+                        start: filters.expirationDateRange?.start,
+                        end: `${e.target.value}T23:59:59Z`
+                      } : undefined;
+                      setFilters(prev => ({
+                        ...prev,
+                        expirationDateRange: newDateRange
+                      }));
+                    }}
+                    className="mt-1.5 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
+                  />
+                </div>
               </div>
               
               <div className="flex justify-end pt-2">
@@ -364,7 +424,10 @@ export function NavigatorAnalysis({
                       type: '',
                       category: '',
                       jurisdiction: '',
-                      dateRange: undefined
+                      minValue: undefined,
+                      maxValue: undefined,
+                      dateRange: undefined,
+                      expirationDateRange: undefined
                     });
                   }}
                   className="text-sm"
@@ -455,6 +518,18 @@ export function NavigatorAnalysis({
                             >
                               {agreement.status?.toLowerCase().replace(/_/g, ' ')}
                             </Badge>
+                            {agreement.provisions?.expiration_date && (
+                              <Badge 
+                                variant="secondary" 
+                                className={`${
+                                  new Date(agreement.provisions.expiration_date) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-blue-100 text-blue-800'
+                                }`}
+                              >
+                                Expires {new Date(agreement.provisions.expiration_date).toLocaleDateString()}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <div className="text-right">
@@ -474,7 +549,10 @@ export function NavigatorAnalysis({
                           <div className="text-sm">
                             <div className="font-medium text-[#130032]">Parties</div>
                             <div className="text-[#130032]/60">
-                              {agreement.parties?.map((p: any) => p.name_in_agreement).join(', ')}
+                              {(agreement.parties || [])
+                                .map((p: any) => p?.name_in_agreement)
+                                .filter(Boolean)
+                                .join(', ') || 'No parties listed'}
                             </div>
                           </div>
                         </div>
