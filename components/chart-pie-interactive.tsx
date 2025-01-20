@@ -152,6 +152,18 @@ function formatMetricValue(value: number, metric: string): string {
   return value.toLocaleString()
 }
 
+// DocuSign brand colors for pie slices - cool purple palette
+const BRAND_COLORS = [
+  '#4C00FF',  // Primary Purple
+  '#CBC2FF',  // Light Purple
+  '#26065D',  // Dark Purple
+  '#7F47FF',  // Medium Purple
+  '#130032',  // Deep Purple
+  '#E5E0FF',  // Softer Purple
+  '#3D1A70',  // Rich Purple
+  '#9B7CFF',  // Lavender Purple
+];
+
 export function AgreementChart({ dimension, metric, chartType = 'pie' }: AgreementChartProps) {
   // Validate chart type
   if (chartType !== 'pie') {
@@ -175,10 +187,10 @@ export function AgreementChart({ dimension, metric, chartType = 'pie' }: Agreeme
   
   const chartData = React.useMemo((): ChartDataItem[] => {
     if (!data?.values) return []
-    return data.values.map((item): ChartDataItem => ({
+    return data.values.map((item, index): ChartDataItem => ({
       dimension: String(item[dimension]),
       value: Number(item[metric]),
-      fill: `var(--color-${String(item[dimension]).toLowerCase().replace(/\s+/g, '-')})`
+      fill: BRAND_COLORS[index % BRAND_COLORS.length]
     }))
   }, [data, dimension, metric])
 
@@ -195,7 +207,7 @@ export function AgreementChart({ dimension, metric, chartType = 'pie' }: Agreeme
       const key = String(item[dimension]).toLowerCase().replace(/\s+/g, '-')
       config[key] = {
         label: String(item[dimension]),
-        color: `hsl(var(--chart-${(index % 5) + 1}))`
+        color: BRAND_COLORS[index % BRAND_COLORS.length]
       }
     })
 
@@ -238,18 +250,21 @@ export function AgreementChart({ dimension, metric, chartType = 'pie' }: Agreeme
   }
 
   return (
-    <Card data-chart={id} className="flex flex-col">
-      <ChartStyle id={id} config={chartConfig} />
+    <Card className="bg-white shadow-sm border border-[#130032]/10">
       <CardHeader className="flex-row items-start space-y-0 pb-0">
         <div className="grid gap-1">
-          <CardTitle>{formatMetricLabel(metric)} by {formatDimensionLabel(dimension)}</CardTitle>
-          <CardDescription>Select {formatDimensionLabel(dimension).toLowerCase()} to analyze</CardDescription>
+          <CardTitle className="text-[#130032] text-xl tracking-tight">
+            {formatMetricLabel(metric)} by {formatDimensionLabel(dimension)}
+          </CardTitle>
+          <CardDescription className="text-[#130032]/60">
+            Select {formatDimensionLabel(dimension).toLowerCase()} to analyze
+          </CardDescription>
         </div>
         <Select 
           value={activeDimension} 
           onValueChange={setActiveDimension}
         >
-          <SelectTrigger className="ml-auto h-7 w-[180px] rounded-lg pl-2.5">
+          <SelectTrigger className="ml-auto h-8 w-[180px] rounded-lg pl-2.5 bg-white border-[#130032]/20">
             <SelectValue placeholder={`Select ${formatDimensionLabel(dimension)}`} />
           </SelectTrigger>
           <SelectContent align="end" className="rounded-xl">
@@ -259,56 +274,64 @@ export function AgreementChart({ dimension, metric, chartType = 'pie' }: Agreeme
                 value={item.dimension} 
                 className="rounded-lg [&_span]:flex"
               >
-                  <div className="flex items-center gap-2 text-xs">
-                    <span
-                      className="flex h-3 w-3 shrink-0 rounded-sm"
-                      style={{
-                      backgroundColor: item.fill
-                      }}
-                    />
+                <div className="flex items-center gap-2 text-xs">
+                  <span
+                    className="flex h-3 w-3 shrink-0 rounded-sm"
+                    style={{ backgroundColor: item.fill }}
+                  />
                   {item.dimension}
-                  </div>
-                </SelectItem>
+                </div>
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex flex-1 justify-center pb-0">
+      <CardContent className="flex flex-1 justify-center pb-4 pt-4">
         <ChartContainer 
           id={id} 
           config={chartConfig} 
-          className="mx-auto aspect-square w-full max-w-[300px]"
+          className="mx-auto aspect-square w-full max-w-[350px]"
         >
           <PieChart>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+            <ChartTooltip 
+              cursor={false} 
+              content={
+                <ChartTooltipContent 
+                  hideLabel 
+                  className="bg-white shadow-lg border border-[#130032]/10 rounded-lg p-2"
+                />
+              } 
+            />
             <Pie
               data={chartData}
               dataKey="value"
               nameKey="dimension"
-              innerRadius={60}
-              strokeWidth={5}
+              innerRadius={70}
+              strokeWidth={2}
+              stroke="#fff"
               activeIndex={activeIndex}
               activeShape={({ outerRadius = 0, ...props }: PieSectorDataItem) => (
                 <g>
-                  <Sector {...props} outerRadius={outerRadius + 10} />
-                  <Sector {...props} outerRadius={outerRadius + 25} innerRadius={outerRadius + 12} />
+                  <Sector {...props} outerRadius={outerRadius + 8} />
+                  <Sector {...props} outerRadius={outerRadius + 16} innerRadius={outerRadius + 10} />
                 </g>
               )}
             >
               <Label
                 content={({ viewBox }) => {
-                  if (!viewBox || !("cx" in viewBox) || activeIndex === -1) return null
+                  if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox) || activeIndex === -1) return null
                   
-                    return (
-                      <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                        <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-3xl font-bold">
+                  const { cx, cy } = viewBox as { cx: number; cy: number };
+                  return (
+                    <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
+                      <tspan x={cx} y={cy - 8} className="fill-[#130032] text-2xl font-bold">
                         {formatMetricValue(chartData[activeIndex].value, metric)}
-                        </tspan>
-                        <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 24} className="fill-muted-foreground">
+                      </tspan>
+                      <tspan x={cx} y={cy + 16} className="fill-[#130032]/60 text-sm">
                         {formatMetricLabel(metric)}
-                        </tspan>
-                      </text>
-                    )
+                      </tspan>
+                    </text>
+                  )
                 }}
               />
             </Pie>
