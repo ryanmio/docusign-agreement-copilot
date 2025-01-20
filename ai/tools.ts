@@ -615,5 +615,50 @@ export const tools = {
         };
       }
     }
+  },
+  createEnvelopeWithExpiration: {
+    name: 'createEnvelopeWithExpiration',
+    description: 'Create a DocuSign envelope with an expiration date. The expiration date should be set when urgent responses are needed.',
+    parameters: z.object({
+      emailSubject: z.string(),
+      emailBlurb: z.string().optional(),
+      expirationHours: z.number().min(1).max(720), // Max 30 days
+      templateId: z.string().optional(),
+      templateRoles: z.array(z.object({
+        email: z.string(),
+        name: z.string(),
+        roleName: z.string()
+      })).optional()
+    }),
+    execute: async (params) => {
+      try {
+        const supabase = createClientComponentClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) throw new Error('Not authenticated');
+
+        const docusign = new DocuSignEnvelopes(supabase);
+        const expirationDate = new Date(Date.now() + params.expirationHours * 60 * 60 * 1000);
+
+        const result = await docusign.createEnvelope(user.id, {
+          emailSubject: params.emailSubject,
+          emailBlurb: params.emailBlurb,
+          status: 'sent',
+          expirationDateTime: expirationDate.toISOString(),
+          templateId: params.templateId,
+          templateRoles: params.templateRoles
+        });
+
+        return {
+          success: true,
+          data: result
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to create envelope'
+        };
+      }
+    }
   }
-}; 
+} as const; 

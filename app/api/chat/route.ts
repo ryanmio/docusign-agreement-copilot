@@ -98,7 +98,6 @@ export async function POST(req: Request) {
           3. Only provide next steps or ask for specific actions
           4. Never repeat information that a tool has displayed
 
-          
           When users ask about documents or envelopes, use displayDocumentDetails
           When users want to view a PDF, use displayPdfViewer
           When users ask about bulk operations, use displayBulkOperation
@@ -111,6 +110,7 @@ export async function POST(req: Request) {
           - Contract type and purpose
           - Number and roles of signing parties
           - Key terms, conditions, and requirements
+          - Any urgency or deadline requirements
           
           2. Generate the contract content in markdown format. The contract should:
           - Have a clear title
@@ -157,17 +157,18 @@ export async function POST(req: Request) {
           
           7. After signers form is submitted:
           - Show summary and ask for confirmation:
-            "I'll send this contract to:
-            - [Role 1]: [Name] ([Email])
-            - [Role 2]: [Name] ([Email])
-            Is this correct? Please confirm by saying 'send' or go back by saying 'edit signers'."
+             "I'll send this contract to:
+             - [Role 1]: [Name] ([Email])
+             - [Role 2]: [Name] ([Email])
+             Is this correct? Please confirm by saying 'send' or go back by saying 'edit signers'."
           
           8. Only after 'send' confirmation:
           - Call sendCustomEnvelope with:
-            - markdown: the confirmed contract content
-            - recipients: the collected signer information
-          - Wait for success response
-          - DO NOT try to send without explicit confirmation
+             - markdown: the confirmed contract content
+             - recipients: the collected signer information
+             - expirationHours: if urgency was determined
+           - Wait for success response
+           - DO NOT try to send without explicit confirmation
 
           When users want to sign a document:
           1. First try using the embedded signing view by calling signDocument
@@ -788,6 +789,7 @@ export async function POST(req: Request) {
             templateId: z.string().describe('The ID of the template to send'),
             subject: z.string().describe('Email subject for the envelope'),
             message: z.string().optional().describe('Optional email message'),
+            expirationHours: z.number().min(1).max(720).optional().describe('Optional expiration time in hours'),
             recipients: z.array(z.object({
               email: z.string(),
               name: z.string(),
@@ -798,8 +800,8 @@ export async function POST(req: Request) {
               type: z.enum(['text', 'number', 'date'])
             }))).optional().describe('Prefill data for template fields, keyed by role name and field name')
           }),
-          execute: async ({ templateId, subject, message, recipients, prefillData }) => {
-            console.log('Starting sendTemplate execution:', { templateId, recipients, prefillData });
+          execute: async ({ templateId, subject, message, recipients, prefillData, expirationHours }) => {
+            console.log('Starting sendTemplate execution:', { templateId, recipients, prefillData, expirationHours });
             try {
               const cookieStore = cookies();
               const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -808,6 +810,11 @@ export async function POST(req: Request) {
               if (sessionError || !session?.user) {
                 throw new Error('User not authenticated');
               }
+
+              // Calculate expiration date if provided
+              const expirationDateTime = expirationHours 
+                ? new Date(Date.now() + expirationHours * 60 * 60 * 1000).toISOString()
+                : undefined;
 
               // Send the template using Docusign
               const docusign = new DocuSignEnvelopes(supabase);
@@ -818,7 +825,8 @@ export async function POST(req: Request) {
                   emailSubject: subject,
                   emailBlurb: message,
                   roles: recipients,
-                  prefillData
+                  prefillData,
+                  expirationDateTime
                 }
               );
 
@@ -1106,10 +1114,11 @@ export async function POST(req: Request) {
               name: z.string(),
               roleName: z.string()
             })).describe('The recipients to send the contract to'),
-            message: z.string().optional().describe('Optional email message')
+            message: z.string().optional().describe('Optional email message'),
+            expirationHours: z.number().min(1).max(720).optional().describe('Optional expiration time in hours')
           }),
-          execute: async ({ markdown, recipients, message }) => {
-            console.log('Starting sendCustomEnvelope execution:', { recipients });
+          execute: async ({ markdown, recipients, message, expirationHours }) => {
+            console.log('Starting sendCustomEnvelope execution:', { recipients, expirationHours });
             try {
               const cookieStore = cookies();
               const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -1118,6 +1127,11 @@ export async function POST(req: Request) {
               if (sessionError || !session?.user) {
                 throw new Error('User not authenticated');
               }
+
+              // Calculate expiration date if provided
+              const expirationDateTime = expirationHours 
+                ? new Date(Date.now() + expirationHours * 60 * 60 * 1000).toISOString()
+                : undefined;
 
               // Preprocess markdown to protect anchor tags
               const preprocessedMarkdown = markdown.replace(
@@ -1211,6 +1225,7 @@ export async function POST(req: Request) {
                 const envelopeDefinition = {
                   emailSubject: "Custom Contract",
                   emailBlurb: message,
+                  expirationDateTime,
                   documents: [{
                     name: 'Contract.pdf',
                     fileExtension: 'pdf',

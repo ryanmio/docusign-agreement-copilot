@@ -86,6 +86,7 @@ export interface CreateFromTemplatePayload {
   subject: string;
   message?: string;
   roles: TemplateRole[];
+  expirationDateTime?: string;
 }
 
 export interface TemplateResponse {
@@ -118,6 +119,7 @@ export interface ListTemplatesResponse {
 export interface CreateEnvelopeOptions {
   emailSubject: string;
   emailBlurb?: string;
+  expirationDateTime?: string;
   documents: {
     name: string;
     fileExtension: string;

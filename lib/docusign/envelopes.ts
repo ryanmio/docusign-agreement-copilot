@@ -71,6 +71,7 @@ interface EnvelopeDefinition {
     routingOrder?: number;
     tabs?: TabDefinition;
   }>;
+  expirationDateTime?: string;
 }
 
 interface CreateEnvelopeDocument {
@@ -154,6 +155,7 @@ interface CreateEnvelopeArgs {
   emailSubject: string;
   emailBlurb?: string;
   enableEmbeddedSigning?: boolean;
+  expirationDateTime?: string;
 }
 
 interface TemplateTab {
@@ -205,6 +207,7 @@ export class DocuSignEnvelopes {
       emailSubject: args.emailSubject,
       emailBlurb: args.emailBlurb,
       status: args.status,
+      ...(args.expirationDateTime ? { expirationDateTime: args.expirationDateTime } : {}),
     };
 
     if (args.templateId) {
@@ -514,17 +517,20 @@ export class DocuSignEnvelopes {
     emailBlurb,
     roles,
     prefillData,
+    expirationDateTime,
   }: {
     emailSubject: string;
     emailBlurb?: string;
     roles: TemplateRole[];
     prefillData?: Record<string, Record<string, { value: string; type: 'text' | 'number' | 'date' }>>;
+    expirationDateTime?: string;
   }) {
     console.log('Creating envelope from template:', {
       templateId,
       emailSubject,
       roles,
-      prefillData
+      prefillData,
+      expirationDateTime
     });
 
     const client = await this.client.getClient(userId);
@@ -534,6 +540,7 @@ export class DocuSignEnvelopes {
       emailBlurb,
       status: 'sent',
       templateId,
+      ...(expirationDateTime ? { expirationDateTime } : {}),
       templateRoles: roles.map(role => {
         const roleTabs = prefillData?.[role.roleName];
         const tabs: TabDefinition = {};
