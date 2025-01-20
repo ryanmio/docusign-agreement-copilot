@@ -490,7 +490,12 @@ export function NavigatorAnalysis({
 
             <div className="space-y-4">
             {paginatedAgreements.map((agreement: any) => (
-                <Card key={agreement.id} className="border border-[#130032]/10">
+                <Card key={agreement.id} className="border border-[#130032]/10 cursor-pointer hover:border-[#4C00FF]/40" 
+                  onClick={() => {
+                    if (agreement.source_name === "ESign" && agreement.source_id) {
+                      console.log('Envelope ID:', agreement.source_id);
+                    }
+                  }}>
                   <div className="p-4">
                     <div className="space-y-4">
                       <div className="flex items-start justify-between">
