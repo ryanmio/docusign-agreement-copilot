@@ -6,8 +6,13 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     // Create Supabase client with awaited cookies
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => {
+        const store = cookies();
+        return store;
+      }
+    });
 
     // Get user session
     const { data: { session } } = await supabase.auth.getSession();

@@ -72,9 +72,12 @@ export async function POST(req: Request) {
     const { messages } = await req.json();
     console.log('Received messages:', JSON.stringify(messages, null, 2));
     
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createRouteHandlerClient({ 
-      cookies: () => cookieStore 
+      cookies: () => {
+        const store = cookies();
+        return store;
+      }
     });
     
     // Get session before starting stream
@@ -380,12 +383,18 @@ export async function POST(req: Request) {
           }),
           execute: async ({ query, filters }) => {
             try {
-              // Get the base URL from the environment or use a default
               const baseUrl = process.env.VERCEL_URL 
                 ? `https://${process.env.VERCEL_URL}` 
                 : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
                 
-              const cookieStore = cookies();
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
+
               const response = await fetch(`${baseUrl}/api/navigator/analyze`, {
                 method: 'POST',
                 headers: {
@@ -464,9 +473,13 @@ export async function POST(req: Request) {
           execute: async ({ envelopeId, showActions }) => {
             console.log('[API] Starting displayDocumentDetails execution:', { envelopeId, showActions });
             try {
-              console.log('[API] Creating Supabase client');
-              const cookieStore = cookies();
-              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
               
               console.log('[API] Getting user session');
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -546,8 +559,13 @@ export async function POST(req: Request) {
           execute: async ({ preselectedId, showSearch }) => {
             console.log('Starting displayTemplateSelector execution:', { preselectedId, showSearch });
             try {
-              const cookieStore = cookies();
-              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
               
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
               if (sessionError || !session?.user) {
@@ -577,8 +595,13 @@ export async function POST(req: Request) {
           }),
           execute: async ({ templateId, showBackButton }) => {
             try {
-              const cookieStore = cookies();
-              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
               if (sessionError || !session?.user) {
                 throw new Error('User not authenticated');
@@ -615,8 +638,13 @@ export async function POST(req: Request) {
           execute: async ({ status, page, showStatusFilter }) => {
             console.log('Starting displayEnvelopeList execution:', { status, page, showStatusFilter });
             try {
-              const cookieStore = cookies();
-              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
               
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
               if (sessionError || !session?.user) {
@@ -666,8 +694,13 @@ export async function POST(req: Request) {
           execute: async ({ showBackButton }) => {
             console.log('Starting displayPriorityDashboard execution');
             try {
-              const cookieStore = cookies();
-              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
               
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
               if (sessionError || !session?.user) {
@@ -860,8 +893,13 @@ export async function POST(req: Request) {
           execute: async ({ templateId, subject, message, recipients, prefillData, expirationHours }) => {
             console.log('Starting sendTemplate execution:', { templateId, recipients, prefillData, expirationHours });
             try {
-              const cookieStore = cookies();
-              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
               
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
               if (sessionError || !session?.user) {
@@ -961,8 +999,13 @@ export async function POST(req: Request) {
           execute: async ({ templateId, roleName }) => {
             console.log('Starting getTemplateTabs tool execution:', { templateId, roleName });
             try {
-              const cookieStore = cookies();
-              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
               
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
               if (sessionError || !session?.user) {
@@ -1018,8 +1061,13 @@ export async function POST(req: Request) {
           execute: async ({ envelopeId, returnUrl }, { toolCallId }) => {
             console.log('Starting signDocument execution:', { envelopeId, toolCallId });
             try {
-              const cookieStore = cookies();
-              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
               
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
               console.log('Auth session check:', {
@@ -1099,8 +1147,13 @@ export async function POST(req: Request) {
           execute: async ({ envelopeId, message }) => {
             console.log('Starting sendReminder execution:', { envelopeId, message });
             try {
-              const cookieStore = cookies();
-              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
               
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
               if (sessionError || !session?.user) {
@@ -1177,8 +1230,13 @@ export async function POST(req: Request) {
           execute: async ({ markdown, recipients, message, expirationHours }) => {
             console.log('Starting sendCustomEnvelope execution:', { recipients, expirationHours });
             try {
-              const cookieStore = cookies();
-              const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+              const cookieStore = await cookies();
+              const supabase = createRouteHandlerClient({ 
+                cookies: () => {
+                  const store = cookies();
+                  return store;
+                }
+              });
               
               const { data: { session }, error: sessionError } = await supabase.auth.getSession();
               if (sessionError || !session?.user) {

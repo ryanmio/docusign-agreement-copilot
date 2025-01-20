@@ -5,8 +5,13 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => {
+        const store = cookies();
+        return store;
+      }
+    });
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {

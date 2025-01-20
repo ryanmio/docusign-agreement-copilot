@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, Suspense } from 'react';
 import { useChat, Message, UseChatHelpers, CreateMessage } from 'ai/react';
 import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -94,11 +94,29 @@ function ContractPreviewTool({
   ), [currentMarkdown, currentMode, toolCallId, handleEdit, handleConfirm, handleBack]);
 }
 
+// Separate the URL parameter handling into a suspense-wrapped component
+function MessageInitializer({ onMessage }: { onMessage: (message: string) => void }) {
+  const searchParams = useSearchParams();
+  const initialMessageSent = React.useRef(false);
+  
+  React.useEffect(() => {
+    if (initialMessageSent.current) return;
+    
+    const message = searchParams?.get('message');
+    if (!message) return;
+    
+    initialMessageSent.current = true;
+    window.history.replaceState({}, '', '/chat');
+    onMessage(decodeURIComponent(message));
+  }, [searchParams, onMessage]);
+  
+  return null;
+}
+
 export default function ChatPage() {
   const { toast } = useToast();
   const [messagesContainerRef, messagesEndRef, scrollToBottom] = useScrollToBottom<HTMLDivElement>();
   const [showScrollButton, setShowScrollButton] = React.useState(false);
-  const initialMessageSent = React.useRef(false);
 
   const { messages, input, handleInputChange, handleSubmit: handleChatSubmit, append, addToolResult, isLoading } = useChat({
     maxSteps: 5,
@@ -110,46 +128,27 @@ export default function ChatPage() {
       console.log('Received response:', response);
     },
     onToolCall: ({ toolCall }: { toolCall: any }) => {
-      console.log('Tool called:', toolCall);
       if (toolCall.state === 'partial-call') {
-        // Show progressive loading
         return <div className="p-4 text-gray-500">Loading...</div>;
       }
     }
   } as ExtendedChatOptions);
 
-  // Handle initial message from URL in useEffect
-  React.useEffect(() => {
-    if (initialMessageSent.current) return;
-    
-    const params = new URLSearchParams(window.location.search);
-    const message = params.get('message');
-    
-    if (message) {
-      initialMessageSent.current = true;
-      const decodedMessage = decodeURIComponent(message);
-      
-      // Clear the URL parameter without refreshing the page
-      window.history.replaceState({}, '', '/chat');
-      
-      // Send the message
-      append({
-        role: 'user',
-        content: decodedMessage
-      });
-    }
+  const handleInitialMessage = useCallback((message: string) => {
+    append({
+      role: 'user',
+      content: message
+    });
   }, [append]);
 
   // Add scroll listener to show/hide button
   React.useEffect(() => {
     const handleScroll = () => {
-      // Show button when not at bottom (with a small threshold)
       const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
       setShowScrollButton(!isAtBottom);
     };
 
     window.addEventListener('scroll', handleScroll);
-    // Check initial scroll position
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -600,6 +599,9 @@ export default function ChatPage() {
 
   return (
     <div className="h-[calc(100vh-70px)] bg-[#F7F7F7] w-full relative overflow-auto">
+      <Suspense fallback={null}>
+        <MessageInitializer onMessage={handleInitialMessage} />
+      </Suspense>
       <div className="w-full h-full flex flex-col items-center">
         <div ref={messagesContainerRef} className="w-full flex justify-center">
           <div className="w-full max-w-[900px] space-y-6 pb-32 pt-8 px-6">

@@ -1,7 +1,7 @@
 'use client';
 
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Session } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
@@ -13,22 +13,32 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from 'react';
 
-export default function Header({ session: initialSession }: { session: Session | null }) {
+export default function Header({ 
+  session: initialSession,
+  user: initialUser 
+}: { 
+  session: Session | null;
+  user: User | null;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClientComponentClient();
   const [session, setSession] = useState<Session | null>(initialSession);
+  const [user, setUser] = useState<User | null>(initialUser);
 
   useEffect(() => {
     setSession(initialSession);
-  }, [initialSession]);
+    setUser(initialUser);
+  }, [initialSession, initialUser]);
 
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session) {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
         router.refresh();
       }
     });
@@ -59,10 +69,10 @@ export default function Header({ session: initialSession }: { session: Session |
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-white shadow-lg border rounded-md">
-              {session ? (
+              {user ? (
                 <>
                   <div className="px-2 py-1.5 text-sm text-gray-600 border-b">
-                    {session.user.email}
+                    {user.email}
                   </div>
                   <DropdownMenuItem asChild className="focus:bg-gray-50">
                     <Link href="/settings">
