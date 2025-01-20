@@ -152,8 +152,9 @@ export default function ChatPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleEnvelopeClick = useCallback((envelopeId: string) => {
-    const message = `Tell me about envelope ${envelopeId}`;
+  const handleEnvelopeClick = useCallback((envelope: any) => {
+    // Use docusign_envelope_id instead of Supabase id
+    const message = `Tell me about envelope ${envelope.docusign_envelope_id}`;
     handleInputChange({ target: { value: message } } as React.ChangeEvent<HTMLInputElement>);
     const event = { preventDefault: () => {} } as React.FormEvent<HTMLFormElement>;
     handleChatSubmit(event);

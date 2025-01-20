@@ -19,7 +19,7 @@ interface EnvelopeListProps {
   initialStatus?: EnvelopeStatus | '';
   initialPage?: number;
   showStatusFilter?: boolean;
-  onEnvelopeClick?: (envelopeId: string) => void;
+  onEnvelopeClick?: (envelope: any) => void;
 }
 
 export function EnvelopeList({ 
@@ -113,7 +113,7 @@ export function EnvelopeList({
             <div
               key={envelope.id}
               className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => onEnvelopeClick ? onEnvelopeClick(envelope.id) : window.location.href = `/documents/${envelope.id}`}
+              onClick={() => onEnvelopeClick ? onEnvelopeClick(envelope) : window.location.href = `/documents/${envelope.id}`}
             >
               <div className="flex justify-between items-start">
                 <div>
