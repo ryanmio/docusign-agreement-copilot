@@ -80,9 +80,7 @@
   - [x] Documentation
   - [ ] Imeplement pre-filled recipient name logic
 - [ ] Implement Connect/Disconnect tool
-- [ ] Implement "Memory" tool
 - [ ] Implement prepopulated search ability for template search tool
-- [ ] Implement pattern recognition tool
 - [ ] Implement timeline view
 
 ## Phase 3.5: Navigator Integration 🧭
@@ -109,7 +107,7 @@
   - [x] Add jurisdiction filtering
   - [x] Add value filtering
   - [x] Basic reporting charts
-  - [ ] FIX FILTERING BY VENDOR
+  - [x] Fix filtering by vendor
 
 - [ ] Priority Enhancement
   - [ ] Enhance Priority Dashboard with AI insights
@@ -131,7 +129,7 @@
   - [ ] Remove unused validation and testing routes and endpoints
 
 ## Phase 4: Polish & Submission (Week 4) ✨
-- [x] Auto-Scroll to bottom
+- [-] Auto-Scroll to bottom
 - [x] Make the homepage design more beautiful
 - [x] Create project logo
 - [x] Create homepage to chat page transition
@@ -139,12 +137,10 @@
 - [x] Restyle header
 - [x] Compare to Stripe https://stripe.dev/blog/adding-payments-to-your-agentic-workflows
 - [x] Optimize conversation starters for productivity
-- [ ] Check to make sure "Docusign" doesnt have camel-case capital S
 - [ ] Update system instructions per https://x.com/weswinder/status/1860035463152828471
-- [ ] Metered billing?
-- [ ] Other models?
 - [ ] Reorder the preview tools page
 - [ ] Update metadata for sharing and stuff
+- [ ] Check to make sure "Docusign" doesnt have camel-case capital S
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README
@@ -160,6 +156,13 @@
 - [ ] Submission Materials
   - [ ] Record demo video
   - [ ] Write project submission
+
+- [ ] IF TIME PERMITS:
+  - [ ] Metered billing?
+  - [ ] Other model providers
+  - [ ] Implement "Memory" tool
+
+--------------------------------
 
 ## Final Sprint Strategy (Jan 20-28) 🏁
 
