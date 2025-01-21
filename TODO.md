@@ -83,7 +83,7 @@
 - [ ] Implement "Memory" tool
 - [ ] Implement prepopulated search ability for template search tool
 - [ ] Implement pattern recognition tool
-      > ⚠️ ON HOLD: Waiting for Docusign dev support to grant us access to sync Navigatorwith eSignature.
+- [ ] Implement timeline view
 
 ## Phase 3.5: Navigator Integration 🧭
 
@@ -109,6 +109,7 @@
   - [x] Add jurisdiction filtering
   - [x] Add value filtering
   - [x] Basic reporting charts
+  - [ ] FIX FILTERING BY VENDOR
 
 - [ ] Priority Enhancement
   - [ ] Enhance Priority Dashboard with AI insights
@@ -118,31 +119,15 @@
 
 - [ ] Pattern Recognition
   - [ ] Implement Tuesday task detection
-    - [ ] Create pattern detection algorithm
-    - [ ] Add visualization component
-  - [ ] Add renewal pattern analysis
-    - [ ] Implement renewal tracking
-    - [ ] Create renewal timeline view
   - [ ] Create employee agreement mapping
-    - [ ] Build relationship graph
-    - [ ] Add filtering by employee
   - [ ] Build timeline view or other visualizations
 
 - [ ] Predictive Features
   - [ ] Implement task forecasting
-    - [ ] Create prediction models
-    - [ ] Add forecast visualization
-  - [ ] Add policy update detection
-    - [ ] Implement change detection
-    - [ ] Add notification system
-  - [ ] Build AI insight display
-    - [ ] Create insight dashboard
+  - [ ] Create insight dashboard
 
 - [ ] Testing & Validation
-  - [ ] Create test suite for Navigator features
-  - [ ] Add error simulation tests
-  - [ ] Implement performance monitoring
-  - [ ] Document edge cases and limitations
+  - [ ] Test new user onboarding
   - [ ] Remove unused validation and testing routes and endpoints
 
 ## Phase 4: Polish & Submission (Week 4) ✨
@@ -153,13 +138,12 @@
 - [x] Style remaining components like Docusign
 - [x] Restyle header
 - [x] Compare to Stripe https://stripe.dev/blog/adding-payments-to-your-agentic-workflows
-- [ ] Optimize conversation starters for productivity
+- [x] Optimize conversation starters for productivity
 - [ ] Check to make sure "Docusign" doesnt have camel-case capital S
 - [ ] Update system instructions per https://x.com/weswinder/status/1860035463152828471
 - [ ] Metered billing?
 - [ ] Other models?
 - [ ] Reorder the preview tools page
-- [ ] Test new user onboarding
 - [ ] Update metadata for sharing and stuff
 
 - [ ] Documentation 📚
@@ -169,9 +153,9 @@
   - [ ] Create user guide
 
 - [ ] Agent Toolkit 
+  - [ ] Create npm package
   - [ ] Documentation
     - [ ] Example: https://github.com/stripe/agent-toolkit
-  - [ ] Create npm package
 
 - [ ] Submission Materials
   - [ ] Record demo video

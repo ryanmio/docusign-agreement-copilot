@@ -53,50 +53,6 @@ export async function POST(request: Request) {
 
     const agreementItems = allAgreements;
     
-    // Filter results by criteria
-    let filteredItems = agreementItems;
-    
-    // Apply date range filter if specified
-    if (dateRange?.from && dateRange?.to) {
-      console.log('🔍 Filtering by date range:', dateRange);
-      filteredItems = filteredItems.filter((agreement: NavigatorAgreement) => {
-        const effectiveDate = agreement.provisions?.effective_date;
-        if (!effectiveDate) return false;
-        const date = new Date(effectiveDate);
-        return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-      });
-    } else if (query.toLowerCase().includes('last 6 months')) {
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      filteredItems = filteredItems.filter((agreement: NavigatorAgreement) => {
-        const effectiveDate = agreement.provisions?.effective_date;
-        if (!effectiveDate) return false;
-        const date = new Date(effectiveDate);
-        return date >= sixMonthsAgo && date <= new Date();
-      });
-    }
-
-    if (types?.length) {
-      console.log('🔍 Filtering by types:', types);
-      filteredItems = filteredItems.filter((agreement: NavigatorAgreement) =>
-        types.includes(agreement.type)
-      );
-    }
-    
-    if (parties?.length) {
-      console.log('🔍 Filtering by parties:', parties);
-      filteredItems = filteredItems.filter((agreement: NavigatorAgreement) => 
-        agreement.parties.some(p => parties.includes(p.name_in_agreement))
-      );
-    }
-
-    if (categories?.length) {
-      console.log('🔍 Filtering by categories:', categories);
-      filteredItems = filteredItems.filter((agreement: NavigatorAgreement) =>
-        categories.includes(agreement.category)
-      );
-    }
-
     // Analyze patterns if requested
     let patterns = null;
     if (query.toLowerCase().includes('pattern') || query.toLowerCase().includes('trend')) {
@@ -109,10 +65,10 @@ export async function POST(request: Request) {
     }
 
     const response = {
-      agreements: agreementItems, // Send ALL agreements
+      agreements: allAgreements,
       patterns,
       metadata: {
-        totalAgreements: agreementItems.length,
+        totalAgreements: allAgreements.length,
         appliedFilters: {
           from_date: dateRange?.from,
           to_date: dateRange?.to,
