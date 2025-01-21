@@ -63,7 +63,39 @@ The demo is centered on Rachel, who unexpectedly fills in for Mark—the legal o
    - Demonstrate bulk send process
    - Display real-time progress updates
 
-### 2.4 Step 3: "Agreement Analysis" – Smart Search & Filtering (1 minute)
+### 2.4 Step 3: "Multi-Step Workflow" – Automated NDA Processing (1 minute)
+
+1. Rachel needs to send an NDA to a new vendor:
+   "Find our standard NDA template, fill it with Acme Corp's info - they're a new vendor in California, and send it to john@acme.com for signature. The contract value is $75,000."
+
+2. Technical Explanation:
+   - Multi-step workflow orchestration
+   - Automated template selection and prefill
+   - Smart field mapping and validation
+   - One-click final approval
+
+3. Live Demo Element:
+   - Show real-time progress through each step:
+     ```
+     Copilot: "I'll help you prepare and send the NDA. Here's what I'm doing:
+     1. ✓ Located our standard NDA template
+     2. ✓ Prefilling company information:
+        - Company: Acme Corp
+        - State: California
+        - Contract Value: $75,000
+     3. ✓ Added recipient: john@acme.com
+     4. → Ready for your review and approval"
+     ```
+   - Display final preview with all fields filled
+   - Show one-click send button
+
+4. Key Features:
+   - Zero context switching
+   - Automated data extraction
+   - Progress visualization
+   - Final human verification
+
+### 2.5 Step 4: "Agreement Analysis" – Smart Search & Filtering (1 minute)
 
 1. Rachel asks: "Show me all vendor agreements over $50,000 in California"
 2. Technical Explanation:
@@ -75,7 +107,7 @@ The demo is centered on Rachel, who unexpectedly fills in for Mark—the legal o
    - Show quick actions for each agreement
    - Demonstrate context-aware suggestions
 
-### 2.5 Step 4: "Visual Insights" – Interactive Reporting (1 minute)
+### 2.6 Step 5: "Visual Insights" – Interactive Reporting (1 minute)
 
 1. Rachel requests: "Give me a breakdown of our agreements"
 2. Technical Explanation:
@@ -87,7 +119,7 @@ The demo is centered on Rachel, who unexpectedly fills in for Mark—the legal o
    - Display value breakdown by jurisdiction
    - Demonstrate interactive filtering
 
-### 2.6 Step 5: Closing Summary (30 seconds)
+### 2.7 Step 6: Closing Summary (30 seconds)
 
 1. Rachel: "I've accomplished more in 30 minutes than I thought possible without Mark."
 2. Key Points:
@@ -103,9 +135,10 @@ The demo is centered on Rachel, who unexpectedly fills in for Mark—the legal o
 |------------------------------|----------------------------|-------------------------------------------------------------------------------------------|
 | 1. Priority & Signing        | PriorityDashboard + SigningView | • "What needs attention today?" <br/> • Embedded signing of urgent document              |
 | 2. Bulk Renewals            | BulkOperationView          | • "Process these renewals" <br/> • Real-time bulk send tracking                          |
-| 3. Smart Analysis           | NavigatorAnalysis          | • "Find high-value agreements" <br/> • Natural language filtering                        |
-| 4. Visual Reports           | AgreementChart             | • "Show agreement breakdown" <br/> • Interactive pie charts                              |
-| 5. Summary                  | EnvelopeList               | • Final overview of completed tasks                                                       |
+| 3. Multi-Step Workflow      | WorkflowAutomation         | • "Prepare and send NDA to Acme Corp" <br/> • Automated template selection and prefill   |
+| 4. Smart Analysis           | NavigatorAnalysis          | • "Find high-value agreements" <br/> • Natural language filtering                        |
+| 5. Visual Reports           | AgreementChart             | • "Show agreement breakdown" <br/> • Interactive pie charts                              |
+| 6. Summary                  | EnvelopeList               | • Final overview of completed tasks                                                       |
 
 ---
 
