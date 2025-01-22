@@ -48,7 +48,7 @@ export function DocumentView({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(true);
   const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
 
   const handleVoid = async () => {
@@ -148,7 +148,7 @@ export function DocumentView({
   };
 
   return (
-    <Card className="w-full max-w-6xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
+    <Card className="w-full max-w-6xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)] bg-white">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
@@ -212,13 +212,13 @@ export function DocumentView({
         <Collapsible
           open={isDetailsOpen}
           onOpenChange={setIsDetailsOpen}
-          className="bg-white rounded-lg shadow-sm overflow-hidden"
+          className="mb-6"
         >
-          <CollapsibleTrigger className="flex w-full justify-between items-center p-4 text-[#130032] hover:bg-[#F8F3F0] transition-colors">
-            <span className="font-semibold">Document Details</span>
+          <CollapsibleTrigger className="w-full flex justify-between items-center p-4 hover:no-underline bg-[#F8F3F0] rounded-lg">
+            <span className="font-medium text-[#130032]">Document Details</span>
             {isDetailsOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
           </CollapsibleTrigger>
-          <CollapsibleContent>
+          <CollapsibleContent className="px-4 pb-4 bg-[#F8F3F0] rounded-b-lg mt-0">
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Timeline */}
               <div>
@@ -270,7 +270,7 @@ export function DocumentView({
           {documents?.envelopeDocuments?.map((doc) => (
             <div 
               key={doc.documentId} 
-              className={`bg-white rounded-lg overflow-hidden shadow-sm ${expandedDocId === doc.documentId ? 'md:col-span-2' : ''}`}
+              className={`bg-[#F8F3F0] rounded-lg overflow-hidden shadow-sm ${expandedDocId === doc.documentId ? 'md:col-span-2' : ''}`}
             >
               <div className="flex justify-between items-center p-4 border-b border-[#130032]/10">
                 <h2 className="font-medium text-[#130032]">{doc.name}</h2>
@@ -304,7 +304,7 @@ export function DocumentView({
                   <div className={`relative w-full h-full transition-all duration-300 ease-in-out`}>
                     <PDFViewer 
                       url={`/api/envelopes/${envelope.id}/documents/${doc.documentId}`}
-                      scale={expandedDocId === doc.documentId ? 1.2 : 0.4}
+                      scale={expandedDocId === doc.documentId ? 1.5 : 0.35}
                       className="h-full"
                     />
                   </div>
