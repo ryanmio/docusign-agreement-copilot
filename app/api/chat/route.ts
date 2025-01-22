@@ -239,19 +239,14 @@ export async function POST(req: Request) {
           3. Examples of queries and how to handle them:
              - "Show me all agreements from 2024"
                -> navigatorAnalysis({ query, filters: { dateRange: { from: "2024-01-01T00:00:00Z", to: "2024-12-31T23:59:59Z" } } })
-             - "Show me agreements from the last 6 months"
-               -> navigatorAnalysis({ query, filters: { dateRange: { from: "[calculated_date]", to: "now" } } })
+             - "Show me agreements from the last 7 days"
+               -> navigatorAnalysis({ query, filters: { dateRange: { from: "now-7days", to: "now" } } })
              - "Find agreements with Acme Corp"
                -> navigatorAnalysis({ query, filters: { parties: ["Acme Corp"] } })
-             - "Find agreements with Acme Corp from Q1 2024"
-               -> navigatorAnalysis({ query, filters: { 
-                    parties: ["Acme Corp"],
-                    dateRange: { from: "2024-01-01T00:00:00Z", to: "2024-03-31T23:59:59Z" }
-                  } })
              - "Show me agreements expiring in the next 30 days"
                -> navigatorAnalysis({ query, filters: { expirationDateRange: { from: "now", to: "now+30days" } } })
-             - "Find renewals due this quarter"
-               -> navigatorAnalysis({ query, filters: { expirationDateRange: { from: "[quarter_start]", to: "[quarter_end]" } } })
+             - "Show me agreements that expired in the last month"
+               -> navigatorAnalysis({ query, filters: { expirationDateRange: { from: "now-30days", to: "now" } } })
           4. Date filtering works on:
              - agreement.provisions.effective_date for dateRange filters
              - agreement.provisions.expiration_date for expirationDateRange filters

@@ -63,6 +63,7 @@ interface NavigatorAnalysisProps {
           expiration_to?: string;
           parties?: string[];
           categories?: string[];
+          types?: string[];
         };
       };
     };
@@ -85,8 +86,8 @@ export function NavigatorAnalysis({
   const [displayLimit, setDisplayLimit] = useState(5);
   const [filters, setFilters] = useState<FilterState>({
     partyName: result?.result?.metadata?.appliedFilters?.parties?.[0] || '',
-    type: '',
-    category: '',
+    type: result?.result?.metadata?.appliedFilters?.types?.[0] || '',
+    category: result?.result?.metadata?.appliedFilters?.categories?.[0] || '',
     jurisdiction: '',
     dateRange: result?.result?.metadata?.appliedFilters?.from_date ? {
       start: result.result.metadata.appliedFilters.from_date,
