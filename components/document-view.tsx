@@ -50,6 +50,7 @@ export function DocumentView({
   const [success, setSuccess] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(true);
   const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
+  const [pdfScale, setPdfScale] = useState(0.35);
 
   const handleVoid = async () => {
     if (!confirm('Are you sure you want to void this envelope? This action cannot be undone.')) {
@@ -142,8 +143,10 @@ export function DocumentView({
   const handleExpand = (docId: string) => {
     if (expandedDocId === docId) {
       setExpandedDocId(null);
+      setPdfScale(0.35);
     } else {
       setExpandedDocId(docId);
+      setPdfScale(2.0);
     }
   };
 
@@ -306,6 +309,7 @@ export function DocumentView({
                       url={`/api/envelopes/${envelope.id}/documents/${doc.documentId}`}
                       scale={expandedDocId === doc.documentId ? 1.5 : 0.35}
                       className="h-full"
+                      key={`${doc.documentId}-${expandedDocId === doc.documentId}`}
                     />
                   </div>
                 </div>
