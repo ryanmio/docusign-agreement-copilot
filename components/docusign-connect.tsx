@@ -54,13 +54,13 @@ export default function DocuSignConnect() {
         
         if (data.success) {
           await checkConnection();
-          router.push('/?success=DocuSign disconnected successfully');
+          router.push('/?success=Docusign disconnected successfully');
         } else {
           throw new Error(data.error || 'Failed to disconnect');
         }
       } catch (error) {
         console.error('Error disconnecting:', error);
-        router.push('/?error=Failed to disconnect DocuSign');
+        router.push('/?error=Failed to disconnect Docusign');
       } finally {
         setIsProcessing(false);
       }
@@ -95,10 +95,10 @@ export default function DocuSignConnect() {
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-[#130032] tracking-[-0.02em] text-2xl font-light mb-1">
-                DocuSign Integration
+                Docusign Integration
               </h3>
               <p className="text-[#130032]/60 text-sm tracking-[-0.01em]">
-                Connect your DocuSign account to manage agreements
+                Connect your Docusign account to manage agreements
               </p>
             </div>
             <Button

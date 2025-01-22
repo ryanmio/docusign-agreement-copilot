@@ -45,7 +45,7 @@ export async function POST(
 
     if (credentialsError || !credentials) {
       return NextResponse.json(
-        { error: 'Please connect your DocuSign account first' },
+        { error: 'Please connect your Docusign account first' },
         { status: 400 }
       );
     }
@@ -69,9 +69,9 @@ export async function POST(
         }
       );
     } catch (error) {
-      console.error('DocuSign API Error:', error);
+      console.error('Docusign API Error:', error);
       return NextResponse.json(
-        { error: 'Failed to create envelope in DocuSign' },
+        { error: 'Failed to create envelope in Docusign' },
         { status: 400 }
       );
     }
@@ -100,7 +100,7 @@ export async function POST(
         // Even if database storage fails, the envelope was created in DocuSign
         return NextResponse.json(
           { 
-            warning: 'Envelope created in DocuSign but failed to store in database',
+            warning: 'Envelope created in Docusign but failed to store in database',
             envelopeId: docusignResponse.envelopeId 
           },
           { status: 200 }
