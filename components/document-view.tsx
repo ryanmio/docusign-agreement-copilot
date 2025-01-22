@@ -300,9 +300,13 @@ export function DocumentView({
                 </div>
               </div>
               <div className={`relative bg-[#F8F3F0] transition-all duration-300 ease-in-out ${expandedDocId === doc.documentId ? 'aspect-[3/4]' : 'h-48'}`}>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className={`relative transition-all duration-300 ease-in-out ${expandedDocId === doc.documentId ? 'w-[calc(100%-2rem)] h-[calc(100%-2rem)]' : 'w-full h-full'}`}>
-                    <PDFViewer url={`/api/envelopes/${envelope.id}/documents/${doc.documentId}`} />
+                <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                  <div className={`relative w-full h-full transition-all duration-300 ease-in-out`}>
+                    <PDFViewer 
+                      url={`/api/envelopes/${envelope.id}/documents/${doc.documentId}`}
+                      scale={expandedDocId === doc.documentId ? 1.2 : 0.4}
+                      className="h-full"
+                    />
                   </div>
                 </div>
               </div>
