@@ -94,7 +94,7 @@ export default function ConnectPage() {
               </div>
 
               <Auth
-                supabaseClient={supabase}
+                supabaseClient={supabase as any}
                 appearance={{ 
                   theme: ThemeSupa,
                   variables: {
@@ -122,10 +122,10 @@ export default function ConnectPage() {
             <>
               <div className="text-center space-y-2">
                 <h1 className="text-2xl font-semibold text-[#130032]">
-                  Connect DocuSign
+                  Connect Docusign
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Now, connect your DocuSign account to start managing agreements
+                  Now, connect your Docusign account to start managing agreements
                 </p>
               </div>
 
