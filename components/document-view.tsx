@@ -49,7 +49,7 @@ export function DocumentView({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isPdfExpanded, setIsPdfExpanded] = useState(false);
+  const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
 
   const handleVoid = async () => {
     if (!confirm('Are you sure you want to void this envelope? This action cannot be undone.')) {
@@ -136,6 +136,14 @@ export function DocumentView({
         return 'bg-[#FF5252]/10 text-[#FF5252]'
       default:
         return 'bg-[#130032]/10 text-[#130032]'
+    }
+  };
+
+  const handleExpand = (docId: string) => {
+    if (expandedDocId === docId) {
+      setExpandedDocId(null);
+    } else {
+      setExpandedDocId(docId);
     }
   };
 
@@ -258,44 +266,49 @@ export function DocumentView({
         </Collapsible>
 
         {/* Document Viewer */}
-        {documents?.envelopeDocuments?.map((doc) => (
-          <div key={doc.documentId} className="bg-white rounded-lg overflow-hidden shadow-sm">
-            <div className="flex justify-between items-center p-4 border-b border-[#130032]/10">
-              <h2 className="font-medium text-[#130032]">{doc.name}</h2>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-[#4C00FF]"
-                  onClick={() => setIsPdfExpanded(!isPdfExpanded)}
-                >
-                  {isPdfExpanded ? 'Collapse' : 'Expand'}
-                </Button>
-                <a
-                  href={`/api/envelopes/${envelope.id}/documents/${doc.documentId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {documents?.envelopeDocuments?.map((doc) => (
+            <div 
+              key={doc.documentId} 
+              className={`bg-white rounded-lg overflow-hidden shadow-sm ${expandedDocId === doc.documentId ? 'md:col-span-2' : ''}`}
+            >
+              <div className="flex justify-between items-center p-4 border-b border-[#130032]/10">
+                <h2 className="font-medium text-[#130032]">{doc.name}</h2>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
                     className="text-[#4C00FF]"
+                    onClick={() => handleExpand(doc.documentId)}
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
+                    {expandedDocId === doc.documentId ? 'Collapse' : 'Expand'}
                   </Button>
-                </a>
+                  <a
+                    href={`/api/envelopes/${envelope.id}/documents/${doc.documentId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[#4C00FF]"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                  </a>
+                </div>
               </div>
-            </div>
-            <div className={`relative bg-[#F8F3F0] transition-all duration-300 ease-in-out ${isPdfExpanded ? 'aspect-[3/4]' : 'h-48'}`}>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className={`relative transition-all duration-300 ease-in-out ${isPdfExpanded ? 'w-[calc(100%-4rem)] h-[calc(100%-2rem)]' : 'w-full h-full'}`}>
-                  <PDFViewer url={`/api/envelopes/${envelope.id}/documents/${doc.documentId}`} />
+              <div className={`relative bg-[#F8F3F0] transition-all duration-300 ease-in-out ${expandedDocId === doc.documentId ? 'aspect-[3/4]' : 'h-48'}`}>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className={`relative transition-all duration-300 ease-in-out ${expandedDocId === doc.documentId ? 'w-[calc(100%-2rem)] h-[calc(100%-2rem)]' : 'w-full h-full'}`}>
+                    <PDFViewer url={`/api/envelopes/${envelope.id}/documents/${doc.documentId}`} />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
