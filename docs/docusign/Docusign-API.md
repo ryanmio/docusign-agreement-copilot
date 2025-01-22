@@ -1,22 +1,25 @@
-[eSignature REST API](/docs/esign-rest-api/)
+### Quick Links to Documentation
 
-v2.1
-
-[API Reference](/docs/esign-rest-api/reference/)
-
-filter
-
-[Accounts](/docs/esign-rest-api/reference/accounts/) [Billing](/docs/esign-rest-api/reference/billing/) [BulkEnvelopes](/docs/esign-rest-api/reference/bulkenvelopes/) [CloudStorage](/docs/esign-rest-api/reference/cloudstorage/) [Connect](/docs/esign-rest-api/reference/connect/) [CustomTabs](/docs/esign-rest-api/reference/customtabs/) [Diagnostics](/docs/esign-rest-api/reference/diagnostics/) [EmailArchive](/docs/esign-rest-api/reference/emailarchive/) [Envelopes](/docs/esign-rest-api/reference/envelopes/) [Folders](/docs/esign-rest-api/reference/folders/) [Notary](/docs/esign-rest-api/reference/notary/) [Payments](/docs/esign-rest-api/reference/payments/) [PowerForms](/docs/esign-rest-api/reference/powerforms/) [SigningGroups](/docs/esign-rest-api/reference/signinggroups/) [Templates](/docs/esign-rest-api/reference/templates/) [UserGroups](/docs/esign-rest-api/reference/usergroups/) [Users](/docs/esign-rest-api/reference/users/) [Workspaces](/docs/esign-rest-api/reference/workspaces/)
-
-[eSignature REST API](/docs/esign-rest-api/)
-
-v2.1
-
-[API Reference](/docs/esign-rest-api/reference/)
-
-filter
-
-[Accounts](/docs/esign-rest-api/reference/accounts/) [Billing](/docs/esign-rest-api/reference/billing/) [BulkEnvelopes](/docs/esign-rest-api/reference/bulkenvelopes/) [CloudStorage](/docs/esign-rest-api/reference/cloudstorage/) [Connect](/docs/esign-rest-api/reference/connect/) [CustomTabs](/docs/esign-rest-api/reference/customtabs/) [Diagnostics](/docs/esign-rest-api/reference/diagnostics/) [EmailArchive](/docs/esign-rest-api/reference/emailarchive/) [Envelopes](/docs/esign-rest-api/reference/envelopes/) [Folders](/docs/esign-rest-api/reference/folders/) [Notary](/docs/esign-rest-api/reference/notary/) [Payments](/docs/esign-rest-api/reference/payments/) [PowerForms](/docs/esign-rest-api/reference/powerforms/) [SigningGroups](/docs/esign-rest-api/reference/signinggroups/) [Templates](/docs/esign-rest-api/reference/templates/) [UserGroups](/docs/esign-rest-api/reference/usergroups/) [Users](/docs/esign-rest-api/reference/users/) [Workspaces](/docs/esign-rest-api/reference/workspaces/)
+* [eSignature REST API](/docs/esign-rest-api/)
+* [API Reference](/docs/esign-rest-api/reference/)
+* [Accounts](/docs/esign-rest-api/reference/accounts/)
+* [Billing](/docs/esign-rest-api/reference/billing/)
+* [BulkEnvelopes](/docs/esign-rest-api/reference/bulkenvelopes/)
+* [CloudStorage](/docs/esign-rest-api/reference/cloudstorage/)
+* [Connect](/docs/esign-rest-api/reference/connect/)
+* [CustomTabs](/docs/esign-rest-api/reference/customtabs/)
+* [Diagnostics](/docs/esign-rest-api/reference/diagnostics/)
+* [EmailArchive](/docs/esign-rest-api/reference/emailarchive/)
+* [Envelopes](/docs/esign-rest-api/reference/envelopes/)
+* [Folders](/docs/esign-rest-api/reference/folders/)
+* [Notary](/docs/esign-rest-api/reference/notary/)
+* [Payments](/docs/esign-rest-api/reference/payments/)
+* [PowerForms](/docs/esign-rest-api/reference/powerforms/)
+* [SigningGroups](/docs/esign-rest-api/reference/signinggroups/)
+* [Templates](/docs/esign-rest-api/reference/templates/)
+* [UserGroups](/docs/esign-rest-api/reference/usergroups/)
+* [Users](/docs/esign-rest-api/reference/users/)
+* [Workspaces](/docs/esign-rest-api/reference/workspaces/)
 
 # API Categories
 

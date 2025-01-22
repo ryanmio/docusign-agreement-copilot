@@ -1,3 +1,12 @@
+-- Migration: Webhook Events
+-- Created: Dec 16, 2024 at 9:52 AM
+-- Part of: DocuSign Hackathon 2024
+-- Note: Original filename used 2023 date due to AI knowledge cutoff
+--
+-- Description: DocuSign Connect webhook support
+-- Captures and processes real-time DocuSign events
+-- See schema.md for complete documentation
+
 -- Create webhook_events table
 create table if not exists webhook_events (
   id uuid default uuid_generate_v4() primary key,

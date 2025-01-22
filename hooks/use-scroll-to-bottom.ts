@@ -1,3 +1,6 @@
+// not in use - was fighting the auto scroll in dev 
+// and decided i didnt like the autoscroll anyways
+
 import { useRef, type RefObject } from 'react';
 
 export function useScrollToBottom<T extends HTMLElement>(): [

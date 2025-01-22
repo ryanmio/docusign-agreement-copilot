@@ -1,3 +1,13 @@
+-- Migration: Envelope Status Procedure
+-- Created: Dec 17, 2024 at 9:39 AM
+-- Part of: DocuSign Hackathon 2024
+-- Note: Original filename used 2023 date due to AI knowledge cutoff
+--
+-- Description: Status update stored procedure
+-- Handles envelope status transitions and notifications
+-- See schema.md for complete documentation
+
+
 -- Create function to update envelope status with proper enum casting
 create or replace function update_envelope_status(
   p_docusign_envelope_id text,

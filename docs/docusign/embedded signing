@@ -97,21 +97,6 @@ To configure the anchor tabs, specify the number of units from the anchor text t
 After creating the tabs, assign them to the signer created in the previous step.
 Set the envelope's status property. To save the envelope as a draft, set status to created. To configure the envelope to be sent immediately after it is instantiated, set status to sent instead.
 
-Bash
-
-C#
-
-Java
-
-Node.js
-
-PHP
-
-PowerShell
-
-Python
-
-Ruby
 1234567891011121314151617181920
 printf \
 '{
@@ -134,21 +119,7 @@ Set the following default request header to add your access token to all API cal
 Initialize the Envelopes API.
 Using your Docusign integration key and the prepared envelope definition, generate and retrieve an envelope ID using the Envelopes:create endpoint.
 
-Bash
 
-C#
-
-Java
-
-Node.js
-
-PHP
-
-PowerShell
-
-Python
-
-Ruby
 12345
 curl --header "Authorization: Bearer ${ACCESS_TOKEN}" \
      --header "Content-Type: application/json" \
@@ -177,21 +148,7 @@ Include the origin or origins of the pages that will embed the focused view and 
 
 Keep in mind that your domain must have a valid SSL certificate or an error message will be returned. We’re using the domain of the launcher, but make sure to replace this with your own domain name.
 
-Bash
 
-C#
-
-Java
-
-Node.js
-
-PHP
-
-PowerShell
-
-Python
-
-Ruby
 12345678910
 printf \
 '{
@@ -210,21 +167,6 @@ Next, create the recipient view. Use the EnvelopeViews:createRecipient endpoint,
 
 Finally, extract the url property from the JSON response. Send the url property to the JavaScript on the browser. Your JavaScript will use the url when it calls Docusign JS in the next step.
 
-Bash
-
-C#
-
-Java
-
-Node.js
-
-PHP
-
-PowerShell
-
-Python
-
-Ruby
 12345
 Status=$(curl --header "Authorization: Bearer ${ACCESS_TOKEN}" \
      --header "Content-Type: application/json" \
@@ -245,21 +187,6 @@ Finally, create an HTML with div container to mount the signing URL. The iframe 
 
 View the source code for this how-to on GitHub: Bash, C#, Java, Node.js, PHP, Powershell, Python, or Ruby.
 
-Bash
-
-C#
-
-Java
-
-Node.js
-
-PHP
-
-PowerShell
-
-Python
-
-Ruby
 1234567891011121314151617181920
 -->
 <br />
@@ -658,21 +585,6 @@ To configure the anchor tabs, specify the number of units from the anchor text t
 After creating the tabs, assign them to the signer created in the previous step.
 Set the envelope's status property. To save the envelope as a draft, set status to created. To configure the envelope to be sent immediately after it is instantiated, set status to sent instead.
 
-Bash
-
-C#
-
-Java
-
-Node.js
-
-PHP
-
-PowerShell
-
-Python
-
-Ruby
 313233343536373839404142434445464748
 def make_envelope(cls, args):
     """
@@ -695,21 +607,6 @@ Set the following default request header to add your access token to all API cal
 Initialize the Envelopes API.
 Using your Docusign integration key and the prepared envelope definition, generate and retrieve an envelope ID using the Envelopes:create endpoint.
 
-Bash
-
-C#
-
-Java
-
-Node.js
-
-PHP
-
-PowerShell
-
-Python
-
-Ruby
 123456789101112
 envelope_args = args["envelope_args"]
 # 1. Create the envelope request object
@@ -728,19 +625,6 @@ The recipient view is the screen that Docusign generates and displays in your ap
 Set the return URL to which the user will be forwarded after signing is complete.
 Add the recipient information to the view, including the signer's email, name, and clientUserID that were set for the recipient who will sign the envelope.
 
-Bash
-
-C#
-
-Java
-
-Node.js
-
-PHP
-
-PowerShell
-
-Python
 
 Ruby
 12345678
@@ -761,21 +645,6 @@ Finally, extract the URL for embedded signing, which is the value of the Url key
 
 View the source code for this how-to on GitHub: Bash, C#, Java, Node.js, PHP, PowerShell, Python, or Ruby.
 
-Bash
-
-C#
-
-Java
-
-Node.js
-
-PHP
-
-PowerShell
-
-Python
-
-Ruby
 1234567
 results = envelope_api.create_recipient_view(
     account_id=args["account_id"],

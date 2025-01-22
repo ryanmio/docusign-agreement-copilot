@@ -1,3 +1,13 @@
+-- Migration: Bulk Operations
+-- Created: Dec 19, 2024 at 8:45 AM
+-- Part of: DocuSign Hackathon 2024
+-- Note: Original filename used 2024 January date due to AI knowledge cutoff
+--
+-- Description: Bulk sending infrastructure
+-- Enables mass envelope operations with status tracking
+-- See schema.md for complete documentation
+
+
 -- Create bulk operation status enum
 do $$ begin
   create type bulk_operation_status as enum (

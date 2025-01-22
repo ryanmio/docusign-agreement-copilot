@@ -1,3 +1,12 @@
+-- Migration: Envelope Management
+-- Created: Dec 16, 2024 at 10:32 AM
+-- Part of: DocuSign Hackathon 2024
+-- Note: Original filename used 2023 date due to AI knowledge cutoff
+--
+-- Description: Core envelope and recipient tables
+-- Handles DocuSign envelope tracking and recipient management
+-- See schema.md for complete documentation
+
 -- Create envelope status enum
 do $$ begin
   create type envelope_status as enum (

@@ -1,6 +1,6 @@
-# Performance Optimizations for Markdown Chat
+# Memoization for Markdown Chat
 
-## Current Implementation
+## Basic Implementation
 - Basic markdown rendering using `react-markdown`
 - Simple implementation without memoization
 - Suitable for short conversations and simple markdown
@@ -18,7 +18,6 @@ Consider implementing the memoization solution when:
 ```bash
 npm install marked
 ```
-(We already have react-markdown)
 
 ### 2. Create Memoized Markdown Component
 Create `components/memoized-markdown.tsx`:
@@ -121,4 +120,3 @@ export default function ChatPage() {
 
 ## References
 - Original implementation: `docs/vercel/cookbook/01-next/25-markdown-chatbot-with-memoization.mdx`
-- Vercel AI SDK documentation on streaming and performance 

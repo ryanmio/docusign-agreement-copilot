@@ -137,13 +137,14 @@
 - [x] Restyle header
 - [x] Compare to Stripe https://stripe.dev/blog/adding-payments-to-your-agentic-workflows
 - [x] Optimize conversation starters for productivity
+- [x] Check to make sure "Docusign" doesnt have camel-case capital S
 - [ ] Update system instructions per https://x.com/weswinder/status/1860035463152828471
 - [ ] Reorder the preview tools page
 - [ ] Update metadata for sharing and stuff
-- [ ] Check to make sure "Docusign" doesnt have camel-case capital S
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README
+      - [ ] Nice diagrams like https://github.com/jimmc414/onefilellm?tab=readme-ov-file#data-flow-diagram
   - [ ] Document API endpoints
   - [ ] Write setup instructions
   - [ ] Create user guide
