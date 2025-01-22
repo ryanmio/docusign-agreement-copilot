@@ -395,6 +395,15 @@ export async function POST(req: Request) {
                 }
               });
 
+              if (query.toLowerCase().includes('party') || query.toLowerCase().includes('with')) {
+                // Extract potential party names - look for words after "with" or between "party" and any punctuation
+                const partyMatches = query.match(/(?:with|party\s+name\s+)(\w+)/i);
+                if (partyMatches && partyMatches[1]) {
+                  filters = filters || {};
+                  filters.parties = [partyMatches[1]];
+                }
+              }
+
               const response = await fetch(`${baseUrl}/api/navigator/analyze`, {
                 method: 'POST',
                 headers: {
