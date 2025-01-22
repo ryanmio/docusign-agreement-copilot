@@ -36,16 +36,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /docs/vercel
-docs/docusign/Docusign Navigator_2025-01-02 19.38.pdf
 /demo/scripts/node_modules
-/demo/pdf
-/demo/markdown
-/demo/pdf
-/docs/docusign
 /_examples
 agents/.post-survey.md
 docs/demo notes
 /docs/stripe
 git-history.md
 project-timeline.md
-docs/date-handling-proposal.md
+docs/docusign/navigator/welcome.md
+components.json
+dev_agents/.post-survey.md
