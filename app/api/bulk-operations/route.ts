@@ -208,32 +208,70 @@ async function processEnvelopes(
 
         const envelope = await docusign.createEnvelope(user.id, envelopeArgs);
 
-        // Store envelope in database
-        const { data: storedEnvelope, error: envelopeError } = await supabase
-          .from('envelopes')
-          .insert({
-            user_id: user.id,
-            docusign_envelope_id: envelope.envelopeId,
-            subject: `${operationName} - Please sign this document`,
-            message: 'Please sign this document at your earliest convenience.',
-            status: 'sent',
-            metadata: {
-              bulk_operation_id: operationId,
-              template_id: templateId || null,
-            },
-          })
-          .select()
-          .single();
+        // Store envelope in database with retry logic
+        let envelopeData = null;
+        let retryCount = 0;
+        const maxRetries = 3;
 
-        if (envelopeError) {
-          throw new Error(`Failed to store envelope: ${envelopeError.message}`);
+        while (retryCount < maxRetries && !envelopeData) {
+          try {
+            // First try to find existing envelope
+            const { data: existingEnvelope, error: findError } = await supabase
+              .from('envelopes')
+              .select('id')
+              .eq('docusign_envelope_id', envelope.envelopeId)
+              .single();
+
+            if (existingEnvelope) {
+              envelopeData = existingEnvelope;
+            } else {
+              // If not found, create it
+              const { data: newEnvelope, error: createError } = await supabase
+                .from('envelopes')
+                .insert({
+                  user_id: user.id,
+                  docusign_envelope_id: envelope.envelopeId,
+                  subject: `${operationName} - Please sign this document`,
+                  message: 'Please sign this document at your earliest convenience.',
+                  status: 'sent',
+                  metadata: {
+                    bulk_operation_id: operationId,
+                    template_id: templateId || null,
+                  },
+                })
+                .select('id')
+                .single();
+
+              if (createError) {
+                if (retryCount === maxRetries - 1) {
+                  throw new Error(`Failed to store envelope after ${maxRetries} attempts: ${createError.message}`);
+                }
+                // If error is due to concurrent insert, we'll retry
+                retryCount++;
+                continue;
+              }
+              
+              envelopeData = newEnvelope;
+            }
+          } catch (error) {
+            if (retryCount === maxRetries - 1) {
+              throw error;
+            }
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
+            continue;
+          }
         }
 
-        // Store recipient
+        if (!envelopeData) {
+          throw new Error('Failed to store or retrieve envelope after multiple attempts');
+        }
+
+        // Store recipient with retry
         const { error: recipientError } = await supabase
           .from('recipients')
           .insert({
-            envelope_id: storedEnvelope.id,
+            envelope_id: envelopeData.id,
             email: recipient.email,
             name: recipient.name,
             status: 'sent',
