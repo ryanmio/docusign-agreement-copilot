@@ -185,11 +185,9 @@ export function PriorityDashboard({ sections, onAction, toolCallId }: PriorityDa
                                 <div className="flex items-center gap-2 text-sm">
                                   <Calendar className="h-4 w-4 text-[#130032]/40" />
                                   <div>
-                                    <span className="text-[#130032]/60">Expiration: </span>
+                                    <span className="text-[#130032]/60">Status: </span>
                                     <span className="text-[#130032]">
-                                      {envelope.expirationDate 
-                                        ? new Date(envelope.expirationDate).toLocaleDateString()
-                                        : 'No expiration date'}
+                                      {envelope.status}
                                     </span>
                                   </div>
                                 </div>
@@ -197,7 +195,7 @@ export function PriorityDashboard({ sections, onAction, toolCallId }: PriorityDa
                                 <div className="flex items-start gap-2 text-sm">
                                   <AlertCircle className="h-4 w-4 text-[#130032]/40 mt-0.5" />
                                   <div>
-                                    <span className="text-[#130032]/60">Urgency Reason: </span>
+                                    <span className="text-[#130032]/60">Reason: </span>
                                     <span className="text-[#130032]">{envelope.urgencyReason}</span>
                                   </div>
                                 </div>

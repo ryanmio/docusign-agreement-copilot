@@ -779,10 +779,15 @@ export async function POST(req: Request) {
                 if (envelope.status === 'declined') return 'Document was declined';
                 if (envelope.status === 'voided') return 'Document was voided';
                 
-                const expiration = envelope.expirationDate ? new Date(envelope.expirationDate) : null;
-                if (expiration) {
-                  const hoursUntilExpiration = Math.floor((expiration.getTime() - new Date().getTime()) / (1000 * 60 * 60));
-                  if (hoursUntilExpiration <= 48) return `Expires in ${hoursUntilExpiration} hours`;
+                const sentDate = envelope.sentDateTime ? new Date(envelope.sentDateTime) : null;
+                const lastModified = envelope.lastModifiedDateTime ? new Date(envelope.lastModifiedDateTime) : null;
+                
+                if (sentDate) {
+                  const daysSinceSent = Math.floor((new Date().getTime() - sentDate.getTime()) / (1000 * 60 * 60 * 24));
+                  if (daysSinceSent >= 7 && lastModified && 
+                      Math.floor((new Date().getTime() - lastModified.getTime()) / (1000 * 60 * 60 * 24)) >= 7) {
+                    return 'No activity for 7+ days';
+                  }
                 }
 
                 return 'Awaiting action';
@@ -793,7 +798,6 @@ export async function POST(req: Request) {
                 envelopeId: string;
                 subject: string;
                 status: string;
-                expirationDate?: string;
                 recipients: Array<{
                   email: string;
                   name: string;
@@ -801,11 +805,10 @@ export async function POST(req: Request) {
                 }>;
                 urgencyReason: string;
               }> = [];
-              const todayEnvelopes: Array<{
+              const upcomingEnvelopes: Array<{
                 envelopeId: string;
                 subject: string;
                 status: string;
-                expirationDate?: string;
                 recipients: Array<{
                   email: string;
                   name: string;
@@ -813,11 +816,10 @@ export async function POST(req: Request) {
                 }>;
                 urgencyReason: string;
               }> = [];
-              const thisWeekEnvelopes: Array<{
+              const stalledEnvelopes: Array<{
                 envelopeId: string;
                 subject: string;
                 status: string;
-                expirationDate?: string;
                 recipients: Array<{
                   email: string;
                   name: string;
@@ -831,44 +833,49 @@ export async function POST(req: Request) {
                   envelopeId: envelope.envelopeId,
                   subject: envelope.emailSubject,
                   status: envelope.status,
-                  expirationDate: envelope.expirationDateTime,
                   recipients: getRecipients(envelope),
                   urgencyReason: getUrgencyReason(envelope)
                 };
 
-                // Categorize based on status and expiration
-                if (
-                  envelope.status === 'voided' || 
-                  envelope.status === 'declined' ||
-                  (envelope.expirationDateTime && new Date(envelope.expirationDateTime).getTime() - new Date().getTime() <= 48 * 60 * 60 * 1000)
-                ) {
+                // Categorize based on status and activity
+                if (envelope.status === 'declined' || envelope.status === 'voided') {
                   urgentEnvelopes.push(priorityEnvelope);
-                } else if (
-                  envelope.expirationDateTime && 
-                  new Date(envelope.expirationDateTime).getTime() - new Date().getTime() <= 7 * 24 * 60 * 60 * 1000
-                ) {
-                  todayEnvelopes.push(priorityEnvelope);
                 } else {
-                  thisWeekEnvelopes.push(priorityEnvelope);
+                  const sentDate = envelope.sentDateTime ? new Date(envelope.sentDateTime) : null;
+                  const lastModified = envelope.lastModifiedDateTime ? new Date(envelope.lastModifiedDateTime) : null;
+                  
+                  if (sentDate) {
+                    const hoursSinceSent = Math.floor((new Date().getTime() - sentDate.getTime()) / (1000 * 60 * 60));
+                    const daysSinceLastActivity = lastModified ? 
+                      Math.floor((new Date().getTime() - lastModified.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                    
+                    if (hoursSinceSent <= 48) {
+                      upcomingEnvelopes.push(priorityEnvelope);
+                    } else if (daysSinceLastActivity >= 7) {
+                      stalledEnvelopes.push(priorityEnvelope);
+                    } else {
+                      upcomingEnvelopes.push(priorityEnvelope);
+                    }
+                  }
                 }
               });
 
               // Limit to 5 items per section for demo
               const sections = [
                 {
-                  title: 'Urgent',
+                  title: 'Needs Attention',
                   type: 'urgent',
                   envelopes: urgentEnvelopes.slice(0, 5)
                 },
                 {
-                  title: 'Today',
+                  title: 'Upcoming',
                   type: 'today',
-                  envelopes: todayEnvelopes.slice(0, 5)
+                  envelopes: upcomingEnvelopes.slice(0, 5)
                 },
                 {
-                  title: 'This Week',
+                  title: 'Stalled',
                   type: 'thisWeek',
-                  envelopes: thisWeekEnvelopes.slice(0, 5)
+                  envelopes: stalledEnvelopes.slice(0, 5)
                 }
               ];
 
