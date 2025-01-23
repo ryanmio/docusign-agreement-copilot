@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     if (sessionError || !session?.user) {
       throw new Error('User not authenticated');
     }
-    
+
     const result = streamText({
       model: openai('gpt-4o'),
       maxSteps: 10,
@@ -191,7 +191,7 @@ export async function POST(req: Request) {
                Call: calculateMath({ expression: "$150,000 * 0.05", showSteps: true, context: "Calculating 5% of $150,000" })
              - Input: "What's 8% tax on $200"
                Call: calculateMath({ expression: "$200 * 0.08", showSteps: true, context: "Calculating 8% tax on $200" })
-          
+
           For sending templates, follow this EXACT flow:
           1. When user wants to send a template:
              - Say "I'll show you the available templates."

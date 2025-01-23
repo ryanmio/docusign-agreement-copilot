@@ -14,7 +14,7 @@ export function StarterBubbles() {
   const bubbles: StarterBubble[] = [
     {
       title: "Check renewals",
-      subtitle: "expiring soon",
+      subtitle: "due soon",
       message: "Show me agreements that need to be renewed soon"
     },
     {
