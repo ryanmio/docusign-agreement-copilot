@@ -420,6 +420,19 @@ export async function POST(req: Request) {
                 }
               });
 
+              // Add session check logging
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              console.log('Navigator Analysis Auth Check:', {
+                hasSession: !!session,
+                sessionError,
+                userId: session?.user?.id,
+                cookiesPresent: !!cookieStore.toString()
+              });
+
+              if (!session?.user) {
+                throw new Error('User not authenticated for Navigator analysis');
+              }
+
               if (query.toLowerCase().includes('party') || query.toLowerCase().includes('with')) {
                 // Extract potential party names - look for words after "with" or between "party" and any punctuation
                 const partyMatches = query.match(/(?:with|party\s+name\s+)(\w+)/i);
@@ -428,6 +441,14 @@ export async function POST(req: Request) {
                   filters.parties = [partyMatches[1]];
                 }
               }
+
+              // Log request details
+              console.log('Making Navigator API request:', {
+                url: `${baseUrl}/api/navigator/analyze`,
+                hasFilters: !!filters,
+                cookieLength: cookieStore.toString().length,
+                query
+              });
 
               const response = await fetch(`${baseUrl}/api/navigator/analyze`, {
                 method: 'POST',
@@ -439,6 +460,13 @@ export async function POST(req: Request) {
                   query,
                   ...filters
                 })
+              });
+
+              // Log response details before checking ok
+              console.log('Navigator API response received:', {
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries())
               });
 
               if (!response.ok) {

@@ -48,24 +48,33 @@ export async function POST(request: Request) {
   
   try {
     // Get authenticated user
-    const supabase = createRouteHandlerClient({ cookies });
-    const { data: { user } } = await supabase.auth.getUser();
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     
-    console.log('👤 User auth check:', { 
-      userId: user?.id,
-      authenticated: !!user 
+    // Add detailed session logging
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log('Navigator Analyze Endpoint Auth:', {
+      hasSession: !!session,
+      sessionError,
+      userId: session?.user?.id,
+      cookiesPresent: !!cookieStore.toString(),
+      headers: Object.fromEntries(request.headers)
     });
 
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    if (!session?.user) {
+      console.error('No authenticated user found in analyze endpoint');
+      return new Response(JSON.stringify({ error: 'Not authenticated' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Parse request body
+    // Log request body
     const body = await request.json();
-    console.log('📝 Request body:', body);
+    console.log('Analyze Request Body:', {
+      query: body.query,
+      hasFilters: !!body.filters
+    });
     
     let { query, dateRange, expirationDateRange, parties, categories, types, provisions } = body;
 
@@ -90,7 +99,7 @@ export async function POST(request: Request) {
     
     do {
       const options = pageToken ? { ctoken: pageToken } : undefined;
-      const agreements = await navigatorClient.getAgreements(user.id, options);
+      const agreements = await navigatorClient.getAgreements(session.user.id, options);
       allAgreements = [...allAgreements, ...(agreements.items || [])];
       pageToken = agreements.response_metadata?.page_token_next;
       
@@ -107,7 +116,7 @@ export async function POST(request: Request) {
     let patterns = null;
     if (query.toLowerCase().includes('pattern') || query.toLowerCase().includes('trend')) {
       console.log('📈 Analyzing patterns...');
-      patterns = await navigatorClient.analyzePatterns(user.id);
+      patterns = await navigatorClient.analyzePatterns(session.user.id);
       console.log('📈 Pattern analysis complete:', { 
         hasPatterns: !!patterns,
         patternTypes: patterns ? Object.keys(patterns) : [] 
