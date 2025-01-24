@@ -444,18 +444,18 @@ export async function POST(req: Request) {
 
               // Log request details
               console.log('Making Navigator API request:', {
-                url: `${baseUrl}/api/navigator/analyze`,
+                url: '/api/navigator/analyze',
                 hasFilters: !!filters,
                 cookieLength: cookieStore.toString().length,
                 query
               });
 
-              const response = await fetch(`${baseUrl}/api/navigator/analyze`, {
+              const response = await fetch('/api/navigator/analyze', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
-                  'Cookie': cookieStore.toString()
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                   query,
                   ...filters

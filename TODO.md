@@ -120,9 +120,9 @@
 - [x] Optimize conversation starters for productivity
 - [x] Check to make sure "Docusign" doesnt have camel-case capital S
 - [x] Reorder the preview tools page
+- [x] Add math convo starter
 - [ ] Update system instructions per https://x.com/weswinder/status/1860035463152828471
 - [ ] Update metadata for sharing and stuff
-- [ ] Add math convo starter
 - [ ] Add a user confirmation component where the ai can show what action it is about to performan and the details nad then have the user confirm - currently this is done with the ai saying with it will do in the chat and asking the user to confirm, which might be fine for this hackathon but we should have a better UX if time permits
  - [ ] Finish adding the preview page "How we use it" and "How it works" sections
 
