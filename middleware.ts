@@ -32,12 +32,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except:
-     * - /api/webhooks/** (webhook endpoints)
+     * - /api/** (all API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - /auth/** (auth endpoints)
      */
-    '/((?!api/webhooks|_next/static|_next/image|favicon.ico|auth).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|auth).*)',
   ],
 }; 
