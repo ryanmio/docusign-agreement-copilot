@@ -12,6 +12,7 @@ import { MathResult } from '@/components/math-result';
 import { BulkOperationsList } from '@/components/bulk-operations-list';
 import { BulkOperationsListPreview } from '@/components/preview/bulk-operations-list';
 import { AgreementChartPreview } from '@/components/chart-pie-interactive-preview';
+import { NavigatorAnalysisPreview } from '@/components/preview/navigator-analysis';
 import {
   mockTemplates,
   mockPriorityDashboard,
@@ -73,32 +74,32 @@ function ComponentSection({
         <p className="text-[#130032]/70">{description}</p>
       </div>
       {skipCard ? children : (
-        <Card className="p-6 bg-white shadow-sm border-[#CBC2FF]/20">
-          {children}
-        </Card>
+      <Card className="p-6 bg-white shadow-sm border-[#CBC2FF]/20">
+        {children}
+      </Card>
       )}
       <div className="space-y-6">
-        <div className="overflow-hidden rounded-lg border border-[#CBC2FF]/20">
-          <table className="w-full bg-white text-sm">
-            <thead className="bg-[#F8F3F0]">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-[#130032]">Prop</th>
-                <th className="px-4 py-3 text-left font-medium text-[#130032]">Type</th>
-                <th className="px-4 py-3 text-left font-medium text-[#130032]">Description</th>
-                <th className="px-4 py-3 text-left font-medium text-[#130032]">Required</th>
+      <div className="overflow-hidden rounded-lg border border-[#CBC2FF]/20">
+        <table className="w-full bg-white text-sm">
+          <thead className="bg-[#F8F3F0]">
+            <tr>
+              <th className="px-4 py-3 text-left font-medium text-[#130032]">Prop</th>
+              <th className="px-4 py-3 text-left font-medium text-[#130032]">Type</th>
+              <th className="px-4 py-3 text-left font-medium text-[#130032]">Description</th>
+              <th className="px-4 py-3 text-left font-medium text-[#130032]">Required</th>
+            </tr>
+          </thead>
+          <tbody>
+            {props.map((prop, index) => (
+              <tr key={prop.name} className={index % 2 === 0 ? 'bg-white' : 'bg-[#F8F3F0]/50'}>
+                <td className="px-4 py-3 font-mono text-sm">{prop.name}</td>
+                <td className="px-4 py-3 font-mono text-sm text-[#4C00FF]">{prop.type}</td>
+                <td className="px-4 py-3">{prop.description}</td>
+                <td className="px-4 py-3">{prop.required ? 'Yes' : 'No'}</td>
               </tr>
-            </thead>
-            <tbody>
-              {props.map((prop, index) => (
-                <tr key={prop.name} className={index % 2 === 0 ? 'bg-white' : 'bg-[#F8F3F0]/50'}>
-                  <td className="px-4 py-3 font-mono text-sm">{prop.name}</td>
-                  <td className="px-4 py-3 font-mono text-sm text-[#4C00FF]">{prop.type}</td>
-                  <td className="px-4 py-3">{prop.description}</td>
-                  <td className="px-4 py-3">{prop.required ? 'Yes' : 'No'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            ))}
+          </tbody>
+        </table>
         </div>
         {usage && (
           <div className="rounded-lg border border-[#CBC2FF]/20 bg-white overflow-hidden">
@@ -321,6 +322,33 @@ export default function PreviewPage() {
       <div>
         <h2 className="section-header">Management & Monitoring</h2>
         <ComponentSection
+          id="navigator-analysis"
+          title="Agreement Search"
+          description="Interactive agreement search with filtering and pattern detection"
+          className="component-section"
+          props={[
+            {
+              name: 'query',
+              type: 'string',
+              description: 'Natural language query for search',
+              required: true
+            },
+            {
+              name: 'onAction',
+              type: '(envelopeId: string, action: string) => Promise<void>',
+              description: 'Handler for agreement actions',
+              required: false
+            }
+          ]}
+          usage={{
+            howWeUseIt: "When users ask to find specific agreements, our AI agent uses this component to display filtered results. It helps users explore their agreement portfolio and find specific documents.",
+            howItWorks: "The agent processes natural language queries into structured filters, then displays matching agreements with key metadata. Users can further refine results using the interactive filter panel."
+          }}
+        >
+          <NavigatorAnalysisPreview />
+        </ComponentSection>
+
+        <ComponentSection
           id="priority-dashboard"
           title="Priority Dashboard"
           description="Shows urgent items needing attention"
@@ -464,7 +492,7 @@ export default function PreviewPage() {
           ]}
         >
           <div className="flex justify-center w-full">
-            <ReminderConfirmationPreview />
+          <ReminderConfirmationPreview />
           </div>
         </ComponentSection>
       </div>
@@ -487,7 +515,7 @@ export default function PreviewPage() {
         >
           <div className="w-full h-[800px] border border-gray-200 rounded-lg">
             <PDFViewer url={mockPdfUrl} />
-          </div>
+      </div>
         </ComponentSection>
 
         <ComponentSection

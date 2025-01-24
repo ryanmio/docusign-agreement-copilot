@@ -557,4 +557,39 @@ export const mockChartData = {
     { category: 'Service Agreements', value: 1200000 },
     { category: 'Partnership Agreements', value: 900000 }
   ]
+};
+
+export const mockNavigatorAnalysis = {
+  result: {
+    agreements: [
+      {
+        id: 'agr-1',
+        title: 'Mutual Non-Disclosure Agreement',
+        type: 'Nda',
+        category: 'BusinessServices',
+        status: 'complete',
+        parties: [
+          { name_in_agreement: 'Acme Corporation' }
+        ],
+        provisions: {
+          jurisdiction: 'California',
+          annual_agreement_value: 25000,
+          effective_date: '2025-01-19',
+          expiration_date: '2027-01-19'
+        }
+      }
+    ],
+    patterns: {
+      common_terms: ['confidentiality', 'termination', 'payment terms'],
+      value_trends: {
+        average: 148333,
+        median: 120000
+      }
+    },
+    metadata: {
+      totalAgreements: 44,
+      appliedFilters: {}
+    }
+  },
+  completed: true
 }; 
