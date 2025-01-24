@@ -183,6 +183,10 @@ export default function PreviewPage() {
               required: false
             }
           ]}
+          usage={{
+            howWeUseIt: "This component enables user-initiated DocuSign setup, guiding them through the permission process. If auth issues are encountered later, the AI agent can render this tool and help the user to reconnect rather than sending them searching through settings and halting progress. Much less context switching this way.",
+            howItWorks: "This component provides a simple interface for connecting or disconnecting a DocuSign account. The AI agent can leverage this tool during initial setup or when auth issues arise, offering users a direct path to resolve authentication without navigating complex settings."
+          }}
         >
           <div className="flex justify-center w-full">
             <div className="max-w-2xl w-full">
@@ -214,8 +218,8 @@ export default function PreviewPage() {
             }
           ]}
           usage={{
-            howWeUseIt: "When a user asks to send a document, our AI agent analyzes the request and presents relevant templates through this interface. The agent filters and ranks templates based on the conversation context, making it easy to find the right one.",
-            howItWorks: "The agent uses semantic search to match the user's request with template metadata. It then renders this component with the filtered templates, letting users confirm or change the selection before proceeding with the workflow."
+            howWeUseIt: "When a user wants to send a document, the AI agent can pass a search term to pre-filter the template list, making it easier to find relevant templates.",
+            howItWorks: "The component displays a searchable list of templates. The agent can provide an initial search term, and users can further refine the search or browse all templates."
           }}
         >
           <TemplateSelectorPreview
@@ -228,35 +232,27 @@ export default function PreviewPage() {
         <ComponentSection
           id="template-preview"
           title="Template Preview"
-          description="Displays template details and roles"
+          description="Displays template details and roles. Note: PDF preview of the template was planned but skipped for hackathon timeline."
           className="component-section"
           skipCard={true}
           props={[
             {
               name: 'templateId',
               type: 'string',
-              description: 'Template identifier',
+              description: 'ID of the template to preview',
               required: true
             },
             {
-              name: 'templateName',
-              type: 'string',
-              description: 'Template name',
-              required: true
-            },
-            {
-              name: 'description',
-              type: 'string',
-              description: 'Template description',
-              required: true
-            },
-            {
-              name: 'roles',
-              type: 'Array<{ roleName: string, roleId: string }>',
-              description: 'Template roles',
-              required: true
+              name: 'showBackButton',
+              type: 'boolean',
+              description: 'Whether to show a back button',
+              required: false
             }
           ]}
+          usage={{
+            howWeUseIt: "After a user selects a template, this component shows its details and required signers before proceeding with the send flow.",
+            howItWorks: "The component takes a template ID and fetches the full template details from DocuSign, including name, description, and required roles. This ensures we always show the latest template configuration."
+          }}
         >
           <TemplatePreview {...mockTemplatePreview} />
         </ComponentSection>
