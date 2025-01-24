@@ -143,6 +143,15 @@ export default function PreviewPage() {
           padding-top: 2rem;
           margin-top: 2rem;
         }
+        .section-header {
+          font-size: 1.5rem;
+          font-weight: 500;
+          color: #130032;
+          opacity: 0.7;
+          margin-bottom: 2rem;
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid rgba(203, 194, 255, 0.3);
+        }
       `}</style>
       <script dangerouslySetInnerHTML={{
         __html: `
@@ -153,431 +162,446 @@ export default function PreviewPage() {
           });
         `
       }} />
-      <ComponentSection
-        id="loading"
-        title="Loading States"
-        description="Used during API calls and tool processing"
-        className="component-section"
-        isFirst={true}
-        props={[
-          {
-            name: 'label',
-            type: 'string',
-            description: 'Optional loading message',
-            required: false
-          }
-        ]}
-        usage={{
-          howWeUseIt: "Our AI agent uses this component to show real-time progress during multi-step operations like analyzing agreements, preparing documents, or processing bulk sends. The loading state appears whenever the agent is performing background tasks.",
-          howItWorks: "The agent dynamically updates the loading message based on the current operation. For example, when sending an NDA, you'll see messages like 'Analyzing requirements...', 'Preparing template...', and 'Setting up recipients...' as the agent works."
-        }}
-      >
-        <div className="flex justify-center gap-24">
-          <LoadingSpinner label="Processing..." />
-          <LoadingSpinner label="Thinking..." />
-        </div>
-      </ComponentSection>
+      <div>
+        <h2 className="section-header">Setup & Authentication</h2>
+        <ComponentSection
+          id="docusign-connect"
+          title="DocuSign Connect"
+          description="Connect and disconnect your DocuSign account"
+          className="component-section"
+          isFirst={true}
+          skipCard={true}
+          props={[
+            {
+              name: '-',
+              type: '-',
+              description: 'No props required - Handles authentication internally',
+              required: false
+            }
+          ]}
+        >
+          <div className="max-w-2xl">
+            <DocuSignConnectPreview />
+          </div>
+        </ComponentSection>
+      </div>
 
-      <ComponentSection
-        id="template-selector"
-        title="Template Selector"
-        description="Used to select DocuSign templates"
-        className="component-section"
-        props={[
-          {
-            name: 'value',
-            type: 'string',
-            description: 'Selected template ID',
-            required: true
-          },
-          {
-            name: 'onChange',
-            type: '(value: string) => void',
-            description: 'Selection handler',
-            required: true
-          }
-        ]}
-        usage={{
-          howWeUseIt: "When a user asks to send a document, our AI agent analyzes the request and presents relevant templates through this interface. The agent filters and ranks templates based on the conversation context, making it easy to find the right one.",
-          howItWorks: "The agent uses semantic search to match the user's request with template metadata. It then renders this component with the filtered templates, letting users confirm or change the selection before proceeding with the workflow."
-        }}
-      >
-        <TemplateSelectorPreview
-          key="template-selector"
-          value={selectedTemplate}
-          onChange={setSelectedTemplate}
-        />
-      </ComponentSection>
-
-      <ComponentSection
-        id="priority-dashboard"
-        title="Priority Dashboard"
-        description="Shows urgent items needing attention"
-        className="component-section"
-        skipCard={true}
-        props={[
-          {
-            name: 'sections',
-            type: 'PrioritySection[]',
-            description: 'Dashboard sections with envelopes',
-            required: true
-          },
-          {
-            name: 'onAction',
-            type: '(envelopeId: string, action: string) => Promise<void>',
-            description: 'Action handler',
-            required: true
-          }
-        ]}
-        usage={{
-          howWeUseIt: "This is our main dashboard view that the AI agent generates when users ask about urgent tasks or need an overview of their agreements. It organizes envelopes by priority and status, making it easy to spot what needs attention.",
-          howItWorks: "The agent analyzes your DocuSign envelopes in real-time, categorizing them by urgency (expiring soon, waiting for others, needs your signature). It then renders this dynamic dashboard with quick actions for each item."
-        }}
-      >
-        <PriorityDashboard
-          sections={mockPriorityDashboard.sections}
-          toolCallId="preview"
-          onAction={async (envelopeId, action) => {
-            console.log('Action:', action, 'on envelope:', envelopeId);
+      <div>
+        <h2 className="section-header">Core Agreement Flow</h2>
+        <ComponentSection
+          id="template-selector"
+          title="Template Selector"
+          description="Used to select DocuSign templates"
+          className="component-section"
+          props={[
+            {
+              name: 'value',
+              type: 'string',
+              description: 'Selected template ID',
+              required: true
+            },
+            {
+              name: 'onChange',
+              type: '(value: string) => void',
+              description: 'Selection handler',
+              required: true
+            }
+          ]}
+          usage={{
+            howWeUseIt: "When a user asks to send a document, our AI agent analyzes the request and presents relevant templates through this interface. The agent filters and ranks templates based on the conversation context, making it easy to find the right one.",
+            howItWorks: "The agent uses semantic search to match the user's request with template metadata. It then renders this component with the filtered templates, letting users confirm or change the selection before proceeding with the workflow."
           }}
-        />
-      </ComponentSection>
+        >
+          <TemplateSelectorPreview
+            key="template-selector"
+            value={selectedTemplate}
+            onChange={setSelectedTemplate}
+          />
+        </ComponentSection>
 
-      <ComponentSection
-        id="template-preview"
-        title="Template Preview"
-        description="Displays template details and roles"
-        className="component-section"
-        skipCard={true}
-        props={[
-          {
-            name: 'templateId',
-            type: 'string',
-            description: 'Template identifier',
-            required: true
-          },
-          {
-            name: 'templateName',
-            type: 'string',
-            description: 'Template name',
-            required: true
-          },
-          {
-            name: 'description',
-            type: 'string',
-            description: 'Template description',
-            required: true
-          },
-          {
-            name: 'roles',
-            type: 'Array<{ roleName: string, roleId: string }>',
-            description: 'Template roles',
-            required: true
-          }
-        ]}
-      >
-        <TemplatePreview {...mockTemplatePreview} />
-      </ComponentSection>
+        <ComponentSection
+          id="template-preview"
+          title="Template Preview"
+          description="Displays template details and roles"
+          className="component-section"
+          skipCard={true}
+          props={[
+            {
+              name: 'templateId',
+              type: 'string',
+              description: 'Template identifier',
+              required: true
+            },
+            {
+              name: 'templateName',
+              type: 'string',
+              description: 'Template name',
+              required: true
+            },
+            {
+              name: 'description',
+              type: 'string',
+              description: 'Template description',
+              required: true
+            },
+            {
+              name: 'roles',
+              type: 'Array<{ roleName: string, roleId: string }>',
+              description: 'Template roles',
+              required: true
+            }
+          ]}
+        >
+          <TemplatePreview {...mockTemplatePreview} />
+        </ComponentSection>
 
-      <ComponentSection
-        id="recipient-form"
-        title="Recipient Form"
-        description="Collects recipient information"
-        className="component-section"
-        skipCard={true}
-        props={[
-          {
-            name: 'roles',
-            type: 'Array<{ roleName: string }>',
-            description: 'Required roles',
-            required: true
-          },
-          {
-            name: 'onSubmit',
-            type: '(recipients: RecipientData[]) => Promise<void>',
-            description: 'Submit handler',
-            required: true
-          },
-          {
-            name: 'onBack',
-            type: '() => void',
-            description: 'Optional back handler',
-            required: false
-          }
-        ]}
-      >
-        <RecipientForm
-          roles={mockRecipientRoles}
-          toolCallId="preview"
-          onSubmit={async (recipients) => {
-            console.log('Recipients:', recipients);
+        <ComponentSection
+          id="recipient-form"
+          title="Recipient Form"
+          description="Collects recipient information"
+          className="component-section"
+          skipCard={true}
+          props={[
+            {
+              name: 'roles',
+              type: 'Array<{ roleName: string }>',
+              description: 'Required roles',
+              required: true
+            },
+            {
+              name: 'onSubmit',
+              type: '(recipients: RecipientData[]) => Promise<void>',
+              description: 'Submit handler',
+              required: true
+            },
+            {
+              name: 'onBack',
+              type: '() => void',
+              description: 'Optional back handler',
+              required: false
+            }
+          ]}
+        >
+          <RecipientForm
+            roles={mockRecipientRoles}
+            toolCallId="preview"
+            onSubmit={async (recipients) => {
+              console.log('Recipients:', recipients);
+            }}
+            onBack={() => console.log('Back clicked')}
+          />
+        </ComponentSection>
+
+        <ComponentSection
+          id="envelope-success"
+          title="Envelope Success"
+          description="Shows envelope status and recipient progress after sending"
+          className="component-section"
+          skipCard={true}
+          props={[
+            {
+              name: 'envelopeId',
+              type: 'string',
+              description: 'DocuSign envelope identifier',
+              required: true
+            }
+          ]}
+        >
+          <EnvelopeSuccessPreview />
+        </ComponentSection>
+      </div>
+
+      <div>
+        <h2 className="section-header">Management & Monitoring</h2>
+        <ComponentSection
+          id="priority-dashboard"
+          title="Priority Dashboard"
+          description="Shows urgent items needing attention"
+          className="component-section"
+          skipCard={true}
+          props={[
+            {
+              name: 'sections',
+              type: 'PrioritySection[]',
+              description: 'Dashboard sections with envelopes',
+              required: true
+            },
+            {
+              name: 'onAction',
+              type: '(envelopeId: string, action: string) => Promise<void>',
+              description: 'Action handler',
+              required: true
+            }
+          ]}
+          usage={{
+            howWeUseIt: "This is our main dashboard view that the AI agent generates when users ask about urgent tasks or need an overview of their agreements. It organizes envelopes by priority and status, making it easy to spot what needs attention.",
+            howItWorks: "The agent analyzes your DocuSign envelopes in real-time, categorizing them by urgency (expiring soon, waiting for others, needs your signature). It then renders this dynamic dashboard with quick actions for each item."
           }}
-          onBack={() => console.log('Back clicked')}
-        />
-      </ComponentSection>
+        >
+          <PriorityDashboard
+            sections={mockPriorityDashboard.sections}
+            toolCallId="preview"
+            onAction={async (envelopeId, action) => {
+              console.log('Action:', action, 'on envelope:', envelopeId);
+            }}
+          />
+        </ComponentSection>
 
-      <ComponentSection
-        id="pdf-viewer"
-        title="PDF Viewer"
-        description="Displays PDF documents"
-        className="component-section"
-        props={[
-          {
-            name: 'url',
-            type: 'string',
-            description: 'PDF document URL',
-            required: true
-          }
-        ]}
-      >
-        <div className="w-full h-[800px] border border-gray-200 rounded-lg">
-          <PDFViewer url={mockPdfUrl} />
-        </div>
-      </ComponentSection>
+        <ComponentSection
+          id="document-view"
+          title="Document View"
+          description="Displays envelope documents and details"
+          className="component-section"
+          skipCard={true}
+          props={[
+            {
+              name: 'envelopeId',
+              type: 'string',
+              description: 'DocuSign envelope identifier',
+              required: true
+            },
+            {
+              name: 'envelope',
+              type: 'Envelope',
+              description: 'Envelope details including recipients',
+              required: true
+            },
+            {
+              name: 'documents',
+              type: '{ envelopeDocuments: Document[] }',
+              description: 'List of documents in the envelope',
+              required: true
+            },
+            {
+              name: 'showActions',
+              type: 'boolean',
+              description: 'Whether to show action buttons',
+              required: false
+            }
+          ]}
+        >
+          <DocumentViewPreview {...mockDocumentView} />
+        </ComponentSection>
 
-      <ComponentSection
-        id="math-result"
-        title="Math Result"
-        description="Displays calculation results with steps"
-        className="component-section"
-        skipCard={true}
-        props={[
-          {
-            name: 'expression',
-            type: 'string',
-            description: 'Math expression',
-            required: true
-          },
-          {
-            name: 'result',
-            type: 'number | string',
-            description: 'Calculation result',
-            required: true
-          },
-          {
-            name: 'steps',
-            type: 'string[]',
-            description: 'Optional calculation steps',
-            required: false
-          },
-          {
-            name: 'error',
-            type: 'string',
-            description: 'Optional error message',
-            required: false
-          }
-        ]}
-      >
-        <MathResult {...mockMathResult} />
-      </ComponentSection>
+        <ComponentSection
+          id="bulk-operations-list"
+          title="Bulk Operations List"
+          description="Displays list of bulk operations"
+          className="component-section"
+          props={[
+            {
+              name: '-',
+              type: '-',
+              description: 'No props required - Uses mock data internally',
+              required: false
+            }
+          ]}
+        >
+          <BulkOperationsListPreview />
+        </ComponentSection>
 
-      <ComponentSection
-        id="envelope-success"
-        title="Envelope Success"
-        description="Shows envelope status and recipient progress after sending"
-        className="component-section"
-        skipCard={true}
-        props={[
-          {
-            name: 'envelopeId',
-            type: 'string',
-            description: 'DocuSign envelope identifier',
-            required: true
-          }
-        ]}
-      >
-        <EnvelopeSuccessPreview />
-      </ComponentSection>
+        <ComponentSection
+          id="bulk-operation-view"
+          title="Bulk Operation View"
+          description="Shows progress and recipient status for bulk operations"
+          className="component-section"
+          props={[
+            {
+              name: 'operationId',
+              type: 'string',
+              description: 'ID of the bulk operation to display',
+              required: true
+            },
+            {
+              name: 'showBackButton',
+              type: 'boolean',
+              description: 'Whether to show the back button',
+              required: false
+            }
+          ]}
+        >
+          <BulkOperationViewPreview />
+        </ComponentSection>
 
-      <ComponentSection
-        id="docusign-connect"
-        title="DocuSign Connect"
-        description="Connect and disconnect your DocuSign account"
-        className="component-section"
-        skipCard={true}
-        props={[
-          {
-            name: '-',
-            type: '-',
-            description: 'No props required - Handles authentication internally',
-            required: false
-          }
-        ]}
-      >
-        <div className="max-w-2xl">
-          <DocuSignConnectPreview />
-        </div>
-      </ComponentSection>
+        <ComponentSection
+          id="reminder-confirmation"
+          title="Reminder Confirmation"
+          description="Shows success or error state after sending a reminder"
+          className="component-section"
+          skipCard={true}
+          props={[
+            {
+              name: 'success',
+              type: 'boolean',
+              description: 'Whether the reminder was sent successfully',
+              required: true
+            },
+            {
+              name: 'envelopeId',
+              type: 'string',
+              description: 'ID of the envelope the reminder was sent for',
+              required: true
+            },
+            {
+              name: 'error',
+              type: 'string',
+              description: 'Error message if the reminder failed',
+              required: false
+            },
+            {
+              name: 'recipientCount',
+              type: 'number',
+              description: 'Number of recipients the reminder was sent to',
+              required: false
+            }
+          ]}
+        >
+          <ReminderConfirmationPreview />
+        </ComponentSection>
+      </div>
 
-      <ComponentSection
-        id="reminder-confirmation"
-        title="Reminder Confirmation"
-        description="Shows success or error state after sending a reminder"
-        className="component-section"
-        skipCard={true}
-        props={[
-          {
-            name: 'success',
-            type: 'boolean',
-            description: 'Whether the reminder was sent successfully',
-            required: true
-          },
-          {
-            name: 'envelopeId',
-            type: 'string',
-            description: 'ID of the envelope the reminder was sent for',
-            required: true
-          },
-          {
-            name: 'error',
-            type: 'string',
-            description: 'Error message if the reminder failed',
-            required: false
-          },
-          {
-            name: 'recipientCount',
-            type: 'number',
-            description: 'Number of recipients the reminder was sent to',
-            required: false
-          }
-        ]}
-      >
-        <ReminderConfirmationPreview />
-      </ComponentSection>
+      <div>
+        <h2 className="section-header">Document Tools</h2>
+        <ComponentSection
+          id="pdf-viewer"
+          title="PDF Viewer"
+          description="Displays PDF documents"
+          className="component-section"
+          props={[
+            {
+              name: 'url',
+              type: 'string',
+              description: 'PDF document URL',
+              required: true
+            }
+          ]}
+        >
+          <div className="w-full h-[800px] border border-gray-200 rounded-lg">
+            <PDFViewer url={mockPdfUrl} />
+          </div>
+        </ComponentSection>
 
-      <ComponentSection
-        id="bulk-operation-view"
-        title="Bulk Operation View"
-        description="Shows progress and recipient status for bulk operations"
-        className="component-section"
-        props={[
-          {
-            name: 'operationId',
-            type: 'string',
-            description: 'ID of the bulk operation to display',
-            required: true
-          },
-          {
-            name: 'showBackButton',
-            type: 'boolean',
-            description: 'Whether to show the back button',
-            required: false
-          }
-        ]}
-      >
-        <BulkOperationViewPreview />
-      </ComponentSection>
+        <ComponentSection
+          id="markdown-editor"
+          title="Markdown Editor"
+          description="Preview and edit markdown with signature anchors"
+          className="component-section"
+          skipCard={true}
+          props={[
+            {
+              name: 'markdown',
+              type: 'string',
+              description: 'Text in markdown format',
+              required: true
+            },
+            {
+              name: 'mode',
+              type: "'preview' | 'edit'",
+              description: 'Current display mode',
+              required: true
+            },
+            {
+              name: 'onEdit',
+              type: '(toolCallId: string) => void',
+              description: 'Called when edit button is clicked',
+              required: false
+            },
+            {
+              name: 'onConfirm',
+              type: '(toolCallId: string, markdown: string) => void',
+              description: 'Called when content is confirmed',
+              required: false
+            },
+            {
+              name: 'onBack',
+              type: '(toolCallId: string) => void',
+              description: 'Called when back button is clicked',
+              required: false
+            }
+          ]}
+        >
+          <MarkdownEditor
+            key="markdown-editor"
+            markdown={mockContractMarkdown}
+            mode={editorMode}
+            onEdit={(toolCallId) => {
+              console.log('Edit clicked', toolCallId);
+              setEditorMode('edit');
+            }}
+            onConfirm={(toolCallId, markdown) => {
+              console.log('Confirm clicked', toolCallId, markdown);
+              setEditorMode('preview');
+            }}
+            onBack={(toolCallId) => {
+              console.log('Back clicked', toolCallId);
+              setEditorMode('preview');
+            }}
+          />
+        </ComponentSection>
 
-      <ComponentSection
-        id="bulk-operations-list"
-        title="Bulk Operations List"
-        description="Displays list of bulk operations"
-        className="component-section"
-        props={[
-          {
-            name: '-',
-            type: '-',
-            description: 'No props required - Uses mock data internally',
-            required: false
-          }
-        ]}
-      >
-        <BulkOperationsListPreview />
-      </ComponentSection>
+        <ComponentSection
+          id="math-result"
+          title="Math Result"
+          description="Displays calculation results with steps"
+          className="component-section"
+          skipCard={true}
+          props={[
+            {
+              name: 'expression',
+              type: 'string',
+              description: 'Math expression',
+              required: true
+            },
+            {
+              name: 'result',
+              type: 'number | string',
+              description: 'Calculation result',
+              required: true
+            },
+            {
+              name: 'steps',
+              type: 'string[]',
+              description: 'Optional calculation steps',
+              required: false
+            },
+            {
+              name: 'error',
+              type: 'string',
+              description: 'Optional error message',
+              required: false
+            }
+          ]}
+        >
+          <MathResult {...mockMathResult} />
+        </ComponentSection>
+      </div>
 
-      <ComponentSection
-        id="markdown-editor"
-        title="Markdown Editor"
-        description="Preview and edit markdown with signature anchors"
-        className="component-section"
-        skipCard={true}
-        props={[
-          {
-            name: 'markdown',
-            type: 'string',
-            description: 'Text in markdown format',
-            required: true
-          },
-          {
-            name: 'mode',
-            type: "'preview' | 'edit'",
-            description: 'Current display mode',
-            required: true
-          },
-          {
-            name: 'onEdit',
-            type: '(toolCallId: string) => void',
-            description: 'Called when edit button is clicked',
-            required: false
-          },
-          {
-            name: 'onConfirm',
-            type: '(toolCallId: string, markdown: string) => void',
-            description: 'Called when content is confirmed',
-            required: false
-          },
-          {
-            name: 'onBack',
-            type: '(toolCallId: string) => void',
-            description: 'Called when back button is clicked',
-            required: false
-          }
-        ]}
-      >
-        <MarkdownEditor
-          key="markdown-editor"
-          markdown={mockContractMarkdown}
-          mode={editorMode}
-          onEdit={(toolCallId) => {
-            console.log('Edit clicked', toolCallId);
-            setEditorMode('edit');
+      <div>
+        <h2 className="section-header">Utility Components</h2>
+        <ComponentSection
+          id="loading"
+          title="Loading States"
+          description="Used during API calls and tool processing"
+          className="component-section"
+          props={[
+            {
+              name: 'label',
+              type: 'string',
+              description: 'Optional loading message',
+              required: false
+            }
+          ]}
+          usage={{
+            howWeUseIt: "Our AI agent uses this component to show real-time progress during multi-step operations like analyzing agreements, preparing documents, or processing bulk sends. The loading state appears whenever the agent is performing background tasks.",
+            howItWorks: "The agent dynamically updates the loading message based on the current operation. For example, when sending an NDA, you'll see messages like 'Analyzing requirements...', 'Preparing template...', and 'Setting up recipients...' as the agent works."
           }}
-          onConfirm={(toolCallId, markdown) => {
-            console.log('Confirm clicked', toolCallId, markdown);
-            setEditorMode('preview');
-          }}
-          onBack={(toolCallId) => {
-            console.log('Back clicked', toolCallId);
-            setEditorMode('preview');
-          }}
-        />
-      </ComponentSection>
-
-      <ComponentSection
-        id="document-view"
-        title="Document View"
-        description="Displays envelope documents and details"
-        className="component-section"
-        skipCard={true}
-        props={[
-          {
-            name: 'envelopeId',
-            type: 'string',
-            description: 'DocuSign envelope identifier',
-            required: true
-          },
-          {
-            name: 'envelope',
-            type: 'Envelope',
-            description: 'Envelope details including recipients',
-            required: true
-          },
-          {
-            name: 'documents',
-            type: '{ envelopeDocuments: Document[] }',
-            description: 'List of documents in the envelope',
-            required: true
-          },
-          {
-            name: 'showActions',
-            type: 'boolean',
-            description: 'Whether to show action buttons',
-            required: false
-          }
-        ]}
-      >
-        <DocumentViewPreview {...mockDocumentView} />
-      </ComponentSection>
+        >
+          <div className="flex justify-center gap-24">
+            <LoadingSpinner label="Processing..." />
+            <LoadingSpinner label="Thinking..." />
+          </div>
+        </ComponentSection>
+      </div>
     </div>
   );
 } 

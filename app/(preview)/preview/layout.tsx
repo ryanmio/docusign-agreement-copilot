@@ -17,21 +17,40 @@ export default function PreviewLayout({
             <div className="w-64 shrink-0">
               <div className="sticky top-6 space-y-2 max-h-[calc(100vh-3rem)] overflow-y-auto">
                 <div className="font-medium text-[#130032] mb-4">Components</div>
-                <nav className="space-y-1">
-                  <a href="#loading" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Loading States</a>
-                  <a href="#template-selector" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Template Selector</a>
-                  <a href="#priority-dashboard" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Priority Dashboard</a>
-                  <a href="#template-preview" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Template Preview</a>
-                  <a href="#recipient-form" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Recipient Form</a>
-                  <a href="#pdf-viewer" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">PDF Viewer</a>
-                  <a href="#math-result" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Math Result</a>
-                  <a href="#envelope-success" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Envelope Success</a>
-                  <a href="#docusign-connect" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">DocuSign Connect</a>
-                  <a href="#reminder-confirmation" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Reminder Confirmation</a>
-                  <a href="#bulk-operation-view" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Bulk Operation View</a>
-                  <a href="#bulk-operations-list" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Bulk Operations List</a>
-                  <a href="#markdown-editor" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Markdown Editor</a>
-                  <a href="#document-view" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Document View</a>
+                <nav className="space-y-4">
+                  <div>
+                    <div className="px-3 py-1 text-sm font-medium text-[#130032]/50">Setup & Authentication</div>
+                    <a href="#docusign-connect" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">DocuSign Connect</a>
+                  </div>
+
+                  <div>
+                    <div className="px-3 py-1 text-sm font-medium text-[#130032]/50">Core Agreement Flow</div>
+                    <a href="#template-selector" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Template Selector</a>
+                    <a href="#template-preview" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Template Preview</a>
+                    <a href="#recipient-form" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Recipient Form</a>
+                    <a href="#envelope-success" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Envelope Success</a>
+                  </div>
+
+                  <div>
+                    <div className="px-3 py-1 text-sm font-medium text-[#130032]/50">Management & Monitoring</div>
+                    <a href="#priority-dashboard" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Priority Dashboard</a>
+                    <a href="#document-view" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Document View</a>
+                    <a href="#bulk-operations-list" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Bulk Operations List</a>
+                    <a href="#bulk-operation-view" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Bulk Operation View</a>
+                    <a href="#reminder-confirmation" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Reminder Confirmation</a>
+                  </div>
+
+                  <div>
+                    <div className="px-3 py-1 text-sm font-medium text-[#130032]/50">Document Tools</div>
+                    <a href="#pdf-viewer" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">PDF Viewer</a>
+                    <a href="#markdown-editor" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Markdown Editor</a>
+                    <a href="#math-result" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Math Result</a>
+                  </div>
+
+                  <div>
+                    <div className="px-3 py-1 text-sm font-medium text-[#130032]/50">Utility Components</div>
+                    <a href="#loading" className="block px-3 py-2 text-sm rounded-md hover:bg-[#F8F3F0] text-[#130032]/70 hover:text-[#130032]">Loading States</a>
+                  </div>
                 </nav>
               </div>
             </div>
