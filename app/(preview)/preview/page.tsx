@@ -35,15 +35,17 @@ function ComponentSection({
   description,
   children,
   props,
+  className,
 }: {
   id: string;
   title: string;
   description: string;
   children: React.ReactNode;
   props: { name: string; type: string; description: string; required?: boolean }[];
+  className?: string;
 }) {
   return (
-    <section id={id} className="space-y-6 scroll-mt-6">
+    <section id={id} className={`space-y-6 scroll-mt-6 ${className || ''}`}>
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold text-[#130032]">{title}</h2>
         <p className="text-[#130032]/70">{description}</p>
@@ -91,11 +93,18 @@ export default function PreviewPage() {
   }
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-32">
+      <style jsx global>{`
+        .component-section + .component-section {
+          border-top: 1px solid rgba(203, 194, 255, 0.2);
+          padding-top: 2rem;
+        }
+      `}</style>
       <ComponentSection
         id="loading"
         title="Loading States"
         description="Used during API calls and tool processing"
+        className="component-section"
         props={[
           {
             name: 'label',
@@ -115,6 +124,7 @@ export default function PreviewPage() {
         id="template-selector"
         title="Template Selector"
         description="Used to select DocuSign templates"
+        className="component-section"
         props={[
           {
             name: 'value',
@@ -141,6 +151,7 @@ export default function PreviewPage() {
         id="priority-dashboard"
         title="Priority Dashboard"
         description="Shows urgent items needing attention"
+        className="component-section"
         props={[
           {
             name: 'sections',
@@ -169,6 +180,7 @@ export default function PreviewPage() {
         id="template-preview"
         title="Template Preview"
         description="Displays template details and roles"
+        className="component-section"
         props={[
           {
             name: 'templateId',
@@ -203,6 +215,7 @@ export default function PreviewPage() {
         id="recipient-form"
         title="Recipient Form"
         description="Collects recipient information"
+        className="component-section"
         props={[
           {
             name: 'roles',
@@ -238,6 +251,7 @@ export default function PreviewPage() {
         id="pdf-viewer"
         title="PDF Viewer"
         description="Displays PDF documents"
+        className="component-section"
         props={[
           {
             name: 'url',
@@ -256,6 +270,7 @@ export default function PreviewPage() {
         id="math-result"
         title="Math Result"
         description="Displays calculation results with steps"
+        className="component-section"
         props={[
           {
             name: 'expression',
@@ -290,6 +305,7 @@ export default function PreviewPage() {
         id="envelope-success"
         title="Envelope Success"
         description="Shows envelope status and recipient progress after sending"
+        className="component-section"
         props={[
           {
             name: 'envelopeId',
@@ -306,6 +322,7 @@ export default function PreviewPage() {
         id="docusign-connect"
         title="DocuSign Connect"
         description="Connect and disconnect your DocuSign account"
+        className="component-section"
         props={[
           {
             name: '-',
@@ -324,6 +341,7 @@ export default function PreviewPage() {
         id="reminder-confirmation"
         title="Reminder Confirmation"
         description="Shows success or error state after sending a reminder"
+        className="component-section"
         props={[
           {
             name: 'success',
@@ -358,6 +376,7 @@ export default function PreviewPage() {
         id="bulk-operation-view"
         title="Bulk Operation View"
         description="Shows progress and recipient status for bulk operations"
+        className="component-section"
         props={[
           {
             name: 'operationId',
@@ -380,6 +399,7 @@ export default function PreviewPage() {
         id="bulk-operations-list"
         title="Bulk Operations List"
         description="Displays list of bulk operations"
+        className="component-section"
         props={[
           {
             name: '-',
@@ -396,6 +416,7 @@ export default function PreviewPage() {
         id="markdown-editor"
         title="Markdown Editor"
         description="Preview and edit markdown with signature anchors"
+        className="component-section"
         props={[
           {
             name: 'markdown',
@@ -452,6 +473,7 @@ export default function PreviewPage() {
         id="document-view"
         title="Document View"
         description="Displays envelope documents and details"
+        className="component-section"
         props={[
           {
             name: 'envelopeId',
