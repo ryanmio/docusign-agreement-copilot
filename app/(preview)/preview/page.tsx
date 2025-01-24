@@ -182,8 +182,10 @@ export default function PreviewPage() {
             }
           ]}
         >
-          <div className="max-w-2xl">
-            <DocuSignConnectPreview />
+          <div className="flex justify-center w-full">
+            <div className="max-w-2xl w-full">
+              <DocuSignConnectPreview />
+            </div>
           </div>
         </ComponentSection>
       </div>
@@ -309,7 +311,9 @@ export default function PreviewPage() {
             }
           ]}
         >
-          <EnvelopeSuccessPreview />
+          <div className="flex justify-center w-full">
+            <EnvelopeSuccessPreview />
+          </div>
         </ComponentSection>
       </div>
 
@@ -458,7 +462,9 @@ export default function PreviewPage() {
             }
           ]}
         >
-          <ReminderConfirmationPreview />
+          <div className="flex justify-center w-full">
+            <ReminderConfirmationPreview />
+          </div>
         </ComponentSection>
       </div>
 
@@ -574,7 +580,9 @@ export default function PreviewPage() {
             }
           ]}
         >
-          <MathResult {...mockMathResult} />
+          <div className="flex justify-center w-full">
+            <MathResult {...mockMathResult} />
+          </div>
         </ComponentSection>
       </div>
 
