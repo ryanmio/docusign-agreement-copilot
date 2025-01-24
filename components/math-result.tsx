@@ -26,7 +26,7 @@ export function MathResult({ expression, result, steps, error, className, isCurr
 
   if (error) {
     return (
-      <Card className={cn("w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]", className)}>
+      <Card className={cn("w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)] bg-white", className)}>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
             <div className="h-10 w-10 rounded-full bg-[#FF5252]/10 flex items-center justify-center flex-shrink-0">
@@ -46,17 +46,19 @@ export function MathResult({ expression, result, steps, error, className, isCurr
   const filteredSteps = steps?.filter(step => !step.startsWith('Result:'));
 
   return (
-    <Card className={cn("w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]", className)}>
+    <Card className={cn("w-full max-w-2xl mx-auto border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)] bg-white", className)}>
       <CardContent className="p-4">
         <div className="space-y-4">
           {/* Header */}
-          <div className="flex items-center space-x-2">
-            <div className="h-10 w-10 rounded-full bg-[#4C00FF]/10 flex items-center justify-center flex-shrink-0">
-              <Calculator className="h-5 w-5 text-[#4C00FF]" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="h-10 w-10 rounded-full bg-[#4C00FF]/10 flex items-center justify-center flex-shrink-0">
+                <Calculator className="h-5 w-5 text-[#4C00FF]" />
+              </div>
+              <h3 className="text-[#130032] tracking-[-0.02em] text-xl font-medium">
+                Calculation Result
+              </h3>
             </div>
-            <h3 className="text-[#130032] tracking-[-0.02em] text-xl font-medium">
-              Calculation Result
-            </h3>
           </div>
 
           {/* Steps */}

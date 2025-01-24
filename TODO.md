@@ -119,19 +119,19 @@
 - [x] Compare to Stripe https://stripe.dev/blog/adding-payments-to-your-agentic-workflows
 - [x] Optimize conversation starters for productivity
 - [x] Check to make sure "Docusign" doesnt have camel-case capital S
+- [x] Reorder the preview tools page
 - [ ] Update system instructions per https://x.com/weswinder/status/1860035463152828471
-- [ ] Reorder the preview tools page
 - [ ] Update metadata for sharing and stuff
 - [ ] Add math convo starter
 - [ ] Add a user confirmation component where the ai can show what action it is about to performan and the details nad then have the user confirm - currently this is done with the ai saying with it will do in the chat and asking the user to confirm, which might be fine for this hackathon but we should have a better UX if time permits
  - [ ] Finish adding the preview page "How we use it" and "How it works" sections
 
 CRITICAL BUGS:
-- [ ] Fix "Parties: Acme Corporation, <<SIGNER1_NAME>>" in contract expiring in 2027 and add annual value
+- [x] Fix "Parties: Acme Corporation, <<SIGNER1_NAME>>" in contract expiring in 2027 and add annual value
+- [x] Convo starter about analyze should include pie chart mention 
+- [x] Add a contract that needs my signature to the priority dashboard to make sure i can sign it in the demo, currently the prioriy dash is only showing docs that others need to sign and none that i need to sign
 - [ ] Fix navigator analysis auth issue on deployed version
-- [ ] Convo starter about analyze should include pie chart mention 
 - [ ] Envelope sending confirmation doesnt work on deployed version, doesnt create envelope
-- [ ] Add a contract that needs my signature to the priority dashboard to make sure i can sign it in the demo, currently the prioriy dash is only showing docs that others need to sign and none that i need to sign
 
 BUGS:
 - [ ] When sending the NDA, pre-fill functionality wasn't fully demonstrated. Investigate whether pre-filled fields (e.g., title and name) are feasible on our time frame
