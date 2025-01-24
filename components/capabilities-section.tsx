@@ -10,19 +10,19 @@ const capabilities = [
     items: [
       {
         title: "Send template to recipients",
-        message: "I need to send our standard NDA template to a new client"
+        message: "I need to send our standard NDA template to Acme Corp. Please help me send it to their team."
       },
       {
         title: "Send documents in bulk",
-        message: "I need to send multiple documents for signature at once"
+        message: "I need to send our Q1 vendor renewals to multiple recipients. Help me set up a bulk send."
       },
       {
         title: "Monitor bulk send progress",
-        message: "Show me the status of my bulk sending operation"
+        message: "Show me the status of my recent bulk send operation for Q1 contract renewals"
       },
       {
         title: "Sign a document",
-        message: "I need to sign a document that's waiting for my signature"
+        message: "Show me the agreements waiting for my signature, prioritizing the most urgent ones first"
       }
     ]
   },
@@ -52,11 +52,11 @@ const capabilities = [
     items: [
       {
         title: "Analyze agreements",
-        message: "Help me analyze the terms in my recent agreements"
+        message: "Analyze the payment terms in our recent agreements with Acme Corp"
       },
       {
         title: "Find related documents",
-        message: "Find all agreements related to a specific vendor"
+        message: "Find all agreements related to Acme Corp"
       },
       {
         title: "Detect patterns",
