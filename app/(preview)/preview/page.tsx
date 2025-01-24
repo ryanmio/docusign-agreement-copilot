@@ -36,7 +36,7 @@ function ComponentSection({
   children,
   props,
   className,
-  noCard,
+  skipCard = false,
 }: {
   id: string;
   title: string;
@@ -44,7 +44,7 @@ function ComponentSection({
   children: React.ReactNode;
   props: { name: string; type: string; description: string; required?: boolean }[];
   className?: string;
-  noCard?: boolean;
+  skipCard?: boolean;
 }) {
   return (
     <section id={id} className={`space-y-6 scroll-mt-6 ${className || ''}`}>
@@ -52,7 +52,7 @@ function ComponentSection({
         <h2 className="text-2xl font-semibold text-[#130032]">{title}</h2>
         <p className="text-[#130032]/70">{description}</p>
       </div>
-      {noCard ? children : (
+      {skipCard ? children : (
         <Card className="p-6 bg-white shadow-sm border-[#CBC2FF]/20">
           {children}
         </Card>
@@ -129,7 +129,6 @@ export default function PreviewPage() {
         title="Template Selector"
         description="Used to select DocuSign templates"
         className="component-section"
-        noCard
         props={[
           {
             name: 'value',
@@ -157,7 +156,7 @@ export default function PreviewPage() {
         title="Priority Dashboard"
         description="Shows urgent items needing attention"
         className="component-section"
-        noCard
+        skipCard={true}
         props={[
           {
             name: 'sections',
@@ -187,7 +186,7 @@ export default function PreviewPage() {
         title="Template Preview"
         description="Displays template details and roles"
         className="component-section"
-        noCard
+        skipCard={true}
         props={[
           {
             name: 'templateId',
@@ -223,7 +222,7 @@ export default function PreviewPage() {
         title="Recipient Form"
         description="Collects recipient information"
         className="component-section"
-        noCard
+        skipCard={true}
         props={[
           {
             name: 'roles',
@@ -279,6 +278,7 @@ export default function PreviewPage() {
         title="Math Result"
         description="Displays calculation results with steps"
         className="component-section"
+        skipCard={true}
         props={[
           {
             name: 'expression',
@@ -314,7 +314,6 @@ export default function PreviewPage() {
         title="Envelope Success"
         description="Shows envelope status and recipient progress after sending"
         className="component-section"
-        noCard
         props={[
           {
             name: 'envelopeId',
@@ -332,7 +331,6 @@ export default function PreviewPage() {
         title="DocuSign Connect"
         description="Connect and disconnect your DocuSign account"
         className="component-section"
-        noCard
         props={[
           {
             name: '-',
@@ -352,7 +350,6 @@ export default function PreviewPage() {
         title="Reminder Confirmation"
         description="Shows success or error state after sending a reminder"
         className="component-section"
-        noCard
         props={[
           {
             name: 'success',
@@ -388,7 +385,6 @@ export default function PreviewPage() {
         title="Bulk Operation View"
         description="Shows progress and recipient status for bulk operations"
         className="component-section"
-        noCard
         props={[
           {
             name: 'operationId',
@@ -412,7 +408,6 @@ export default function PreviewPage() {
         title="Bulk Operations List"
         description="Displays list of bulk operations"
         className="component-section"
-        noCard
         props={[
           {
             name: '-',
@@ -430,6 +425,7 @@ export default function PreviewPage() {
         title="Markdown Editor"
         description="Preview and edit markdown with signature anchors"
         className="component-section"
+        skipCard={true}
         props={[
           {
             name: 'markdown',
