@@ -11,6 +11,7 @@ import PDFViewer from '@/components/pdf-viewer';
 import { MathResult } from '@/components/math-result';
 import { BulkOperationsList } from '@/components/bulk-operations-list';
 import { BulkOperationsListPreview } from '@/components/preview/bulk-operations-list';
+import { AgreementChartPreview } from '@/components/chart-pie-interactive-preview';
 import {
   mockTemplates,
   mockPriorityDashboard,
@@ -583,6 +584,30 @@ export default function PreviewPage() {
           <div className="flex justify-center w-full">
             <MathResult {...mockMathResult} />
           </div>
+        </ComponentSection>
+
+        <ComponentSection
+          id="agreement-chart"
+          title="Agreement Chart"
+          description="Interactive pie chart showing agreement value distribution by category"
+          className="component-section"
+          skipCard={true}
+          props={[
+            {
+              name: 'dimension',
+              type: 'string',
+              description: 'Dimension to group by (e.g. category, party_name)',
+              required: true
+            },
+            {
+              name: 'metric',
+              type: 'string',
+              description: 'Metric to show (e.g. value, count)',
+              required: true
+            }
+          ]}
+        >
+          <AgreementChartPreview />
         </ComponentSection>
       </div>
 

@@ -547,4 +547,14 @@ export const mockDocumentView = {
       }
     ]
   }
+};
+
+export const mockChartData = {
+  values: [
+    { category: 'Sales Agreements', value: 2500000 },
+    { category: 'NDAs', value: 150000 },
+    { category: 'Employment Contracts', value: 750000 },
+    { category: 'Service Agreements', value: 1200000 },
+    { category: 'Partnership Agreements', value: 900000 }
+  ]
 }; 
