@@ -331,6 +331,7 @@ export default function PreviewPage() {
         title="DocuSign Connect"
         description="Connect and disconnect your DocuSign account"
         className="component-section"
+        skipCard={true}
         props={[
           {
             name: '-',
@@ -483,6 +484,7 @@ export default function PreviewPage() {
         title="Document View"
         description="Displays envelope documents and details"
         className="component-section"
+        skipCard={true}
         props={[
           {
             name: 'envelopeId',
