@@ -49,6 +49,7 @@ function ComponentSection({
   className,
   skipCard = false,
   usage,
+  isFirst = false,
 }: {
   id: string;
   title: string;
@@ -61,10 +62,11 @@ function ComponentSection({
     howWeUseIt: string;
     howItWorks: string;
   };
+  isFirst?: boolean;
 }) {
   return (
-    <section id={id} className={`relative space-y-6 scroll-mt-6 ${className || ''}`}>
-      {className?.includes('component-section') && <BackToTop />}
+    <section id={id} className={`relative space-y-6 scroll-mt-6 ${className || ''} ${isFirst ? 'mt-0 pt-0 border-none' : ''}`}>
+      {className?.includes('component-section') && !isFirst && <BackToTop />}
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold text-[#130032]">{title}</h2>
         <p className="text-[#130032]/70">{description}</p>
@@ -156,6 +158,7 @@ export default function PreviewPage() {
         title="Loading States"
         description="Used during API calls and tool processing"
         className="component-section"
+        isFirst={true}
         props={[
           {
             name: 'label',
