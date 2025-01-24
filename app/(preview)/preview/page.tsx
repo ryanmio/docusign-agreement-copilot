@@ -144,12 +144,14 @@ export default function PreviewPage() {
           margin-top: 2rem;
         }
         .section-header {
-          font-size: 1.5rem;
-          font-weight: 500;
+          font-size: 0.875rem;
+          font-weight: 600;
           color: #130032;
-          opacity: 0.7;
+          opacity: 0.6;
+          text-transform: uppercase;
+          letter-spacing: 0.025em;
           margin-bottom: 2rem;
-          padding-bottom: 0.5rem;
+          padding-bottom: 0.75rem;
           border-bottom: 1px solid rgba(203, 194, 255, 0.3);
         }
       `}</style>
