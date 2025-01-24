@@ -11,7 +11,8 @@ export async function middleware(req: NextRequest) {
   if (
     req.nextUrl.pathname === '/' || 
     req.nextUrl.pathname === '/preview' ||
-    req.nextUrl.pathname.startsWith('/VENDOR-RENEWAL-AcmeCorp-2023-01-15.pdf')
+    req.nextUrl.pathname.startsWith('/VENDOR-RENEWAL-AcmeCorp-2023-01-15.pdf') ||
+    req.nextUrl.pathname.startsWith('/api/')
   ) {
     return res;
   }
@@ -38,6 +39,5 @@ export const config = {
      * - /auth/** (auth endpoints)
      */
     '/((?!api/webhooks|_next/static|_next/image|favicon.ico|auth).*)',
-    '/api/navigator/:path*'  // Explicitly protect navigator API routes
   ],
 }; 
