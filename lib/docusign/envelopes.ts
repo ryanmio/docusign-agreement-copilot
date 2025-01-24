@@ -187,10 +187,12 @@ interface Envelope {
   lastModifiedDateTime?: string;
   recipients: EnvelopeRecipient[];
   purgeState?: 'unpurged' | 'documents_and_metadata_queued' | 'documents_queued' | 'metadata_queued' | 'purged';
+  expireAfter?: string;
   metadata?: {
     expirationDate?: string;
     [key: string]: any;
   };
+  expirationDateTime?: string;
 }
 
 interface ListStatusChangesResponse {
