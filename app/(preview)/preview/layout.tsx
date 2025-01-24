@@ -5,8 +5,8 @@ export default function PreviewLayout({
 }) {
   return (
     <div className="min-h-screen bg-white">
-      <div className="ds-container py-12">
-        <div className="space-y-12">
+      <div className="ds-container py-6">
+        <div className="space-y-6">
           <div className="space-y-4">
             <h1 className="text-3xl font-bold text-[#130032]">Generative UI Components</h1>
             <p className="max-w-3xl text-[#130032]/70">
