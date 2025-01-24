@@ -109,25 +109,6 @@
   - [x] Basic reporting charts
   - [x] Fix filtering by vendor
 
-- [ ] Priority Enhancement
-  - [ ] Enhance Priority Dashboard with AI insights
-  - [ ] Add agreement urgency scoring
-    - [ ] Implement scoring algorithm using Navigator data
-    - [ ] Add visual urgency indicators
-
-- [ ] Pattern Recognition
-  - [ ] Implement Tuesday task detection
-  - [ ] Create employee agreement mapping
-  - [ ] Build timeline view or other visualizations
-
-- [ ] Predictive Features
-  - [ ] Implement task forecasting
-  - [ ] Create insight dashboard
-
-- [ ] Testing & Validation
-  - [ ] Test new user onboarding
-  - [ ] Remove unused validation and testing routes and endpoints
-
 ## Phase 4: Polish & Submission (Week 4) ✨
 - [-] Auto-Scroll to bottom
 - [x] Make the homepage design more beautiful
@@ -141,6 +122,28 @@
 - [ ] Update system instructions per https://x.com/weswinder/status/1860035463152828471
 - [ ] Reorder the preview tools page
 - [ ] Update metadata for sharing and stuff
+- [ ] Add math convo starter
+- [ ] Add a user confirmation component where the ai can show what action it is about to performan and the details nad then have the user confirm - currently this is done with the ai saying with it will do in the chat and asking the user to confirm, which might be fine for this hackathon but we should have a better UX if time permits
+ - [ ] Finish adding the preview page "How we use it" and "How it works" sections
+
+CRITICAL BUGS:
+- [ ] Fix "Parties: Acme Corporation, <<SIGNER1_NAME>>" in contract expiring in 2027 and add annual value
+- [ ] Fix navigator analysis auth issue on deployed version
+- [ ] Convo starter about analyze should include pie chart mention 
+- [ ] Envelope sending confirmation doesnt work on deployed version, doesnt create envelope
+- [ ] Add a contract that needs my signature to the priority dashboard to make sure i can sign it in the demo, currently the prioriy dash is only showing docs that others need to sign and none that i need to sign
+
+BUGS:
+- [ ] When sending the NDA, pre-fill functionality wasn't fully demonstrated. Investigate whether pre-filled fields (e.g., title and name) are feasible on our time frame
+- [ ] Add system instruction for multi-step workflows where user asks to do something and doesnt want to go step by step - ie. send X template to X then X. agent shouldnt pull up template and ask which, it hsould pull it up and add recipient x then ask for confirmation to send, then repeat with next recipient
+- [ ] Template selector hover state after clicking should be persistent showing the selected template
+
+
+
+- [ ] Testing & Validation
+  - [ ] Test new user onboarding
+  - [ ] Remove unused validation and testing routes and endpoints
+  - [ ] Test on deployed version
 
 - [ ] Documentation 📚
   - [ ] Create comprehensive README
@@ -157,6 +160,21 @@
 - [ ] Submission Materials
   - [ ] Record demo video
   - [ ] Write project submission
+  - [ ] Create thumbnail image
+  - [ ] Pick project name
+  - [ ] Write elevator pitch
+  - [ ] Write headline (30 characters or less)
+  - [ ] Write Project Story (markdown) Be sure to write what inspired you, what you learned, how you built your project, and the challenges you faced.
+  - [ ] Comppile "Built with" list (What languages, frameworks, platforms, cloud services, databases, APIs, or other technologies did you use?)
+  - [ ] "Try it out" links (multiple)
+  - [ ] Take screenshots for Image gallery
+  - [ ] Upload video to youtube unlisted
+  - [ ] Upload a File
+  - [ ] Set repo public
+  - [ ] If applicable, please provide testing instructions for your project
+  - [ ] List of libraries or APIs you used
+
+
 
 - [ ] IF TIME PERMITS:
   - [ ] Metered billing?

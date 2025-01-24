@@ -184,8 +184,8 @@ export default function PreviewPage() {
             }
           ]}
           usage={{
-            howWeUseIt: "This component enables user-initiated DocuSign setup, guiding them through the permission process. If auth issues are encountered later, the AI agent can render this tool and help the user to reconnect rather than sending them searching through settings and halting progress. Much less context switching this way.",
-            howItWorks: "This component provides a simple interface for connecting or disconnecting a DocuSign account. The AI agent can leverage this tool during initial setup or when auth issues arise, offering users a direct path to resolve authentication without navigating complex settings."
+            howWeUseIt: "This component enables agent-initiated Docusign connection. If auth issues are encountered later, the AI agent can render this tool and help the user to reconnect rather than sending them searching through settings and halting progress. Much less context switching this way.",
+            howItWorks: "The AI agent can call this tool during initial setup or when auth issues arise in the conversation. The agent is constrained to only render the connect button for the user and can't connect the account without user interactions on the official docusign interstitial."
           }}
         >
           <div className="flex justify-center w-full">

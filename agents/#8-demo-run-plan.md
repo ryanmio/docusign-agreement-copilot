@@ -101,25 +101,6 @@
 2. Vendor Agreement
 3. Employee Onboarding
 
-### Test Recipients
-1. Main demo account
-2. 2-3 test recipient accounts
-3. Bulk operation recipients
-
-## Contingency Plan
-1. Have backup recording if live demo
-2. Prepare offline version of each component
-3. Have screenshots ready
-4. Know how to handle common errors
-
-## Recording Tips
-1. Speak slowly and clearly
-2. Pause between scenes
-3. Use mouse pointer to guide attention
-4. Keep terminal commands visible
-5. Zoom in for important details
-6. Don't rush transitions
-
 ## Common Mistakes to Avoid
 1. Don't read error messages
 2. Don't show loading states
