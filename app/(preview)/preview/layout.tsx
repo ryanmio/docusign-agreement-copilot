@@ -5,9 +5,9 @@ export default function PreviewLayout({
 }) {
   return (
     <div className="min-h-screen bg-white">
-      <div className="ds-container py-6">
-        <div className="space-y-6">
-          <div className="space-y-4">
+      <div className="ds-container pt-2 pb-6">
+        <div className="space-y-4">
+          <div className="space-y-3">
             <h1 className="text-3xl font-bold text-[#130032]">Generative UI Components</h1>
             <p className="max-w-3xl text-[#130032]/70">
               Preview of all Agreement Copilot agent tools. The model can render each tool independently or in sequence to create complex workflows.

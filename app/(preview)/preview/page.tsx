@@ -135,7 +135,7 @@ export default function PreviewPage() {
   }
 
   return (
-    <div className="space-y-32 -mt-6">
+    <div className="space-y-32 -mt-8">
       <style jsx global>{`
         .component-section + .component-section {
           position: relative;
