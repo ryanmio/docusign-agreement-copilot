@@ -38,5 +38,6 @@ export const config = {
      * - /auth/** (auth endpoints)
      */
     '/((?!api/webhooks|_next/static|_next/image|favicon.ico|auth).*)',
+    '/api/navigator/:path*'  // Explicitly protect navigator API routes
   ],
 }; 
