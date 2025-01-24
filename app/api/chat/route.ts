@@ -63,6 +63,31 @@ marked.use({
   }]
 });
 
+interface EnvelopeRecipient {
+  email: string;
+  name: string;
+  status: string;
+}
+
+interface Envelope {
+  envelopeId: string;
+  status: string;
+  emailSubject: string;
+  sentDateTime?: string;
+  lastModifiedDateTime?: string;
+  recipients: EnvelopeRecipient[];
+  purgeState?: 'unpurged' | 'documents_and_metadata_queued' | 'documents_queued' | 'metadata_queued' | 'purged';
+  expireAfter?: string;
+  metadata?: {
+    expirationDate?: string;
+    [key: string]: any;
+  };
+}
+
+interface ListStatusChangesResponse {
+  envelopes: Envelope[];
+}
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -778,16 +803,46 @@ export async function POST(req: Request) {
               const getUrgencyReason = (envelope: any) => {
                 if (envelope.status === 'declined') return 'Document was declined';
                 if (envelope.status === 'voided') return 'Document was voided';
+
+                // DEMO OVERRIDE: Temporary hack for demo purposes only
+                // TODO: Replace with real Navigator integration
+                // Proper implementation would:
+                // 1. Query Navigator API for agreement.provisions.expiration_date
+                // 2. Merge with Docusign envelope status
+                const demoExpirationMap: Record<string, string> = {
+                  'GlobalTech - Renewal - 2025-01-07': '2025-01-26',
+                  'FastComm Vendor Renewal Agreement - February 2025': '2025-01-25',
+                  'FastComm - Check-in - 2023-12-26': '2025-01-30',
+                  'AcmeCorp - Renewal - 2025-01-15': '2025-01-31',
+                  'Weekly Team Review - 2025-01-14': '2025-02-01',
+                };
                 
-                const sentDate = envelope.sentDateTime ? new Date(envelope.sentDateTime) : null;
-                const lastModified = envelope.lastModifiedDateTime ? new Date(envelope.lastModifiedDateTime) : null;
-                
-                if (sentDate) {
-                  const daysSinceSent = Math.floor((new Date().getTime() - sentDate.getTime()) / (1000 * 60 * 60 * 24));
-                  if (daysSinceSent >= 7 && lastModified && 
-                      Math.floor((new Date().getTime() - lastModified.getTime()) / (1000 * 60 * 60 * 24)) >= 7) {
-                    return 'No activity for 7+ days';
+                let expirationDate = demoExpirationMap[envelope.emailSubject] || 
+                  envelope.metadata?.expirationDate;
+
+                // Calculate expiration from expireAfter + sentDateTime as fallback
+                if (!expirationDate && envelope.expireAfter && envelope.sentDateTime) {
+                  const days = parseInt(envelope.expireAfter);
+                  const sentDate = new Date(envelope.sentDateTime);
+                  expirationDate = new Date(sentDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
+                }
+
+                if (expirationDate) {
+                  const hoursUntilExpiration = Math.floor((new Date(expirationDate).getTime() - Date.now()) / (1000 * 60 * 60));
+                  
+                  if (hoursUntilExpiration <= 48) {
+                    return `Expires in ${hoursUntilExpiration} hours`;
                   }
+                  if (hoursUntilExpiration <= 168) { // 7 days
+                    const days = Math.floor(hoursUntilExpiration / 24);
+                    return days <= 1 ? `Expires in ${hoursUntilExpiration} hours` : `Expires in ${days} days`;
+                  }
+                }
+
+                // Simplified stalled check
+                const lastModified = envelope.lastModifiedDateTime ? new Date(envelope.lastModifiedDateTime) : null;
+                if (lastModified && (Date.now() - lastModified.getTime()) > 7 * 24 * 60 * 60 * 1000) {
+                  return 'No activity for 7+ days';
                 }
 
                 return 'Awaiting action';
@@ -829,36 +884,54 @@ export async function POST(req: Request) {
               }> = [];
 
               activeEnvelopes.forEach(envelope => {
+                console.log('\n--- Processing Envelope ---');
+                console.log('Envelope:', {
+                  id: envelope.envelopeId,
+                  subject: envelope.emailSubject,
+                  status: envelope.status,
+                  metadata: envelope.metadata,
+                  sentDateTime: envelope.sentDateTime,
+                  lastModifiedDateTime: envelope.lastModifiedDateTime
+                });
+
+                const urgencyReason = getUrgencyReason(envelope);
                 const priorityEnvelope = {
                   envelopeId: envelope.envelopeId,
                   subject: envelope.emailSubject,
                   status: envelope.status,
                   recipients: getRecipients(envelope),
-                  urgencyReason: getUrgencyReason(envelope)
+                  urgencyReason
                 };
 
-                // Categorize based on status and activity
-                if (envelope.status === 'declined' || envelope.status === 'voided') {
+                // Simplified categorization
+                if (['declined', 'voided'].includes(envelope.status)) {
+                  console.log('Categorizing as URGENT - Status is:', envelope.status);
                   urgentEnvelopes.push(priorityEnvelope);
-                } else {
-                  const sentDate = envelope.sentDateTime ? new Date(envelope.sentDateTime) : null;
-                  const lastModified = envelope.lastModifiedDateTime ? new Date(envelope.lastModifiedDateTime) : null;
-                  
-                  if (sentDate) {
-                    const hoursSinceSent = Math.floor((new Date().getTime() - sentDate.getTime()) / (1000 * 60 * 60));
-                    const daysSinceLastActivity = lastModified ? 
-                      Math.floor((new Date().getTime() - lastModified.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                } else if (urgencyReason.includes('Expires in')) {
+                  const match = urgencyReason.match(/(\d+)\s+(hours|days)/);
+                  if (match) {
+                    const value = parseInt(match[1]);
+                    const unit = match[2];
+                    const hours = unit === 'hours' ? value : value * 24;
                     
-                    if (hoursSinceSent <= 48) {
-                      upcomingEnvelopes.push(priorityEnvelope);
-                    } else if (daysSinceLastActivity >= 7) {
-                      stalledEnvelopes.push(priorityEnvelope);
-                    } else {
+                    if (hours <= 48) {
+                      console.log('Categorizing as NEEDS ATTENTION - Expires in less than 48 hours');
+                      urgentEnvelopes.push(priorityEnvelope);
+                    } else if (hours <= 168) { // 7 days
+                      console.log('Categorizing as UPCOMING - Expires in less than 7 days');
                       upcomingEnvelopes.push(priorityEnvelope);
                     }
                   }
+                } else if (urgencyReason.includes('No activity')) {
+                  console.log('Categorizing as STALLED - No activity for 7+ days');
+                  stalledEnvelopes.push(priorityEnvelope);
                 }
               });
+
+              console.log('\n--- Final Categorization ---');
+              console.log('Urgent Envelopes:', urgentEnvelopes.length);
+              console.log('Upcoming Envelopes:', upcomingEnvelopes.length);
+              console.log('Stalled Envelopes:', stalledEnvelopes.length);
 
               // Limit to 5 items per section for demo
               const sections = [

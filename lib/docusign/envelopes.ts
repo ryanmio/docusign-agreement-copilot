@@ -183,9 +183,14 @@ interface Envelope {
   envelopeId: string;
   status: string;
   emailSubject: string;
-  expirationDateTime?: string;
+  sentDateTime?: string;
+  lastModifiedDateTime?: string;
   recipients: EnvelopeRecipient[];
   purgeState?: 'unpurged' | 'documents_and_metadata_queued' | 'documents_queued' | 'metadata_queued' | 'purged';
+  metadata?: {
+    expirationDate?: string;
+    [key: string]: any;
+  };
 }
 
 interface ListStatusChangesResponse {
@@ -768,6 +773,9 @@ export class DocuSignEnvelopes {
       queryParams.append('status', options.status.join(','));
     }
 
+    // Add custom_fields to include metadata
+    queryParams.append('include', 'custom_fields');
+
     console.log('DocuSign API Request:', {
       url: `${client.baseUrl}/restapi/v2.1/accounts/${client.accountId}/envelopes`,
       params: Object.fromEntries(queryParams.entries())
@@ -791,20 +799,36 @@ export class DocuSignEnvelopes {
     }
 
     const data = await response.json();
+
+    // Extract metadata from custom fields
+    const envelopes = data.envelopes?.map((env: any) => {
+      const metadata: Record<string, any> = {};
+      if (env.customFields?.textCustomFields) {
+        env.customFields.textCustomFields.forEach((field: any) => {
+          metadata[field.name] = field.value;
+        });
+      }
+      return {
+        ...env,
+        metadata
+      };
+    }) || [];
+
     console.log('DocuSign API Response:', {
       totalCount: data.totalCount,
       resultSetSize: data.resultSetSize,
-      envelopesCount: data.envelopes?.length,
-      envelopes: data.envelopes?.map((env: any) => ({
+      envelopesCount: envelopes.length,
+      envelopes: envelopes.map((env: any) => ({
         id: env.envelopeId,
         subject: env.emailSubject,
         status: env.status,
         purgeState: env.purgeState,
-        created: env.createdDateTime
+        created: env.createdDateTime,
+        metadata: env.metadata
       }))
     });
 
-    return data;
+    return { envelopes };
   }
 
   async updateRecipientForEmbeddedSigning(userId: string, envelopeId: string, recipientId: string, recipientInfo: any) {
