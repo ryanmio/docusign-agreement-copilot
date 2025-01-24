@@ -45,7 +45,7 @@ export class NavigatorClient {
 
   constructor(supabase: SupabaseClient) {
     this.docuSignClient = new DocuSignClient(supabase);
-    this.navigatorBasePath = process.env.NEXT_PUBLIC_DOCUSIGN_NAVIGATOR_BASE_PATH || 'https://api-d.docusign.com';
+    this.navigatorBasePath = process.env.NEXT_PUBLIC_DOCUSIGN_NAVIGATOR_BASE_PATH || 'https://navigator-d.docusign.com';
   }
 
   /**
@@ -80,6 +80,14 @@ export class NavigatorClient {
     });
 
     try {
+      // Add token validation logging
+      console.log('Token validation check:', {
+        tokenExists: !!token,
+        tokenLength: token?.length,
+        accountId,
+        baseUrl: this.navigatorBasePath
+      });
+
       const response = await fetch(
         `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
         {
@@ -90,6 +98,10 @@ export class NavigatorClient {
         }
       );
 
+      // Add response headers logging
+      const responseHeaders = Object.fromEntries(response.headers.entries());
+      console.log('Response headers:', responseHeaders);
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Navigator API error:', {
@@ -97,6 +109,8 @@ export class NavigatorClient {
           statusText: response.statusText,
           error: errorText,
           url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
+          headers: responseHeaders,
+          environment: process.env.NODE_ENV
         });
         
         if (response.status === 401) {
