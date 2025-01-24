@@ -352,6 +352,7 @@ export default function PreviewPage() {
         title="Reminder Confirmation"
         description="Shows success or error state after sending a reminder"
         className="component-section"
+        skipCard={true}
         props={[
           {
             name: 'success',
