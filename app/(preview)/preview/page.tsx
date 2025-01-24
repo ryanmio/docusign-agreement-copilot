@@ -29,6 +29,17 @@ import { MarkdownEditor } from '@/components/markdown-editor';
 import { DocumentViewPreview } from '@/components/preview/document-view';
 import { useState, useEffect } from 'react';
 
+function BackToTop() {
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      className="absolute -top-3 right-0 px-3 py-1 text-sm text-[#4C00FF] bg-white border border-[#CBC2FF]/40 rounded-md hover:bg-[#F8F3F0] transition-colors"
+    >
+      Back to Top ↑
+    </button>
+  );
+}
+
 function ComponentSection({
   id,
   title,
@@ -37,6 +48,7 @@ function ComponentSection({
   props,
   className,
   skipCard = false,
+  usage,
 }: {
   id: string;
   title: string;
@@ -45,9 +57,14 @@ function ComponentSection({
   props: { name: string; type: string; description: string; required?: boolean }[];
   className?: string;
   skipCard?: boolean;
+  usage?: {
+    howWeUseIt: string;
+    howItWorks: string;
+  };
 }) {
   return (
-    <section id={id} className={`space-y-6 scroll-mt-6 ${className || ''}`}>
+    <section id={id} className={`relative space-y-6 scroll-mt-6 ${className || ''}`}>
+      {className?.includes('component-section') && <BackToTop />}
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold text-[#130032]">{title}</h2>
         <p className="text-[#130032]/70">{description}</p>
@@ -57,27 +74,46 @@ function ComponentSection({
           {children}
         </Card>
       )}
-      <div className="overflow-hidden rounded-lg border border-[#CBC2FF]/20">
-        <table className="w-full bg-white text-sm">
-          <thead className="bg-[#F8F3F0]">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium text-[#130032]">Prop</th>
-              <th className="px-4 py-3 text-left font-medium text-[#130032]">Type</th>
-              <th className="px-4 py-3 text-left font-medium text-[#130032]">Description</th>
-              <th className="px-4 py-3 text-left font-medium text-[#130032]">Required</th>
-            </tr>
-          </thead>
-          <tbody>
-            {props.map((prop, index) => (
-              <tr key={prop.name} className={index % 2 === 0 ? 'bg-white' : 'bg-[#F8F3F0]/50'}>
-                <td className="px-4 py-3 font-mono text-sm">{prop.name}</td>
-                <td className="px-4 py-3 font-mono text-sm text-[#4C00FF]">{prop.type}</td>
-                <td className="px-4 py-3">{prop.description}</td>
-                <td className="px-4 py-3">{prop.required ? 'Yes' : 'No'}</td>
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-lg border border-[#CBC2FF]/20">
+          <table className="w-full bg-white text-sm">
+            <thead className="bg-[#F8F3F0]">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium text-[#130032]">Prop</th>
+                <th className="px-4 py-3 text-left font-medium text-[#130032]">Type</th>
+                <th className="px-4 py-3 text-left font-medium text-[#130032]">Description</th>
+                <th className="px-4 py-3 text-left font-medium text-[#130032]">Required</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {props.map((prop, index) => (
+                <tr key={prop.name} className={index % 2 === 0 ? 'bg-white' : 'bg-[#F8F3F0]/50'}>
+                  <td className="px-4 py-3 font-mono text-sm">{prop.name}</td>
+                  <td className="px-4 py-3 font-mono text-sm text-[#4C00FF]">{prop.type}</td>
+                  <td className="px-4 py-3">{prop.description}</td>
+                  <td className="px-4 py-3">{prop.required ? 'Yes' : 'No'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {usage && (
+          <div className="rounded-lg border border-[#CBC2FF]/20 bg-white overflow-hidden">
+            <div className="px-4 py-3 bg-[#F8F3F0] border-b border-[#CBC2FF]/20">
+              <h3 className="font-medium text-[#130032]">Implementation Details</h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <div className="font-medium text-[#130032] mb-1">How We Use It</div>
+                <p className="text-[#130032]/70">{usage.howWeUseIt}</p>
+              </div>
+              <div>
+                <div className="font-medium text-[#130032] mb-1">How It Works</div>
+                <p className="text-[#130032]/70">{usage.howItWorks}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -100,10 +136,21 @@ export default function PreviewPage() {
     <div className="space-y-32">
       <style jsx global>{`
         .component-section + .component-section {
+          position: relative;
           border-top: 1px solid rgba(203, 194, 255, 0.2);
           padding-top: 2rem;
+          margin-top: 2rem;
         }
       `}</style>
+      <script dangerouslySetInnerHTML={{
+        __html: `
+          document.addEventListener('click', function(e) {
+            if (e.target && e.target.textContent === 'Back to Top ↑') {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          });
+        `
+      }} />
       <ComponentSection
         id="loading"
         title="Loading States"
@@ -117,6 +164,10 @@ export default function PreviewPage() {
             required: false
           }
         ]}
+        usage={{
+          howWeUseIt: "Our AI agent uses this component to show real-time progress during multi-step operations like analyzing agreements, preparing documents, or processing bulk sends. The loading state appears whenever the agent is performing background tasks.",
+          howItWorks: "The agent dynamically updates the loading message based on the current operation. For example, when sending an NDA, you'll see messages like 'Analyzing requirements...', 'Preparing template...', and 'Setting up recipients...' as the agent works."
+        }}
       >
         <div className="flex justify-center gap-24">
           <LoadingSpinner label="Processing..." />
@@ -143,6 +194,10 @@ export default function PreviewPage() {
             required: true
           }
         ]}
+        usage={{
+          howWeUseIt: "When a user asks to send a document, our AI agent analyzes the request and presents relevant templates through this interface. The agent filters and ranks templates based on the conversation context, making it easy to find the right one.",
+          howItWorks: "The agent uses semantic search to match the user's request with template metadata. It then renders this component with the filtered templates, letting users confirm or change the selection before proceeding with the workflow."
+        }}
       >
         <TemplateSelectorPreview
           key="template-selector"
@@ -171,6 +226,10 @@ export default function PreviewPage() {
             required: true
           }
         ]}
+        usage={{
+          howWeUseIt: "This is our main dashboard view that the AI agent generates when users ask about urgent tasks or need an overview of their agreements. It organizes envelopes by priority and status, making it easy to spot what needs attention.",
+          howItWorks: "The agent analyzes your DocuSign envelopes in real-time, categorizing them by urgency (expiring soon, waiting for others, needs your signature). It then renders this dynamic dashboard with quick actions for each item."
+        }}
       >
         <PriorityDashboard
           sections={mockPriorityDashboard.sections}
