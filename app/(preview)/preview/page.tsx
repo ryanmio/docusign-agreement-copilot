@@ -260,29 +260,39 @@ export default function PreviewPage() {
         <ComponentSection
           id="recipient-form"
           title="Recipient Form"
-          description="Collects recipient information"
+          description="Smart form for collecting recipient information with validation and persistent state"
           className="component-section"
           skipCard={true}
           props={[
             {
               name: 'roles',
               type: 'Array<{ roleName: string }>',
-              description: 'Required roles',
+              description: 'Required roles from template or contract',
+              required: true
+            },
+            {
+              name: 'toolCallId',
+              type: 'string',
+              description: 'Unique ID to maintain form state across AI interactions',
               required: true
             },
             {
               name: 'onSubmit',
-              type: '(recipients: RecipientData[]) => Promise<void>',
-              description: 'Submit handler',
+              type: '(recipients: Array<{ email: string; name: string; roleName: string }>) => Promise<void>',
+              description: 'Async handler called with validated recipient data',
               required: true
             },
             {
               name: 'onBack',
               type: '() => void',
-              description: 'Optional back handler',
+              description: 'Optional back handler for navigation',
               required: false
             }
           ]}
+          usage={{
+            howWeUseIt: "When sending templates or custom contracts, this form collects and validates recipient information. It maintains state during AI interactions, so users don't lose their progress if they ask questions or need help.",
+            howItWorks: "The form uses a form instance hook to maintain state, validates email/name fields in real-time, and adapts its layout based on the number of recipients. It handles loading, error, and submission states internally."
+          }}
         >
           <RecipientForm
             roles={mockRecipientRoles}
@@ -297,7 +307,7 @@ export default function PreviewPage() {
         <ComponentSection
           id="envelope-success"
           title="Envelope Success"
-          description="Shows envelope status and recipient progress after sending"
+          description="Shows real-time envelope status using DocuSign Connect webhooks for instant updates, with fallback to smart polling. One of my favorite components."
           className="component-section"
           skipCard={true}
           props={[
@@ -308,6 +318,10 @@ export default function PreviewPage() {
               required: true
             }
           ]}
+          usage={{
+            howWeUseIt: "After sending a template or custom contract, this component provides real-time status updates. It shows a success message immediately, then tracks recipient activity and status changes, helping users confirm their document is on its way.",
+            howItWorks: "The component receives instant updates via DocuSign Connect webhooks stored in Supabase. As a fallback, it implements smart polling with adaptive intervals (1s, 2s, then 5s) to track envelope status until it reaches a final state (completed/declined/voided). It displays recipient cards with status badges and provides quick actions to send another document or view details."
+          }}
         >
           <div className="flex justify-center w-full">
             <EnvelopeSuccessPreview />
@@ -381,7 +395,7 @@ export default function PreviewPage() {
         <ComponentSection
           id="document-view"
           title="Document View"
-          description="Displays envelope documents and details"
+          description="Rich document viewer with collapsible details, timeline tracking, and recipient status. Combines PDF viewing with envelope management."
           className="component-section"
           skipCard={true}
           props={[
@@ -406,10 +420,14 @@ export default function PreviewPage() {
             {
               name: 'showActions',
               type: 'boolean',
-              description: 'Whether to show action buttons',
+              description: 'Whether to show void/resend actions',
               required: false
             }
           ]}
+          usage={{
+            howWeUseIt: "When users want to check a document's status or manage an envelope, this component provides a comprehensive view. It shows the document, timeline, recipient statuses, and actions all in one place, making it easy to track and manage agreements.",
+            howItWorks: "The component features a collapsible details section showing timeline and recipients, an expandable PDF viewer, and contextual actions (void/resend). Status badges update in real-time, and all actions have loading/success states for better feedback."
+          }}
         >
           <DocumentViewPreview {...mockDocumentView} />
         </ComponentSection>
