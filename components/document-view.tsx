@@ -276,8 +276,8 @@ export function DocumentView({
               className={`bg-[#F8F3F0] rounded-lg overflow-hidden shadow-sm ${expandedDocId === doc.documentId ? 'md:col-span-2' : ''}`}
             >
               <div className="flex justify-between items-center p-4 border-b border-[#130032]/10">
-                <h2 className="font-medium text-[#130032]">{doc.name}</h2>
-                <div className="flex items-center gap-2">
+                <h2 className="font-medium text-[#130032] truncate max-w-[200px]">{doc.name}</h2>
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <Button 
                     variant="ghost" 
                     size="sm" 
