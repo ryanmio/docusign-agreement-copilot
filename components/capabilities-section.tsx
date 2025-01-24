@@ -51,8 +51,12 @@ const capabilities = [
     category: "AI Analysis",
     items: [
       {
+        title: "Calculate contract values",
+        message: "Calculate the total of a 15 percent commission on 847632 plus an annual fee of 25000"
+      },
+      {
         title: "Analyze agreements",
-        message: "Analyze the payment terms in our recent agreements with Acme Corp"
+        message: "Analyze the payment terms in our recent agreements with Acme Corp with a pie chart"
       },
       {
         title: "Find related documents",
