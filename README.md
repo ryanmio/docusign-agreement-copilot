@@ -16,7 +16,7 @@ Exploring next-gen agreement interfaces for AI agents
 - For production use, these should be properly addressed by migrating to `@supabase/ssr` and implementing async cookie handling
 
 
-Test to see if i can add a diagram like this:
+Agreement Copilot Diagram:
 
 ```sql
 +-----------------+           +-----------------------+           +----------------------+           +---------------------------+           +------------------+
