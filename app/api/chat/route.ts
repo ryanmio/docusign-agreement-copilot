@@ -408,10 +408,10 @@ export async function POST(req: Request) {
           }),
           execute: async ({ query, filters }) => {
             try {
-              const baseUrl = process.env.VERCEL_URL 
-                ? `https://${process.env.VERCEL_URL}` 
-                : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-                
+              const protocol = process.env.NODE_ENV === 'development' ? 'http:' : 'https:';
+              const host = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_BASE_URL?.replace(/^https?:\/\//, '') || 'localhost:3000';
+              const url = new URL('/api/navigator/analyze', `${protocol}//${host}`);
+
               const cookieStore = await cookies();
               const supabase = createRouteHandlerClient({ 
                 cookies: () => {
@@ -444,13 +444,13 @@ export async function POST(req: Request) {
 
               // Log request details
               console.log('Making Navigator API request:', {
-                url: '/api/navigator/analyze',
+                url: url.toString(),
                 hasFilters: !!filters,
                 cookieLength: cookieStore.toString().length,
                 query
               });
 
-              const response = await fetch('/api/navigator/analyze', {
+              const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
