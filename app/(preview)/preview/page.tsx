@@ -314,6 +314,7 @@ export default function PreviewPage() {
         title="Envelope Success"
         description="Shows envelope status and recipient progress after sending"
         className="component-section"
+        skipCard={true}
         props={[
           {
             name: 'envelopeId',
