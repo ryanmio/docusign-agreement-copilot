@@ -1,16 +1,78 @@
 ## Intro
 
-"Agreement Copilot demonstrates a new way to build with Docusign - instead of coding against APIs, developers deploy AI agents that dynamically generate both the interface and workflow for any agreement task. This means any application can now add complex Docusign-powered features in minutes, while end users get exactly the experience they need - no more, no less."
 
-"Agreement Copilot shows how AI agents can remove the friction from agreement workflows while keeping humans in control. While signing always stays with humans, agents handle everything else - preparing documents, managing recipients, tracking status, sending reminders.
 
-What's unique is how it works: When you or your users need something done - like sending an NDA or managing approvals - the agent creates a custom interface right there, handles all the DocuSign operations, and keeps the workflow moving. Humans stay in control of signing, while agents handle everything else. No fixed menus or predefined flows - just the right UI components, assembled in real-time based on what needs to be done. I'll show you how a single conversation can kick off an entire agreement workflow, with the agent building interfaces on-the-fly and handling all routine tasks.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------------
+I built Agreement Copilot to demonstrate a new way to build with Docusign - where instead of coding against APIs, developers deploy AI agents that dynamically generate both the interface and workflow for any agreement task.
 
 Let me demo this..."
 
-[Demo flows into first example]
+First, let's say my role involves managing contracts. Here's how generative agreement interfaces would help me.
 
-- I built Agreement Copilot, a generative AI-powered app that transforms how agreements are managed with Docusign. It uses Generative UI and tool calling to dynamically create workflows and interfaces on demand, powered by the Vercel AI SDK.
+First I type in << WHAT NEEDS TO GET DONE TODAY? >>
+
+The agent calls the Docusign API to fetch contracts expiring or due soon and other documents that need attention like stalled signers, voided contracts, and more. It then renders the revelvant documents in an interactive react component within the chat itself.
+
+FIND EXPIRING - SEND REMINDER
+
+SIGNING DEMO
+
+DECLINED - Send template - 5% increase!
+
+DRAFT CUSTOM CONTRACT
+
+SEARCH BY PARTY
+
+SEARCH BY VALUE
+
+SEARCH BY EXPIRATION DATE
+
+GRAPH CONTRACT VALUE BY PARTY
+
+Now I'll demo how it can handle mutliple steps autonmously. 
+
+VENDOR RENEWALS - send vendor renewal template
+
+BULK SEND - SKIP
+
+This isn't just for roles that manage contracts though. The same approach can used for end-user tasks like signing lease agreements and navigating a mortgage application.
+
+I encourage you to check out the demo, connect your own Docusign account, and try it out. 
+
+Or head to the preview page to see the components without connecting to Docusign.
+
+I'm a true believer in this approach. That's why I extracted what worked into an open source toolkit.
+
+That's available on GitHub now so you can get started integrating docusign-capable agents into your own applications.
+
+I'm excited to see what you build with it.
+
+-----
 
 - Traditional UIs are static and rigid. This approach generates custom React components dynamically, tailored to the user's needs in real time. Instead of navigating menus or predefined processes, users simply describe what they need (e.g., "Send an NDA" or "Remind signers"), and the app builds the workflow step by step. Agents handle all the backend complexity—managing signers, deadlines, templates, and reminders—while keeping humans in control of critical decisions like signing.
 
@@ -41,3 +103,7 @@ Let me demo this..."
   - Entire flow created dynamically - no pre-coded lease workflow
 
 - Enterprise value: This turns Docusign from a destination into an invisible layer. Employees can handle agreements through natural language in Slack, customers get tailored flows in web/mobile apps, all powered by Docusign without the traditional UI friction.
+
+Agreement Copilot shows how AI agents can remove the friction from agreement workflows while keeping humans in control. While signing always stays with humans, agents handle everything else - preparing documents, managing recipients, tracking status, sending reminders.
+
+I built Agreement Copilot, It uses Generative UI and tool calling to dynamically create workflows and interfaces on demand.

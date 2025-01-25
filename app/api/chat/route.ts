@@ -1044,7 +1044,7 @@ export async function POST(req: Request) {
                 .upsert({
                   user_id: session.user.id,
                   docusign_envelope_id: docusignResponse.envelopeId,
-                  subject: subject,
+                  subject: `Complete with Docusign: ${subject}`,
                   message,
                   status: 'sent',
                   created_at: new Date().toISOString(),
@@ -1515,7 +1515,7 @@ export async function POST(req: Request) {
                   .upsert({
                     user_id: session.user.id,
                     docusign_envelope_id: docusignResponse.envelopeId,
-                    subject: "Custom Contract",
+                    subject: `Complete with Docusign: Custom Contract`,
                     message,
                     status: 'sent',
                     created_at: new Date().toISOString(),
