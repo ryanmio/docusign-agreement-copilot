@@ -36,6 +36,7 @@ import { cookies } from 'next/headers';
 import { create, all } from 'mathjs';
 import { marked } from 'marked';
 import puppeteer from 'puppeteer';
+import { NavigatorClient } from '@/lib/docusign/navigator-client';
 
 // Create a math instance with all functions
 const math = create(all);
@@ -408,10 +409,6 @@ export async function POST(req: Request) {
           }),
           execute: async ({ query, filters }) => {
             try {
-              const baseUrl = process.env.VERCEL_URL 
-                ? `https://${process.env.VERCEL_URL}` 
-                : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-                
               const cookieStore = await cookies();
               const supabase = createRouteHandlerClient({ 
                 cookies: () => {
@@ -419,9 +416,14 @@ export async function POST(req: Request) {
                   return store;
                 }
               });
+              
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              if (sessionError || !session?.user) {
+                throw new Error('User not authenticated');
+              }
 
+              // Extract party names from query if present
               if (query.toLowerCase().includes('party') || query.toLowerCase().includes('with')) {
-                // Extract potential party names - look for words after "with" or between "party" and any punctuation
                 const partyMatches = query.match(/(?:with|party\s+name\s+)(\w+)/i);
                 if (partyMatches && partyMatches[1]) {
                   filters = filters || {};
@@ -429,35 +431,47 @@ export async function POST(req: Request) {
                 }
               }
 
-              const response = await fetch(`${baseUrl}/api/navigator/analyze`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Cookie': cookieStore.toString()
-                },
-                body: JSON.stringify({
-                  query,
-                  ...filters
-                })
-              });
+              // Initialize Navigator client and get agreements
+              const navigatorClient = new NavigatorClient(supabase);
+              let allAgreements: any[] = [];
+              let pageToken: string | undefined;
+              
+              do {
+                const options = pageToken ? { ctoken: pageToken } : undefined;
+                const agreements = await navigatorClient.getAgreements(session.user.id, options);
+                allAgreements = [...allAgreements, ...(agreements.items || [])];
+                pageToken = agreements.response_metadata?.page_token_next;
+              } while (pageToken);
 
-              if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Navigator API error:', {
-                  status: response.status,
-                  statusText: response.statusText,
-                  error: errorText
-                });
-                throw new Error(`Navigator API error: ${response.status} ${response.statusText}`);
+              // Analyze patterns if requested
+              let patterns = null;
+              if (query.toLowerCase().includes('pattern') || query.toLowerCase().includes('trend')) {
+                patterns = await navigatorClient.analyzePatterns(session.user.id);
               }
 
-              const result = await response.json();
+              const response = {
+                agreements: allAgreements,
+                patterns,
+                metadata: {
+                  totalAgreements: allAgreements.length,
+                  appliedFilters: {
+                    from_date: filters?.dateRange?.from,
+                    to_date: filters?.dateRange?.to,
+                    expiration_from: filters?.expirationDateRange?.from,
+                    expiration_to: filters?.expirationDateRange?.to,
+                    parties: filters?.parties,
+                    categories: filters?.categories,
+                    types: filters?.types,
+                    provisions: filters?.provisions
+                  }
+                }
+              };
 
               return {
                 state: 'result',
                 result: {
                   query,
-                  result,
+                  result: response,
                   completed: true
                 }
               };
