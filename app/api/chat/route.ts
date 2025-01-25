@@ -1099,7 +1099,7 @@ export async function POST(req: Request) {
 
               return {
                 success: true,
-                envelopeId: envelope.docusign_envelope_id,
+                envelopeId: docusignResponse.envelopeId,
                 status: 'sent'
               };
             } catch (error) {
