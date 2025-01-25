@@ -829,6 +829,8 @@ export async function POST(req: Request) {
                   'FastComm - Check-in - 2023-12-26': '2025-01-30',
                   'AcmeCorp - Renewal - 2025-01-15': '2025-01-31',
                   'Weekly Team Review - 2025-01-14': '2025-02-01',
+                  'VENDOR RENEWAL AGREEMENT.pdf': '2025-01-25',
+                  'Please sign: Vendor Renewal Agreement': '2025-01-30',
                 };
                 
                 let expirationDate = demoExpirationMap[envelope.emailSubject] || 
@@ -1067,6 +1069,7 @@ export async function POST(req: Request) {
                     email: role.email,
                     name: role.name,
                     routing_order: 1,
+                    status: 'sent',
                     metadata: {
                       role_name: role.roleName,
                     },
@@ -1530,6 +1533,7 @@ export async function POST(req: Request) {
                       email: recipient.email,
                       name: recipient.name,
                       routing_order: i + 1,
+                      status: 'sent',
                       metadata: {
                         role_name: recipient.roleName,
                       },
