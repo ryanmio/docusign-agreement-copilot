@@ -42,54 +42,43 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
           timestamp: new Date().toISOString()
         });
         
-        let envelopeData;
         const { data: envelope, error } = await supabase
           .from('envelopes')
           .select('*, recipients(*)')
-          .eq('docusign_envelope_id', envelopeId)
+          .eq('id', envelopeId)
           .single();
 
         if (error) {
-          // Try querying by database ID as fallback
-          const { data: envelopeByDbId, error: dbError } = await supabase
-            .from('envelopes')
-            .select('*, recipients(*)')
-            .eq('id', envelopeId)
-            .single();
-            
-          if (dbError) {
-            console.error('ENVELOPE_SUCCESS_DEBUG: Both queries failed:', { 
-              docusignError: error,
-              dbError,
-              envelopeId
-            });
-            throw error;
-          }
-          
-          envelopeData = envelopeByDbId;
-        } else {
-          envelopeData = envelope;
+          console.error('ENVELOPE_SUCCESS_DEBUG: Query failed:', { 
+            error,
+            envelopeId
+          });
+          setError('Failed to load envelope status');
+          setLoading(false);
+          return;
         }
         
         console.log('Envelope fetch result:', { 
-          found: !!envelopeData, 
-          status: envelopeData?.status,
-          recipientCount: envelopeData?.recipients?.length 
+          found: !!envelope, 
+          status: envelope?.status,
+          recipientCount: envelope?.recipients?.length 
         });
 
-        if (envelopeData) {
-          setEnvelope(envelopeData);
-          setError(null);
-          
-          // Continue polling if not in a final state
-          const finalStates = ['completed', 'declined', 'voided'];
-          if (!finalStates.includes(envelopeData.status)) {
-            timer = setTimeout(() => {
-              setPollCount(count => count + 1);
-            }, 5000);
-          }
-        } else {
+        if (!envelope) {
           setError('Envelope not found');
+          setLoading(false);
+          return;
+        }
+
+        setEnvelope(envelope);
+        setError(null);
+        
+        // Continue polling if not in a final state
+        const finalStates = ['completed', 'declined', 'voided'];
+        if (!finalStates.includes(envelope.status)) {
+          timer = setTimeout(() => {
+            setPollCount(count => count + 1);
+          }, 5000);
         }
       } catch (err) {
         console.error('Error fetching envelope:', err);
