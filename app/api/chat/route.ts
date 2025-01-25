@@ -223,7 +223,7 @@ export async function POST(req: Request) {
              - Say "I'll show you the available templates."
              - Call displayTemplateSelector 
              - Do not repeat or describe the templates, let the UI handle that
-             - Wait for user to select a template
+             - Wait for user to select a template, unless they have already told you which template they want, in which case you should find it and proceed.
           
           2. After user selects a template:
              - Say "Let me pull up the template details."
