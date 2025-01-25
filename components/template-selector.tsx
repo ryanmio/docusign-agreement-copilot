@@ -19,6 +19,21 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
   const [error, setError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
   const [search, setSearch] = useState('');
+  const [selectedId, setSelectedId] = useState<string>('');
+
+  const handleTemplateClick = (templateId: string) => {
+    // Set selection immediately
+    setSelectedId(templateId);
+    
+    // Then trigger the transition
+    transition(async () => {
+      try {
+        await onChange(templateId);
+      } catch (error) {
+        console.error('Failed to select template:', error);
+      }
+    });
+  };
 
   useEffect(() => {
     loadTemplates();
@@ -44,16 +59,6 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleTemplateClick = async (templateId: string) => {
-    transition(async () => {
-      try {
-        await onChange(templateId);
-      } catch (error) {
-        console.error('Failed to select template:', error);
-      }
-    });
   };
 
   if (error) {
@@ -88,32 +93,35 @@ export function TemplateSelector({ value = '', onChange }: TemplateSelectorProps
           </div>
         ) : (
           <div className="grid gap-3">
-            {templates.map((template) => (
-              <Card
-                key={template.templateId}
-                onClick={() => handleTemplateClick(template.templateId)}
-                className={`p-4 cursor-pointer transition-all ${
-                  value === template.templateId 
-                    ? 'bg-[#4C00FF] border-none shadow-[0_2px_4px_rgba(76,0,255,0.2)]' 
-                    : 'border-[#130032]/10 hover:border-[#4C00FF] hover:shadow-[0_2px_4px_rgba(19,0,50,0.1)]'
-                }`}
-              >
-                <div className={`font-medium ${
-                  value === template.templateId ? 'text-white' : 'text-[#130032]'
-                }`}>
-                  {template.name}
-                </div>
-                {template.description && (
-                  <div className={`text-sm mt-1 ${
-                    value === template.templateId 
-                      ? 'text-white/90' 
-                      : 'text-[#130032]/60'
+            {templates.map((template) => {
+              const isSelected = selectedId === template.templateId;
+              return (
+                <Card
+                  key={template.templateId}
+                  onClick={() => handleTemplateClick(template.templateId)}
+                  className={`p-4 cursor-pointer transition-all ${
+                    isSelected
+                      ? 'bg-[#4C00FF] border-none shadow-[0_2px_4px_rgba(76,0,255,0.2)]' 
+                      : 'border-[#130032]/10 hover:border-[#4C00FF] hover:shadow-[0_2px_4px_rgba(19,0,50,0.1)]'
+                  }`}
+                >
+                  <div className={`font-medium ${
+                    isSelected ? 'text-white' : 'text-[#130032]'
                   }`}>
-                    {template.description}
+                    {template.name}
                   </div>
-                )}
-              </Card>
-            ))}
+                  {template.description && (
+                    <div className={`text-sm mt-1 ${
+                      isSelected
+                        ? 'text-white/90' 
+                        : 'text-[#130032]/60'
+                    }`}>
+                      {template.description}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
