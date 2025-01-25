@@ -72,22 +72,7 @@ export class NavigatorClient {
     if (options?.limit) queryParams.append('limit', options.limit.toString());
     if (options?.ctoken) queryParams.append('ctoken', options.ctoken);
 
-    console.log('🔍 Debug: Making Navigator API request:', {
-      url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
-      hasToken: !!token,
-      tokenPrefix: token ? token.substring(0, 10) + '...' : 'none',
-      accountId
-    });
-
     try {
-      // Add token validation logging
-      console.log('Token validation check:', {
-        tokenExists: !!token,
-        tokenLength: token?.length,
-        accountId,
-        baseUrl: this.navigatorBasePath
-      });
-
       const response = await fetch(
         `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
         {
@@ -98,19 +83,12 @@ export class NavigatorClient {
         }
       );
 
-      // Add response headers logging
-      const responseHeaders = Object.fromEntries(response.headers.entries());
-      console.log('Response headers:', responseHeaders);
-
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Navigator API error:', {
           status: response.status,
           statusText: response.statusText,
-          error: errorText,
-          url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
-          headers: responseHeaders,
-          environment: process.env.NODE_ENV
+          error: errorText
         });
         
         if (response.status === 401) {
@@ -121,26 +99,7 @@ export class NavigatorClient {
       }
 
       const data = await response.json();
-      
-      // Log full response structure to see all available fields
-      console.log('Navigator API full response structure:', {
-        data,
-        responseStatus: response.status,
-        headers: Object.fromEntries(response.headers.entries()),
-        endpoint: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`
-      });
-      
-      // Handle response where agreements are in data.data
       const agreements = data.data || [];
-      
-      // Add warning log if no agreements found
-      if (!agreements.length) {
-        console.warn('No agreements found in Navigator response:', {
-          agreements,
-          metadata: data.response_metadata,
-          responseFields: Object.keys(data)
-        });
-      }
 
       // Return in expected format
       return {
@@ -148,10 +107,7 @@ export class NavigatorClient {
         response_metadata: data.response_metadata
       };
     } catch (error) {
-      console.error('Navigator API fetch error:', {
-        error,
-        url: `${this.navigatorBasePath}/v1/accounts/${accountId}/agreements?${queryParams}`,
-      });
+      console.error('Navigator API fetch error:', error);
       throw error;
     }
   }
