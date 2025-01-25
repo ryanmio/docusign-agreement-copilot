@@ -161,6 +161,13 @@ export async function POST(
         recipientsStored: true
       });
 
+      // Add this critical log
+      console.log('ENVELOPE_DEBUG:', {
+        returnedToClient: envelope,
+        docusignResponse,
+        whatClientSees: docusignResponse.envelopeId
+      });
+
       return NextResponse.json(envelope);
     } catch (error) {
       console.error('Database operation error:', error);

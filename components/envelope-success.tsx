@@ -36,7 +36,12 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
 
     const fetchEnvelope = async () => {
       try {
-        console.log('Fetching envelope:', { envelopeId, pollCount });
+        console.log('ENVELOPE_SUCCESS_DEBUG: Querying with ID:', { 
+          envelopeId,
+          pollCount,
+          timestamp: new Date().toISOString()
+        });
+        
         const { data: envelope, error } = await supabase
           .from('envelopes')
           .select('*, recipients(*)')
@@ -44,7 +49,13 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
           .single();
 
         if (error) {
-          console.error('Supabase query error:', { error, envelopeId });
+          console.error('ENVELOPE_SUCCESS_DEBUG: Query failed:', { 
+            error, 
+            envelopeId,
+            errorCode: error.code,
+            details: error.details,
+            hint: error.hint
+          });
           throw error;
         }
         
