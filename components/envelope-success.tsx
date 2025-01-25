@@ -187,8 +187,8 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
             asChild
             className="bg-[#4C00FF] hover:bg-[#4C00FF]/90 text-white"
           >
-            <Link href="/documents">
-              View All Documents
+            <Link href={`/documents/${envelope.id}`}>
+              View Details
             </Link>
           </Button>
         </div>
