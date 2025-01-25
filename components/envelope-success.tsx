@@ -36,13 +36,24 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
 
     const fetchEnvelope = async () => {
       try {
+        console.log('Fetching envelope:', { envelopeId, pollCount });
         const { data: envelope, error } = await supabase
           .from('envelopes')
           .select('*, recipients(*)')
           .eq('docusign_envelope_id', envelopeId)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase query error:', { error, envelopeId });
+          throw error;
+        }
+        
+        console.log('Envelope fetch result:', { 
+          found: !!envelope, 
+          status: envelope?.status,
+          recipientCount: envelope?.recipients?.length 
+        });
+        
         setEnvelope(envelope);
         setError(null);
 

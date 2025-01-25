@@ -58,6 +58,12 @@ export async function POST(
     // Create envelope from template
     let docusignResponse;
     try {
+      console.log('Creating envelope from template:', { 
+        templateId: params.id,
+        subject: payload.subject,
+        recipientCount: payload.roles.length
+      });
+      
       docusignResponse = await docusign.createEnvelopeFromTemplate(
         user.id,
         params.id,
@@ -68,6 +74,12 @@ export async function POST(
           prefillData: payload.prefillData,
         }
       );
+
+      console.log('DocuSign response:', {
+        envelopeId: docusignResponse.envelopeId,
+        success: !!docusignResponse.envelopeId
+      });
+
     } catch (error) {
       console.error('Docusign API Error:', error);
       return NextResponse.json(
@@ -78,6 +90,11 @@ export async function POST(
 
     // Store envelope in database
     try {
+      console.log('Storing envelope in database:', {
+        userId: user.id,
+        envelopeId: docusignResponse.envelopeId
+      });
+
       const { data: envelope, error: envelopeError } = await supabase
         .from('envelopes')
         .insert({
@@ -96,7 +113,7 @@ export async function POST(
         .single();
 
       if (envelopeError) {
-        console.error('Database error:', envelopeError);
+        console.error('Database error:', { error: envelopeError, envelopeId: docusignResponse.envelopeId });
         // Even if database storage fails, the envelope was created in DocuSign
         return NextResponse.json(
           { 
@@ -106,6 +123,11 @@ export async function POST(
           { status: 200 }
         );
       }
+
+      console.log('Storing recipients:', {
+        envelopeId: envelope.id,
+        recipientCount: payload.roles.length
+      });
 
       // Store recipients
       const { error: recipientsError } = await supabase
@@ -123,7 +145,7 @@ export async function POST(
         );
 
       if (recipientsError) {
-        console.error('Recipients storage error:', recipientsError);
+        console.error('Recipients storage error:', { error: recipientsError, envelopeId: envelope.id });
         return NextResponse.json(
           { 
             warning: 'Envelope created but recipient details not stored',
@@ -132,6 +154,12 @@ export async function POST(
           { status: 200 }
         );
       }
+
+      console.log('Successfully created and stored envelope:', {
+        envelopeId: envelope.id,
+        docusignEnvelopeId: docusignResponse.envelopeId,
+        recipientsStored: true
+      });
 
       return NextResponse.json(envelope);
     } catch (error) {
