@@ -20,7 +20,7 @@ export function StarterBubbles() {
     {
       title: "Send an NDA",
       subtitle: "to a new client",
-      message: "I need to send a non-disclosure agreement to a new client"
+      message: "I need to send the non-disclosure agreement template to a new client"
     },
     {
       title: "Send reminders",

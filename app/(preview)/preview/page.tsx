@@ -386,6 +386,7 @@ export default function PreviewPage() {
           <PriorityDashboard
             sections={mockPriorityDashboard.sections}
             toolCallId="preview"
+            currentUserEmail="ryan@mioduski.us"
             onAction={async (envelopeId, action) => {
               console.log('Action:', action, 'on envelope:', envelopeId);
             }}

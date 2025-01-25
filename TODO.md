@@ -133,6 +133,7 @@ CRITICAL BUGS:
 - [x] Fix navigator analysis auth issue on deployed version
 - [x] Envelope sending confirmation doesnt work on deployed version, doesnt create envelope
 - [x] Fix navigator filters for expiration dates with relative dates and value
+- [x] Fix envelope success page not showing up again!!
 - [ ] Forgot to implement bulk send tool! Too late?
 
 BUGS:

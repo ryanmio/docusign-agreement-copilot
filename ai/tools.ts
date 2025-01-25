@@ -325,10 +325,78 @@ export const tools = {
         throw new Error(error.message || 'Failed to send template');
       }
 
-      const envelope = await response.json();
+      const result = await response.json();
+      
+      console.log('ENVELOPE_FLOW: sendTemplate received response:', {
+        resultShape: {
+          hasEnvelopeWithId: !!result.envelope?.id,
+          hasDirectId: !!result.id,
+          hasEnvelopeId: !!result.envelopeId
+        },
+        fullResult: result,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Handle different response formats
+      let envelopeId;
+      if (result.envelope?.id) {
+        // Response with warning but has envelope
+        envelopeId = result.envelope.id;
+        console.log('ENVELOPE_FLOW: Using envelope.id from warning response:', {
+          envelopeId,
+          timestamp: new Date().toISOString()
+        });
+      } else if (result.id) {
+        // Happy path - full envelope record
+        envelopeId = result.id;
+        console.log('ENVELOPE_FLOW: Using direct id from success response:', {
+          envelopeId,
+          timestamp: new Date().toISOString()
+        });
+      } else if (result.envelopeId) {
+        // Database error case - just DocuSign ID
+        console.log('ENVELOPE_FLOW: Got DocuSign ID, querying database:', {
+          docusignEnvelopeId: result.envelopeId,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Query the database to get our record
+        const { data: envelope, error } = await supabase
+          .from('envelopes')
+          .select('id')
+          .eq('docusign_envelope_id', result.envelopeId)
+          .single();
+          
+        if (envelope?.id) {
+          envelopeId = envelope.id;
+          console.log('ENVELOPE_FLOW: Found database ID:', {
+            envelopeId,
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          console.error('ENVELOPE_FLOW: Failed to find in database:', {
+            error,
+            docusignEnvelopeId: result.envelopeId,
+            timestamp: new Date().toISOString()
+          });
+          throw new Error('Failed to find envelope in database');
+        }
+      } else {
+        console.error('ENVELOPE_FLOW: Invalid response format:', {
+          result,
+          timestamp: new Date().toISOString()
+        });
+        throw new Error('Invalid response format from server');
+      }
+
+      console.log('ENVELOPE_FLOW: Final ID being returned to component:', {
+        envelopeId,
+        timestamp: new Date().toISOString()
+      });
+
       return {
         success: true,
-        envelopeId: envelope.id,
+        envelopeId,
         status: 'sent'
       };
     }
@@ -455,17 +523,17 @@ export const tools = {
         {
           title: 'Urgent',
           type: 'urgent',
-          envelopes: urgentEnvelopes.slice(0, 5)
+          envelopes: urgentEnvelopes.slice(0, 10)
         },
         {
           title: 'Today',
           type: 'today',
-          envelopes: todayEnvelopes.slice(0, 5)
+          envelopes: todayEnvelopes.slice(0, 10)
         },
         {
           title: 'This Week',
           type: 'thisWeek',
-          envelopes: thisWeekEnvelopes.slice(0, 5)
+          envelopes: thisWeekEnvelopes.slice(0, 10)
         }
       ];
 

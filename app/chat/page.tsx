@@ -385,6 +385,7 @@ export default function ChatPage() {
             <PriorityDashboard
               sections={result.sections}
               toolCallId={toolCallId}
+              currentUserEmail="ryan@mioduski.us"
               onAction={async (envelopeId, action) => {
                 try {
                   if (action === 'view') {

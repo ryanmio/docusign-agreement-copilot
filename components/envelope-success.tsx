@@ -41,6 +41,11 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
           pollCount,
           timestamp: new Date().toISOString()
         });
+
+        // Add a small delay before first query to handle race condition
+        if (pollCount === 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
         
         const { data: envelope, error } = await supabase
           .from('envelopes')
@@ -50,8 +55,14 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
 
         if (error) {
           console.error('ENVELOPE_SUCCESS_DEBUG: Query failed:', { 
-            error,
-            envelopeId
+            error: {
+              message: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            },
+            envelopeId,
+            timestamp: new Date().toISOString()
           });
           setError('Failed to load envelope status');
           setLoading(false);

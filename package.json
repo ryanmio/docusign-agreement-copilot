@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "dev": "next dev 2>/dev/null",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "setup-db": "ts-node scripts/setup-database.ts",

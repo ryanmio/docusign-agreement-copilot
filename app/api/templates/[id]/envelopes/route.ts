@@ -90,9 +90,10 @@ export async function POST(
 
     // Store envelope in database
     try {
-      console.log('Storing envelope in database:', {
+      console.log('ENVELOPE_FLOW: About to store in database:', {
         userId: user.id,
-        envelopeId: docusignResponse.envelopeId
+        docusignEnvelopeId: docusignResponse.envelopeId,
+        timestamp: new Date().toISOString()
       });
 
       const { data: envelope, error: envelopeError } = await supabase
@@ -113,7 +114,11 @@ export async function POST(
         .single();
 
       if (envelopeError) {
-        console.error('Database error:', { error: envelopeError, envelopeId: docusignResponse.envelopeId });
+        console.error('ENVELOPE_FLOW: Database error:', { 
+          error: envelopeError, 
+          docusignEnvelopeId: docusignResponse.envelopeId,
+          timestamp: new Date().toISOString()
+        });
         // Even if database storage fails, the envelope was created in DocuSign
         return NextResponse.json(
           { 
@@ -124,9 +129,10 @@ export async function POST(
         );
       }
 
-      console.log('Storing recipients:', {
-        envelopeId: envelope.id,
-        recipientCount: payload.roles.length
+      console.log('ENVELOPE_FLOW: Successfully stored envelope:', {
+        databaseId: envelope.id,
+        docusignEnvelopeId: docusignResponse.envelopeId,
+        timestamp: new Date().toISOString()
       });
 
       // Store recipients
@@ -145,7 +151,11 @@ export async function POST(
         );
 
       if (recipientsError) {
-        console.error('Recipients storage error:', { error: recipientsError, envelopeId: envelope.id });
+        console.error('ENVELOPE_FLOW: Recipients storage error:', { 
+          error: recipientsError, 
+          databaseId: envelope.id,
+          timestamp: new Date().toISOString()
+        });
         return NextResponse.json(
           { 
             warning: 'Envelope created but recipient details not stored',
@@ -155,22 +165,21 @@ export async function POST(
         );
       }
 
-      console.log('Successfully created and stored envelope:', {
-        envelopeId: envelope.id,
+      console.log('ENVELOPE_FLOW: Final success state:', {
+        databaseId: envelope.id,
         docusignEnvelopeId: docusignResponse.envelopeId,
-        recipientsStored: true
-      });
-
-      // Add this critical log
-      console.log('ENVELOPE_DEBUG:', {
-        returnedToClient: envelope,
-        docusignResponse,
-        whatClientSees: docusignResponse.envelopeId
+        recipientsStored: true,
+        whatWeReturn: envelope,
+        timestamp: new Date().toISOString()
       });
 
       return NextResponse.json(envelope);
     } catch (error) {
-      console.error('Database operation error:', error);
+      console.error('ENVELOPE_FLOW: Database operation error:', {
+        error,
+        docusignEnvelopeId: docusignResponse.envelopeId,
+        timestamp: new Date().toISOString()
+      });
       return NextResponse.json(
         { 
           warning: 'Envelope created in DocuSign but database operation failed',

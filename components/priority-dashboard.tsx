@@ -28,9 +28,10 @@ interface PriorityDashboardProps {
   sections: PrioritySection[];
   onAction: (envelopeId: string, action: 'view' | 'sign' | 'remind') => Promise<void>;
   toolCallId: string;
+  currentUserEmail: string;
 }
 
-export function PriorityDashboard({ sections, onAction, toolCallId }: PriorityDashboardProps) {
+export function PriorityDashboard({ sections, onAction, toolCallId, currentUserEmail }: PriorityDashboardProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedEnvelopeId, setExpandedEnvelopeId] = useState<string | null>(null);
   const itemsPerPage = 3;
@@ -135,17 +136,21 @@ export function PriorityDashboard({ sections, onAction, toolCallId }: PriorityDa
 
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
-                              {envelope.status === 'sent' && (
-                                <Button
-                                  size="sm"
-                                  className="bg-[#4C00FF] hover:bg-[#26065D] text-white"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onAction(envelope.envelopeId, 'sign');
-                                  }}
-                                >
-                                  Sign
-                                </Button>
+                              {envelope.status === 'sent' && 
+                                envelope.recipients.some(r => 
+                                  r.email === currentUserEmail && 
+                                  r.status !== 'completed'
+                                ) && (
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#4C00FF] hover:bg-[#26065D] text-white"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onAction(envelope.envelopeId, 'sign');
+                                    }}
+                                  >
+                                    Sign
+                                  </Button>
                               )}
                               <Button
                                 variant="outline"
