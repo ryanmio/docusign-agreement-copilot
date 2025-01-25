@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
@@ -64,6 +64,8 @@ interface NavigatorAnalysisProps {
           parties?: string[];
           categories?: string[];
           types?: string[];
+          min_value?: number;
+          max_value?: number;
         };
       };
     };
@@ -84,11 +86,15 @@ export function NavigatorAnalysis({
   const [isLoading, setIsLoading] = useState(!result);
   const [accordionValue, setAccordionValue] = useState<string>("");
   const [displayLimit, setDisplayLimit] = useState(5);
+  
+  // Initialize filters with any values from the API result
   const [filters, setFilters] = useState<FilterState>({
     partyName: result?.result?.metadata?.appliedFilters?.parties?.[0] || '',
     type: result?.result?.metadata?.appliedFilters?.types?.[0] || '',
     category: result?.result?.metadata?.appliedFilters?.categories?.[0] || '',
     jurisdiction: '',
+    minValue: undefined,
+    maxValue: undefined,
     dateRange: result?.result?.metadata?.appliedFilters?.from_date ? {
       start: result.result.metadata.appliedFilters.from_date,
       end: result.result.metadata.appliedFilters.to_date
@@ -98,6 +104,20 @@ export function NavigatorAnalysis({
       end: result.result.metadata.appliedFilters.expiration_to
     } : undefined
   });
+
+  // Set initial filter values from result if available
+  useEffect(() => {
+    if (result?.result?.metadata?.appliedFilters) {
+      const filters = result.result.metadata.appliedFilters;
+      if (filters.min_value !== undefined || filters.max_value !== undefined) {
+        setFilters(prev => ({
+          ...prev,
+          minValue: filters.min_value !== undefined ? Number(filters.min_value) : undefined,
+          maxValue: filters.max_value !== undefined ? Number(filters.max_value) : undefined
+        }));
+      }
+    }
+  }, [result]);
 
   // Add refs for inputs that need focus management
   const partyNameRef = useRef<HTMLInputElement>(null);
@@ -124,7 +144,7 @@ export function NavigatorAnalysis({
     return new Date(dateStr);
   };
 
-  // Add handleInputChange function
+  // Update handleInputChange to properly handle number inputs
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     field: keyof FilterState,
@@ -132,12 +152,14 @@ export function NavigatorAnalysis({
   ) => {
     e.stopPropagation();
     const value = e.target.value;
+    
     setFilters(f => ({ 
       ...f, 
       [field]: field === 'minValue' || field === 'maxValue' 
-        ? (value ? Number(value) : undefined)
+        ? (value === '' ? undefined : Number(value))
         : value 
     }));
+    
     // Maintain focus after state update
     setTimeout(() => {
       ref.current?.focus();
@@ -169,12 +191,11 @@ export function NavigatorAnalysis({
     };
   }, [result?.result?.agreements]);
 
-  // Filter agreements based on current filters
+  // Update the filtering logic
   const filteredAgreements = useMemo(() => {
     if (!result?.result?.agreements) return [];
     
     console.log('Filtering agreements with filters:', filters);
-    console.log('Raw agreements:', result.result.agreements);
     
     return result.result.agreements.filter(agreement => {
       const matchesParty = !filters.partyName || 
@@ -202,9 +223,44 @@ export function NavigatorAnalysis({
         (agreement.provisions?.jurisdiction && 
          String(agreement.provisions.jurisdiction).toLowerCase() === filters.jurisdiction.toLowerCase());
       
-      const annualValue = agreement.provisions?.annual_agreement_value;
-      const matchesValue = (!filters.minValue || (annualValue !== undefined && annualValue >= filters.minValue)) &&
-        (!filters.maxValue || (annualValue !== undefined && annualValue <= filters.maxValue));
+      // Handle annual value filtering
+      const rawAnnualValue = agreement.provisions?.annual_agreement_value;
+      
+      // Convert to number, handling different formats
+      const numericAnnualValue = (() => {
+        if (typeof rawAnnualValue === 'number') return rawAnnualValue;
+        if (typeof rawAnnualValue === 'string') {
+          // Remove currency symbols, commas, etc and convert to number
+          const cleaned = rawAnnualValue.replace(/[^0-9.-]+/g, '');
+          const parsed = parseFloat(cleaned);
+          return isNaN(parsed) ? undefined : parsed;
+        }
+        return undefined;
+      })();
+
+      console.log('Value filtering:', {
+        agreement: agreement.title,
+        rawValue: rawAnnualValue,
+        numericValue: numericAnnualValue,
+        minValue: filters.minValue,
+        maxValue: filters.maxValue,
+        hasMinFilter: filters.minValue !== undefined,
+        hasMaxFilter: filters.maxValue !== undefined,
+        passesMinFilter: filters.minValue === undefined || (numericAnnualValue !== undefined && numericAnnualValue >= filters.minValue),
+        passesMaxFilter: filters.maxValue === undefined || (numericAnnualValue !== undefined && numericAnnualValue <= filters.maxValue)
+      });
+
+      // Only filter if we have a valid numeric value and a filter is set
+      const matchesValue = 
+        // If we have no value filters, return true
+        (filters.minValue === undefined && filters.maxValue === undefined) ||
+        // If we have a value to check against
+        (numericAnnualValue !== undefined && 
+          // Check min value if set
+          (filters.minValue === undefined || numericAnnualValue >= filters.minValue) &&
+          // Check max value if set
+          (filters.maxValue === undefined || numericAnnualValue <= filters.maxValue)
+        );
 
       // Add date range filtering
       const matchesDateRange = !filters.dateRange || (
@@ -337,7 +393,7 @@ export function NavigatorAnalysis({
                 </div>
                 
                 <div key="min-value">
-                  <Label htmlFor="min-value">Min Annual Value</Label>
+                  <Label htmlFor="min-value">Min Annual Value ($)</Label>
                   <Input
                     id="min-value"
                     ref={minValueRef}
@@ -345,11 +401,12 @@ export function NavigatorAnalysis({
                     placeholder="Min value..."
                     value={filters.minValue || ''}
                     onChange={e => handleInputChange(e, 'minValue', minValueRef)}
+                    className="mt-1.5 border-[#130032]/20 bg-white focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
                   />
                 </div>
                 
                 <div key="max-value">
-                  <Label htmlFor="max-value">Max Annual Value</Label>
+                  <Label htmlFor="max-value">Max Annual Value ($)</Label>
                   <Input
                     id="max-value"
                     ref={maxValueRef}
@@ -357,7 +414,7 @@ export function NavigatorAnalysis({
                     placeholder="Max value..."
                     value={filters.maxValue || ''}
                     onChange={e => handleInputChange(e, 'maxValue', maxValueRef)}
-                    className="mt-1.5 border-[#130032]/20 focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
+                    className="mt-1.5 border-[#130032]/20 bg-white focus:border-[#4C00FF] focus:ring-1 focus:ring-[#4C00FF]"
                   />
                 </div>
 
