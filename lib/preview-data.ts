@@ -1,3 +1,5 @@
+import { StatusType } from '@/components/live-status-badge';
+
 export const mockTemplates = [
   {
     templateId: 'template-1',
@@ -112,60 +114,60 @@ export const mockEnvelopeStates = {
   initial: {
     id: 'env-123',
     docusign_envelope_id: 'ds-456',
-    status: 'sent',
+    status: 'sent' as StatusType,
     subject: 'Sales Agreement - ACME Corp',
     recipients: [
       {
         id: 'rec-1',
         name: 'John Doe',
         email: 'john@acme.com',
-        status: 'sent'
+        status: 'sent' as StatusType
       },
       {
         id: 'rec-2',
         name: 'Jane Smith',
         email: 'jane@acme.com',
-        status: 'pending'
+        status: 'sent' as StatusType
       }
     ]
   },
   inProgress: {
     id: 'env-123',
     docusign_envelope_id: 'ds-456',
-    status: 'delivered',
+    status: 'delivered' as StatusType,
     subject: 'Sales Agreement - ACME Corp',
     recipients: [
       {
         id: 'rec-1',
         name: 'John Doe',
         email: 'john@acme.com',
-        status: 'completed'
+        status: 'completed' as StatusType
       },
       {
         id: 'rec-2',
         name: 'Jane Smith',
         email: 'jane@acme.com',
-        status: 'delivered'
+        status: 'delivered' as StatusType
       }
     ]
   },
   completed: {
     id: 'env-123',
     docusign_envelope_id: 'ds-456',
-    status: 'completed',
+    status: 'completed' as StatusType,
     subject: 'Sales Agreement - ACME Corp',
     recipients: [
       {
         id: 'rec-1',
         name: 'John Doe',
         email: 'john@acme.com',
-        status: 'completed'
+        status: 'completed' as StatusType
       },
       {
         id: 'rec-2',
         name: 'Jane Smith',
         email: 'jane@acme.com',
-        status: 'completed'
+        status: 'completed' as StatusType
       }
     ]
   }

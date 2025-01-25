@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Check, Loader2, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { mockEnvelopeStates } from '@/lib/preview-data';
+import { LiveStatusBadge, StatusType } from '@/components/live-status-badge';
 
 interface EnvelopeSuccessPreviewProps {
   envelopeId?: string; // Optional in preview
@@ -53,22 +53,6 @@ export function EnvelopeSuccessPreview({ envelopeId = 'ds-456' }: EnvelopeSucces
 
     return () => clearTimeout(timer);
   }, [envelope, stateIndex]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'sent':
-        return 'bg-[#CBC2FF]/40 text-[#26065D]'
-      case 'delivered':
-        return 'bg-[#4C00FF]/10 text-[#4C00FF]'
-      case 'completed':
-        return 'bg-[#26065D]/10 text-[#26065D]'
-      case 'declined':
-      case 'voided':
-        return 'bg-[#FF5252]/10 text-[#FF5252]'
-      default:
-        return 'bg-[#130032]/10 text-[#130032]'
-    }
-  };
 
   if (loading) {
     return (
@@ -118,12 +102,7 @@ export function EnvelopeSuccessPreview({ envelopeId = 'ds-456' }: EnvelopeSucces
         {/* Status */}
         <div className="flex items-center justify-between py-4 border-y border-[#130032]/10">
           <span className="text-[#130032] font-medium">Status</span>
-          <Badge
-            variant="secondary"
-            className={`${getStatusColor(envelope.status)} px-4 py-1 rounded-full text-xs font-medium`}
-          >
-            {envelope.status}
-          </Badge>
+          <LiveStatusBadge status={envelope.status as StatusType} />
         </div>
 
         {/* Recipients */}
@@ -144,12 +123,7 @@ export function EnvelopeSuccessPreview({ envelopeId = 'ds-456' }: EnvelopeSucces
                     <div className="text-sm text-[#130032]/60">{recipient.email}</div>
                   </div>
                 </div>
-                <Badge
-                  variant="secondary"
-                  className={`${getStatusColor(recipient.status)} px-3 py-1 rounded-full text-xs font-medium`}
-                >
-                  {recipient.status}
-                </Badge>
+                <LiveStatusBadge status={recipient.status as StatusType} />
               </div>
             ))}
           </div>
