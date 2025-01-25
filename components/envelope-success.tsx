@@ -42,6 +42,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
           timestamp: new Date().toISOString()
         });
         
+        let envelopeData;
         const { data: envelope, error } = await supabase
           .from('envelopes')
           .select('*, recipients(*)')
@@ -49,28 +50,39 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
           .single();
 
         if (error) {
-          console.error('ENVELOPE_SUCCESS_DEBUG: Query failed:', { 
-            error, 
-            envelopeId,
-            errorCode: error.code,
-            details: error.details,
-            hint: error.hint
-          });
-          throw error;
+          // Try querying by database ID as fallback
+          const { data: envelopeByDbId, error: dbError } = await supabase
+            .from('envelopes')
+            .select('*, recipients(*)')
+            .eq('id', envelopeId)
+            .single();
+            
+          if (dbError) {
+            console.error('ENVELOPE_SUCCESS_DEBUG: Both queries failed:', { 
+              docusignError: error,
+              dbError,
+              envelopeId
+            });
+            throw error;
+          }
+          
+          envelopeData = envelopeByDbId;
+        } else {
+          envelopeData = envelope;
         }
         
         console.log('Envelope fetch result:', { 
-          found: !!envelope, 
-          status: envelope?.status,
-          recipientCount: envelope?.recipients?.length 
+          found: !!envelopeData, 
+          status: envelopeData?.status,
+          recipientCount: envelopeData?.recipients?.length 
         });
         
-        setEnvelope(envelope);
+        setEnvelope(envelopeData);
         setError(null);
 
         // Continue polling if the envelope is not in a final state
         const finalStates = ['completed', 'declined', 'voided'];
-        if (!finalStates.includes(envelope.status)) {
+        if (!finalStates.includes(envelopeData.status)) {
           // Use shorter intervals for first few polls, then increase
           const pollInterval = pollCount < 3 ? 1000 : // 1 second for first 3 attempts
                              pollCount < 6 ? 2000 : // 2 seconds for next 3 attempts
