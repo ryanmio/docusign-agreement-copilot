@@ -104,6 +104,26 @@ export function NavigatorAnalysis({
   const minValueRef = useRef<HTMLInputElement>(null);
   const maxValueRef = useRef<HTMLInputElement>(null);
 
+  // Add helper function to parse relative dates
+  const parseRelativeDate = (dateStr: string): Date => {
+    if (!dateStr) return new Date();
+    
+    // Handle "now" keyword
+    if (dateStr === 'now') return new Date();
+    
+    // Handle relative dates (now+/-Xdays)
+    const relativeMatch = dateStr.match(/^now([+-])(\d+)days$/);
+    if (relativeMatch) {
+      const [_, operation, days] = relativeMatch;
+      const date = new Date();
+      const daysInMs = parseInt(days) * 24 * 60 * 60 * 1000;
+      return new Date(date.getTime() + (operation === '+' ? daysInMs : -daysInMs));
+    }
+    
+    // Handle ISO dates
+    return new Date(dateStr);
+  };
+
   // Add handleInputChange function
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -189,15 +209,15 @@ export function NavigatorAnalysis({
       // Add date range filtering
       const matchesDateRange = !filters.dateRange || (
         agreement.provisions?.effective_date && (
-          (!filters.dateRange?.start || new Date(agreement.provisions.effective_date) >= new Date(filters.dateRange.start)) &&
-          (!filters.dateRange?.end || new Date(agreement.provisions.effective_date) <= new Date(filters.dateRange.end))
+          (!filters.dateRange?.start || new Date(agreement.provisions.effective_date) >= parseRelativeDate(filters.dateRange.start)) &&
+          (!filters.dateRange?.end || new Date(agreement.provisions.effective_date) <= parseRelativeDate(filters.dateRange.end))
         )
       );
 
       const matchesExpirationRange = !filters.expirationDateRange || (
         agreement.provisions?.expiration_date && (
-          (!filters.expirationDateRange?.start || new Date(agreement.provisions.expiration_date) >= new Date(filters.expirationDateRange.start)) &&
-          (!filters.expirationDateRange?.end || new Date(agreement.provisions.expiration_date) <= new Date(filters.expirationDateRange.end))
+          (!filters.expirationDateRange?.start || new Date(agreement.provisions.expiration_date) >= parseRelativeDate(filters.expirationDateRange.start)) &&
+          (!filters.expirationDateRange?.end || new Date(agreement.provisions.expiration_date) <= parseRelativeDate(filters.expirationDateRange.end))
         )
       );
       
