@@ -45,7 +45,9 @@ export class NavigatorClient {
 
   constructor(supabase: SupabaseClient) {
     this.docuSignClient = new DocuSignClient(supabase);
-    this.navigatorBasePath = process.env.NEXT_PUBLIC_DOCUSIGN_NAVIGATOR_BASE_PATH || 'https://navigator-d.docusign.com';
+    this.navigatorBasePath = process.env.NODE_ENV === 'production' 
+      ? 'https://navigator-d.docusign.com'
+      : (process.env.NEXT_PUBLIC_DOCUSIGN_NAVIGATOR_BASE_PATH || 'https://navigator-d.docusign.com');
   }
 
   /**
@@ -61,6 +63,19 @@ export class NavigatorClient {
   async getAgreements(userId: string, options?: GetAgreementsOptions) {
     // Get a valid token using DocuSignClient's token management
     const token = await this.docuSignClient.getValidToken(userId);
+    
+    // Add detailed logging
+    console.log('Navigator getAgreements:', {
+      hasToken: !!token,
+      tokenLength: token?.length,
+      env: process.env.NODE_ENV,
+      basePath: this.navigatorBasePath
+    });
+
+    if (!token) {
+      throw new Error('No valid token available');
+    }
+
     const userInfo = await this.docuSignClient.getUserInfo(userId);
     const accountId = userInfo.accounts.find(a => a.is_default)?.account_id || userInfo.accounts[0]?.account_id;
 

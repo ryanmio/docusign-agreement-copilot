@@ -47,22 +47,40 @@ export async function POST(request: Request) {
   console.log('🔍 Navigator analyze endpoint called');
   
   try {
-    // Get authenticated user
+    // Get authenticated user with explicit cookie handling
     const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    }, {
+      cookieOptions: {
+        // Add secure cookie options for production
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/'
+      }
+    });
     
-    // Add detailed session logging
+    // Add more detailed session logging
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.log('Navigator Analyze Endpoint Auth:', {
+    console.log('Navigator Auth Details:', {
       hasSession: !!session,
       sessionError,
       userId: session?.user?.id,
-      cookiesPresent: !!cookieStore.toString(),
-      headers: Object.fromEntries(request.headers)
+      env: process.env.NODE_ENV,
+      cookieHeader: request.headers.get('cookie'),
+      allHeaders: Object.fromEntries(request.headers.entries())
     });
 
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      return new Response(JSON.stringify({ error: 'Session error', details: sessionError }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     if (!session?.user) {
-      console.error('No authenticated user found in analyze endpoint');
+      console.error('No authenticated user found');
       return new Response(JSON.stringify({ error: 'Not authenticated' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
