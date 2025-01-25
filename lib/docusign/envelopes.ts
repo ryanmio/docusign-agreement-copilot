@@ -282,8 +282,8 @@ export class DocuSignEnvelopes {
     const data = await response.json();
     const envelopeId = data.envelopeId;
 
-    // Store the envelope in our database using upsert
-    const { error: dbError } = await this.client.supabase
+    // Store the envelope in our database
+    const { data: envelope, error: dbError } = await this.client.supabase
       .from('envelopes')
       .upsert({
         user_id: userId,
@@ -294,16 +294,37 @@ export class DocuSignEnvelopes {
       }, {
         onConflict: 'docusign_envelope_id',
         ignoreDuplicates: false
-      });
+      })
+      .select()
+      .single();
 
     if (dbError) {
       console.error('Failed to store envelope in database:', dbError);
       throw new Error(`Failed to store envelope: ${dbError.message}`);
     }
 
-    return {
-      envelopeId: envelopeId,
-    };
+    // Store recipients with initial 'sent' status
+    const { error: recipientsError } = await this.client.supabase
+      .from('recipients')
+      .insert(
+        args.templateRoles?.map(role => ({
+          envelope_id: envelope.id,
+          email: role.email,
+          name: role.name,
+          status: 'sent',
+          routing_order: role.routingOrder || 1,
+          metadata: {
+            role_name: role.roleName,
+          },
+        }))
+      );
+
+    if (recipientsError) {
+      console.error('Failed to store recipients:', recipientsError);
+      throw new Error(`Failed to store recipients: ${recipientsError.message}`);
+    }
+
+    return { envelopeId };
   }
 
   async getEnvelope(userId: string, envelopeId: string) {
@@ -611,7 +632,7 @@ export class DocuSignEnvelopes {
     const envelopeId = data.envelopeId;
 
     // Store the envelope in our database
-    const { error: dbError } = await this.client.supabase
+    const { data: envelope, error: dbError } = await this.client.supabase
       .from('envelopes')
       .upsert({
         user_id: userId,
@@ -622,16 +643,37 @@ export class DocuSignEnvelopes {
       }, {
         onConflict: 'docusign_envelope_id',
         ignoreDuplicates: false
-      });
+      })
+      .select()
+      .single();
 
     if (dbError) {
       console.error('Failed to store envelope in database:', dbError);
       throw new Error(`Failed to store envelope: ${dbError.message}`);
     }
 
-    return {
-      envelopeId: envelopeId,
-    };
+    // Store recipients with initial 'sent' status
+    const { error: recipientsError } = await this.client.supabase
+      .from('recipients')
+      .insert(
+        roles.map(role => ({
+          envelope_id: envelope.id,
+          email: role.email,
+          name: role.name,
+          status: 'sent',
+          routing_order: role.routingOrder || 1,
+          metadata: {
+            role_name: role.roleName,
+          },
+        }))
+      );
+
+    if (recipientsError) {
+      console.error('Failed to store recipients:', recipientsError);
+      throw new Error(`Failed to store recipients: ${recipientsError.message}`);
+    }
+
+    return { envelopeId };
   }
 
   async getTemplateRecipientTabs(userId: string, templateId: string, roleName: string): Promise<TemplateTab[]> {
