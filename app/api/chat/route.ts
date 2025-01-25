@@ -962,17 +962,17 @@ export async function POST(req: Request) {
                 {
                   title: 'Needs Attention',
                   type: 'urgent',
-                  envelopes: urgentEnvelopes.slice(0, 5)
+                  envelopes: urgentEnvelopes.slice(0, 10)
                 },
                 {
                   title: 'Upcoming',
                   type: 'today',
-                  envelopes: upcomingEnvelopes.slice(0, 5)
+                  envelopes: upcomingEnvelopes.slice(0, 10)
                 },
                 {
                   title: 'Stalled',
                   type: 'thisWeek',
-                  envelopes: stalledEnvelopes.slice(0, 5)
+                  envelopes: stalledEnvelopes.slice(0, 10)
                 }
               ];
 
@@ -1074,7 +1074,7 @@ export async function POST(req: Request) {
               // Store recipients with initial sent status
               const { error: recipientsError } = await supabase
                 .from('recipients')
-                .insert(
+                .upsert(
                   recipients.map((role, index) => ({
                     envelope_id: envelope.id,
                     email: role.email,
@@ -1084,7 +1084,11 @@ export async function POST(req: Request) {
                     metadata: {
                       role_name: role.roleName,
                     },
-                  }))
+                  })),
+                  {
+                    onConflict: 'envelope_id,email',
+                    ignoreDuplicates: false
+                  }
                 );
 
               if (recipientsError) {
