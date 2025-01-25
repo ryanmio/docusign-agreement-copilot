@@ -1084,7 +1084,7 @@ export async function POST(req: Request) {
 
               return {
                 success: true,
-                envelopeId: envelope.id,
+                envelopeId: docusignResponse.envelopeId,
                 status: 'sent'
               };
             } catch (error) {
