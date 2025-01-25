@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NavigatorClient } from '@/lib/docusign/navigator-client';
 import type { NavigatorAgreement } from '@/lib/docusign/navigator-client';
@@ -47,37 +47,16 @@ export async function POST(request: Request) {
   console.log('🔍 Navigator analyze endpoint called');
   
   try {
-    // Get authenticated user with explicit cookie handling
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ 
-      cookies: () => cookieStore 
-    }, {
-      cookieOptions: {
-        // Add secure cookie options for production
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/'
-      }
-    });
+    // Use the same client creation approach as the working endpoint
+    const supabase = createServerComponentClient({ cookies });
     
-    // Add more detailed session logging
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     console.log('Navigator Auth Details:', {
       hasSession: !!session,
       sessionError,
       userId: session?.user?.id,
       env: process.env.NODE_ENV,
-      cookieHeader: request.headers.get('cookie'),
-      allHeaders: Object.fromEntries(request.headers.entries())
     });
-
-    if (sessionError) {
-      console.error('Session error:', sessionError);
-      return new Response(JSON.stringify({ error: 'Session error', details: sessionError }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
 
     if (!session?.user) {
       console.error('No authenticated user found');
