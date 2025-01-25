@@ -1044,13 +1044,15 @@ export async function POST(req: Request) {
                 .upsert({
                   user_id: session.user.id,
                   docusign_envelope_id: docusignResponse.envelopeId,
-                  subject: "Custom Contract",
+                  subject: subject,
                   message,
                   status: 'sent',
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString(),
                   metadata: {
-                    is_custom: true,
+                    is_template: true,
+                    template_id: templateId,
+                    expiration_date: expirationDateTime,
                   },
                 }, {
                   onConflict: 'docusign_envelope_id',
@@ -1064,19 +1066,20 @@ export async function POST(req: Request) {
                 return {
                   success: true,
                   warning: 'Envelope created in Docusign but failed to store in database',
-                  envelopeId: docusignResponse.envelopeId
+                  envelopeId: docusignResponse.envelopeId,
+                  status: 'sent'
                 };
               }
 
-              // Store recipients
+              // Store recipients with initial sent status
               const { error: recipientsError } = await supabase
                 .from('recipients')
                 .insert(
-                  recipients.map(role => ({
+                  recipients.map((role, index) => ({
                     envelope_id: envelope.id,
                     email: role.email,
                     name: role.name,
-                    routing_order: 1,
+                    routing_order: index + 1,
                     status: 'sent',
                     metadata: {
                       role_name: role.roleName,
@@ -1089,13 +1092,14 @@ export async function POST(req: Request) {
                 return {
                   success: true,
                   warning: 'Envelope created but recipient details not stored',
-                  envelope
+                  envelopeId: envelope.docusign_envelope_id,
+                  status: 'sent'
                 };
               }
 
               return {
                 success: true,
-                envelopeId: docusignResponse.envelopeId,
+                envelopeId: envelope.docusign_envelope_id,
                 status: 'sent'
               };
             } catch (error) {
