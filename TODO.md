@@ -130,12 +130,12 @@ CRITICAL BUGS:
 - [x] Fix "Parties: Acme Corporation, <<SIGNER1_NAME>>" in contract expiring in 2027 and add annual value
 - [x] Convo starter about analyze should include pie chart mention 
 - [x] Add a contract that needs my signature to the priority dashboard to make sure i can sign it in the demo, currently the prioriy dash is only showing docs that others need to sign and none that i need to sign
-- [ ] Fix navigator analysis auth issue on deployed version
+- [x] Fix navigator analysis auth issue on deployed version
 - [ ] Envelope sending confirmation doesnt work on deployed version, doesnt create envelope
 
 BUGS:
 - [ ] When sending the NDA, pre-fill functionality wasn't fully demonstrated. Investigate whether pre-filled fields (e.g., title and name) are feasible on our time frame
-- [ ] Add system instruction for multi-step workflows where user asks to do something and doesnt want to go step by step - ie. send X template to X then X. agent shouldnt pull up template and ask which, it hsould pull it up and add recipient x then ask for confirmation to send, then repeat with next recipient
+- [x] Add system instruction for multi-step workflows where user asks to do something and doesnt want to go step by step - ie. send X template to X then X. agent shouldnt pull up template and ask which, it hsould pull it up and add recipient x then ask for confirmation to send, then repeat with next recipient
 - [ ] Template selector hover state after clicking should be persistent showing the selected template
 
 

@@ -379,8 +379,8 @@ export default function PreviewPage() {
             }
           ]}
           usage={{
-            howWeUseIt: "This is our main dashboard view that the AI agent generates when users ask about urgent tasks or need an overview of their agreements. It organizes envelopes by priority and status, making it easy to spot what needs attention.",
-            howItWorks: "The agent analyzes your DocuSign envelopes in real-time, categorizing them by urgency (expiring soon, waiting for others, needs your signature). It then renders this dynamic dashboard with quick actions for each item."
+            howWeUseIt: "",
+            howItWorks: ""
           }}
         >
           <PriorityDashboard
