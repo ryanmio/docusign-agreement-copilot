@@ -269,6 +269,10 @@ export async function POST(req: Request) {
                -> navigatorAnalysis({ query, filters: { dateRange: { from: "now-7days", to: "now" } } })
              - "Find agreements with Acme Corp"
                -> navigatorAnalysis({ query, filters: { parties: ["Acme Corp"] } })
+             - "Show me agreements over $50,000"
+               -> navigatorAnalysis({ query, filters: { min_value: 50000 } })
+             - "Show me agreements between $10,000 and $50,000"
+               -> navigatorAnalysis({ query, filters: { min_value: 10000, max_value: 50000 } })
              - "Show me agreements expiring in the next 30 days"
                -> navigatorAnalysis({ query, filters: { expirationDateRange: { from: "now", to: "now+30days" } } })
              - "Show me agreements that expired in the last month"
@@ -404,7 +408,9 @@ export async function POST(req: Request) {
               parties: z.array(z.string()).optional(),
               categories: z.array(z.string()).optional(),
               types: z.array(z.string()).optional(),
-              provisions: z.record(z.any()).optional()
+              provisions: z.record(z.any()).optional(),
+              min_value: z.number().optional(),
+              max_value: z.number().optional()
             }).optional()
           }),
           execute: async ({ query, filters }) => {
@@ -462,7 +468,9 @@ export async function POST(req: Request) {
                     parties: filters?.parties,
                     categories: filters?.categories,
                     types: filters?.types,
-                    provisions: filters?.provisions
+                    provisions: filters?.provisions,
+                    min_value: filters?.min_value,
+                    max_value: filters?.max_value
                   }
                 }
               };
