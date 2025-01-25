@@ -438,8 +438,12 @@ export async function POST(req: Request) {
                 }
               }
 
-              // Use relative URL for API call
-              const response = await fetch('/api/navigator/analyze', {
+              // Use absolute URL for API call
+              const baseUrl = process.env.VERCEL_ENV === 'production' 
+                ? `https://${process.env.VERCEL_URL}` 
+                : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+              
+              const response = await fetch(`${baseUrl}/api/navigator/analyze`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
