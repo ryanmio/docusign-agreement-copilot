@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
 import { Check, Loader2, Mail } from 'lucide-react';
 import Link from 'next/link';
+import { LiveStatusBadge, StatusType } from './live-status-badge';
 
 interface EnvelopeSuccessProps {
   envelopeId: string;
@@ -14,12 +14,12 @@ interface Recipient {
   id: string;
   name: string;
   email: string;
-  status: string;
+  status: StatusType;
 }
 
 interface Envelope {
   id: string;
-  status: string;
+  status: StatusType;
   subject: string;
   recipients: Recipient[];
 }
@@ -76,22 +76,20 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
           status: envelopeData?.status,
           recipientCount: envelopeData?.recipients?.length 
         });
-        
-        setEnvelope(envelopeData);
-        setError(null);
 
-        // Continue polling if the envelope is not in a final state
-        const finalStates = ['completed', 'declined', 'voided'];
-        if (!finalStates.includes(envelopeData.status)) {
-          // Use shorter intervals for first few polls, then increase
-          const pollInterval = pollCount < 3 ? 1000 : // 1 second for first 3 attempts
-                             pollCount < 6 ? 2000 : // 2 seconds for next 3 attempts
-                             5000; // 5 seconds thereafter
+        if (envelopeData) {
+          setEnvelope(envelopeData);
+          setError(null);
           
-          timer = setTimeout(() => {
-            setPollCount(count => count + 1);
-            fetchEnvelope();
-          }, pollInterval);
+          // Continue polling if not in a final state
+          const finalStates = ['completed', 'declined', 'voided'];
+          if (!finalStates.includes(envelopeData.status)) {
+            timer = setTimeout(() => {
+              setPollCount(count => count + 1);
+            }, 5000);
+          }
+        } else {
+          setError('Envelope not found');
         }
       } catch (err) {
         console.error('Error fetching envelope:', err);
@@ -101,29 +99,12 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
       }
     };
 
-    // Start polling immediately
     fetchEnvelope();
 
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [envelopeId]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'sent':
-        return 'bg-[#CBC2FF]/40 text-[#26065D]'
-      case 'delivered':
-        return 'bg-[#4C00FF]/10 text-[#4C00FF]'
-      case 'completed':
-        return 'bg-[#26065D]/10 text-[#26065D]'
-      case 'declined':
-      case 'voided':
-        return 'bg-[#FF5252]/10 text-[#FF5252]'
-      default:
-        return 'bg-[#130032]/10 text-[#130032]'
-    }
-  };
+  }, [envelopeId, pollCount]);
 
   if (loading) {
     return (
@@ -173,12 +154,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
         {/* Status */}
         <div className="flex items-center justify-between py-4 border-y border-[#130032]/10">
           <span className="text-[#130032] font-medium">Status</span>
-          <Badge
-            variant="secondary"
-            className={`${getStatusColor(envelope.status)} px-4 py-1 rounded-full text-xs font-medium`}
-          >
-            {envelope.status}
-          </Badge>
+          <LiveStatusBadge status={envelope.status} />
         </div>
 
         {/* Recipients */}
@@ -199,12 +175,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
                     <div className="text-sm text-[#130032]/60">{recipient.email}</div>
                   </div>
                 </div>
-                <Badge
-                  variant="secondary"
-                  className={`${getStatusColor(recipient.status)} px-3 py-1 rounded-full text-xs font-medium`}
-                >
-                  {recipient.status}
-                </Badge>
+                <LiveStatusBadge status={recipient.status} />
               </div>
             ))}
           </div>
@@ -213,18 +184,11 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
         {/* Actions */}
         <div className="flex justify-end space-x-3">
           <Button
-            variant="outline"
-            onClick={() => window.location.reload()}
-            className="text-[#4C00FF] border-[#4C00FF] hover:bg-[#4C00FF]/10"
-          >
-            Send Another
-          </Button>
-          <Button
             asChild
             className="bg-[#4C00FF] hover:bg-[#4C00FF]/90 text-white"
           >
-            <Link href={`/documents/${envelope.id}`}>
-              View Details
+            <Link href="/documents">
+              View All Documents
             </Link>
           </Button>
         </div>
