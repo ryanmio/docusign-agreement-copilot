@@ -103,7 +103,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
               timer = setTimeout(() => {
                 if (!isActive) return;
                 setPollCount(count => count + 1);
-              }, 2000);
+              }, 5000);
             }
             return;
           }
@@ -127,7 +127,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
             timer = setTimeout(() => {
               if (!isActive) return;
               setPollCount(count => count + 1);
-            }, 2000);
+            }, 5000);
           }
           return;
         }
@@ -137,20 +137,13 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
         setLoading(false);
         
         // Continue polling until we reach a final state
-        const finalStates = ['completed', 'declined', 'voided', 'error'];
-        const shouldPoll = !finalStates.includes(envelope.status);
-        console.log('ENVELOPE_SUCCESS_DEBUG: Poll decision:', {
-          status: envelope.status,
-          shouldContinuePolling: shouldPoll,
-          timestamp: new Date().toISOString()
-        });
-        
-        if (shouldPoll) {
+        const finalStates = ['completed', 'declined', 'voided'];
+        if (!finalStates.includes(envelope.status)) {
           if (isActive) {
             timer = setTimeout(() => {
               if (!isActive) return;
               setPollCount(count => count + 1);
-            }, 2000);
+            }, 5000);
           }
         }
       } catch (err) {
@@ -164,7 +157,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
           timer = setTimeout(() => {
             if (!isActive) return;
             setPollCount(count => count + 1);
-          }, 2000);
+          }, 5000);
         }
       }
     };
