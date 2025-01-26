@@ -29,6 +29,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pollCount, setPollCount] = useState(0);
+  const [isInitialDelay, setIsInitialDelay] = useState(true);
 
   useEffect(() => {
     const supabase = createClientComponentClient();
@@ -42,16 +43,37 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
           timestamp: new Date().toISOString()
         });
 
+        if (!supabase) {
+          console.error('ENVELOPE_SUCCESS_DEBUG: Failed to create Supabase client');
+          setError('Database connection failed');
+          setLoading(false);
+          return;
+        }
+        console.log('ENVELOPE_SUCCESS_DEBUG: Supabase client created');
+
         // Add a small delay before first query to handle race condition
         if (pollCount === 0) {
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
+        setIsInitialDelay(false);
         
-        const { data: envelope, error } = await supabase
-          .from('envelopes')
-          .select('*, recipients(*)')
-          .eq('id', envelopeId)
-          .single();
+        let queryResult;
+        try {
+          console.log('ENVELOPE_SUCCESS_DEBUG: Starting query...');
+          queryResult = await supabase
+            .from('envelopes')
+            .select('*, recipients(*)')
+            .eq('id', envelopeId)
+            .single();
+          console.log('ENVELOPE_SUCCESS_DEBUG: Query completed:', queryResult);
+        } catch (queryError) {
+          console.error('ENVELOPE_SUCCESS_DEBUG: Query threw error:', queryError);
+          setError('Database query failed');
+          setLoading(false);
+          return;
+        }
+
+        const { data: envelope, error } = queryResult;
 
         if (error) {
           console.error('ENVELOPE_SUCCESS_DEBUG: Query failed:', { 
@@ -64,6 +86,16 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
             envelopeId,
             timestamp: new Date().toISOString()
           });
+          if (error.code === 'PGRST116') {
+            // Not found - keep polling but show not found state
+            setLoading(false);
+            setError('Envelope not found - retrying...');
+            timer = setTimeout(() => {
+              setPollCount(count => count + 1);
+            }, 5000);
+            return;
+          }
+          // Real error - stop polling
           setError('Failed to load envelope status');
           setLoading(false);
           return;
@@ -76,26 +108,38 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
         });
 
         if (!envelope) {
-          setError('Envelope not found');
+          console.log('ENVELOPE_SUCCESS_DEBUG: Envelope not found, will retry');
           setLoading(false);
+          setError('Waiting for envelope...');
+          timer = setTimeout(() => {
+            setLoading(true);
+            setPollCount(count => count + 1);
+          }, 5000);
           return;
         }
 
         setEnvelope(envelope);
         setError(null);
+        setLoading(false);
         
-        // Continue polling if not in a final state
+        // Continue polling until we reach a final state
         const finalStates = ['completed', 'declined', 'voided'];
         if (!finalStates.includes(envelope.status)) {
           timer = setTimeout(() => {
+            setLoading(true);
             setPollCount(count => count + 1);
           }, 5000);
         }
       } catch (err) {
-        console.error('Error fetching envelope:', err);
+        console.error('ENVELOPE_SUCCESS_DEBUG: Unhandled error:', err);
         setError('Failed to load envelope status');
-      } finally {
         setLoading(false);
+        
+        // Keep polling on unhandled errors
+        timer = setTimeout(() => {
+          setLoading(true);
+          setPollCount(count => count + 1);
+        }, 5000);
       }
     };
 
@@ -111,7 +155,11 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
       <Card className="w-full max-w-2xl mx-auto bg-white border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
         <div className="p-6 flex items-center justify-center space-x-2">
           <Loader2 className="h-5 w-5 animate-spin text-[#130032]/40" />
-          <span className="text-[#130032]/60">Loading envelope status...</span>
+          <span className="text-[#130032]/60">
+            {isInitialDelay 
+              ? "Preparing envelope details..." 
+              : "Loading envelope status..."}
+          </span>
         </div>
       </Card>
     );
