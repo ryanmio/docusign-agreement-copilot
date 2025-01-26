@@ -34,17 +34,21 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
   useEffect(() => {
     const supabase = createClientComponentClient();
     let timer: NodeJS.Timeout;
+    let isActive = true; // Add mounted flag
 
     const fetchEnvelope = async () => {
+      if (!isActive) return; // Skip if unmounted
       try {
         console.log('ENVELOPE_SUCCESS_DEBUG: Querying with ID:', { 
           envelopeId,
           pollCount,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          isActive
         });
 
         if (!supabase) {
           console.error('ENVELOPE_SUCCESS_DEBUG: Failed to create Supabase client');
+          if (!isActive) return;
           setError('Database connection failed');
           setLoading(false);
           return;
@@ -54,7 +58,9 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
         // Add a small delay before first query to handle race condition
         if (pollCount === 0) {
           await new Promise(resolve => setTimeout(resolve, 1000));
+          if (!isActive) return;
         }
+        if (!isActive) return;
         setIsInitialDelay(false);
         
         let queryResult;
@@ -65,8 +71,10 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
             .select('*, recipients(*)')
             .eq('id', envelopeId)
             .single();
+          if (!isActive) return;
           console.log('ENVELOPE_SUCCESS_DEBUG: Query completed:', queryResult);
         } catch (queryError) {
+          if (!isActive) return;
           console.error('ENVELOPE_SUCCESS_DEBUG: Query threw error:', queryError);
           setError('Database query failed');
           setLoading(false);
@@ -74,6 +82,7 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
         }
 
         const { data: envelope, error } = queryResult;
+        if (!isActive) return;
 
         if (error) {
           console.error('ENVELOPE_SUCCESS_DEBUG: Query failed:', { 
@@ -90,9 +99,12 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
             // Not found - keep polling but show not found state
             setLoading(false);
             setError('Envelope not found - retrying...');
-            timer = setTimeout(() => {
-              setPollCount(count => count + 1);
-            }, 5000);
+            if (isActive) {
+              timer = setTimeout(() => {
+                if (!isActive) return;
+                setPollCount(count => count + 1);
+              }, 5000);
+            }
             return;
           }
           // Real error - stop polling
@@ -111,10 +123,12 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
           console.log('ENVELOPE_SUCCESS_DEBUG: Envelope not found, will retry');
           setLoading(false);
           setError('Waiting for envelope...');
-          timer = setTimeout(() => {
-            setLoading(true);
-            setPollCount(count => count + 1);
-          }, 5000);
+          if (isActive) {
+            timer = setTimeout(() => {
+              if (!isActive) return;
+              setPollCount(count => count + 1);
+            }, 5000);
+          }
           return;
         }
 
@@ -125,28 +139,38 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
         // Continue polling until we reach a final state
         const finalStates = ['completed', 'declined', 'voided'];
         if (!finalStates.includes(envelope.status)) {
-          timer = setTimeout(() => {
-            setLoading(true);
-            setPollCount(count => count + 1);
-          }, 5000);
+          if (isActive) {
+            timer = setTimeout(() => {
+              if (!isActive) return;
+              setPollCount(count => count + 1);
+            }, 5000);
+          }
         }
       } catch (err) {
+        if (!isActive) return;
         console.error('ENVELOPE_SUCCESS_DEBUG: Unhandled error:', err);
         setError('Failed to load envelope status');
         setLoading(false);
         
         // Keep polling on unhandled errors
-        timer = setTimeout(() => {
-          setLoading(true);
-          setPollCount(count => count + 1);
-        }, 5000);
+        if (isActive) {
+          timer = setTimeout(() => {
+            if (!isActive) return;
+            setPollCount(count => count + 1);
+          }, 5000);
+        }
       }
     };
 
     fetchEnvelope();
 
     return () => {
-      if (timer) clearTimeout(timer);
+      console.log('ENVELOPE_SUCCESS_DEBUG: Cleanup triggered');
+      isActive = false;
+      if (timer) {
+        console.log('ENVELOPE_SUCCESS_DEBUG: Clearing timer');
+        clearTimeout(timer);
+      }
     };
   }, [envelopeId, pollCount]);
 
