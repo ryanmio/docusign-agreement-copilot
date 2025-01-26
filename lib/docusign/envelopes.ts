@@ -306,7 +306,7 @@ export class DocuSignEnvelopes {
     // Store recipients with initial 'sent' status
     const { error: recipientsError } = await this.client.supabase
       .from('recipients')
-      .insert(
+      .upsert(
         args.templateId
           ? args.templateRoles?.map(role => ({
               envelope_id: envelope.id,
@@ -327,7 +327,11 @@ export class DocuSignEnvelopes {
               metadata: {
                 role_name: `Signer ${i + 1}`,
               },
-            }))
+            })),
+        {
+          onConflict: 'envelope_id,email',
+          ignoreDuplicates: false
+        }
       );
 
     if (recipientsError) {
@@ -666,7 +670,7 @@ export class DocuSignEnvelopes {
     // Store recipients with initial 'sent' status
     const { error: recipientsError } = await this.client.supabase
       .from('recipients')
-      .insert(
+      .upsert(
         roles.map(role => ({
           envelope_id: envelope.id,
           email: role.email,
@@ -676,7 +680,11 @@ export class DocuSignEnvelopes {
           metadata: {
             role_name: role.roleName,
           },
-        }))
+        })),
+        {
+          onConflict: 'envelope_id,email',
+          ignoreDuplicates: false
+        }
       );
 
     if (recipientsError) {
