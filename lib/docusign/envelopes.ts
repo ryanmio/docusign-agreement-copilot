@@ -307,16 +307,27 @@ export class DocuSignEnvelopes {
     const { error: recipientsError } = await this.client.supabase
       .from('recipients')
       .insert(
-        args.templateRoles?.map(role => ({
-          envelope_id: envelope.id,
-          email: role.email,
-          name: role.name,
-          status: 'sent',
-          routing_order: role.routingOrder || 1,
-          metadata: {
-            role_name: role.roleName,
-          },
-        }))
+        args.templateId
+          ? args.templateRoles?.map(role => ({
+              envelope_id: envelope.id,
+              email: role.email,
+              name: role.name,
+              status: 'sent',
+              routing_order: role.routingOrder || 1,
+              metadata: {
+                role_name: role.roleName,
+              },
+            }))
+          : args.recipients?.signers.map((signer, i) => ({
+              envelope_id: envelope.id,
+              email: signer.email,
+              name: signer.name,
+              status: 'sent',
+              routing_order: signer.routingOrder || i + 1,
+              metadata: {
+                role_name: `Signer ${i + 1}`,
+              },
+            }))
       );
 
     if (recipientsError) {
