@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
@@ -10,6 +10,7 @@ import { LiveStatusBadge, StatusType } from './live-status-badge';
 
 interface EnvelopeSuccessProps {
   envelopeId: string;
+  onComplete?: () => Promise<void>;
 }
 
 interface Recipient {
@@ -26,11 +27,14 @@ interface Envelope {
   recipients: Recipient[];
 }
 
-export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
+export function EnvelopeSuccess({ envelopeId, onComplete }: EnvelopeSuccessProps) {
   const [envelope, setEnvelope] = useState<Envelope | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClientComponentClient();
+  const pollingRef = useRef<NodeJS.Timeout>();
+  const isActiveRef = useRef(true);
+  const isFirstQuery = useRef(true);
 
   useEffect(() => {
     console.log('[ENV-DEBUG] Component mounted, env:', {
@@ -38,58 +42,97 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0,8),
       hasEnvelopeId: !!envelopeId
     });
+    isActiveRef.current = true;
 
-    let isActive = true;
-    let timer: NodeJS.Timeout;
+    const pollEnvelope = async () => {
+      if (!isActiveRef.current) {
+        console.log('[ENV-DEBUG] Component inactive, stopping poll');
+        return;
+      }
 
-    async function pollEnvelope() {
-      if (!isActive) return;
-      
       try {
         console.log('[ENV-DEBUG] Supabase query starting');
         
+        // For demo: First query returns immediate success
+        if (isFirstQuery.current) {
+          if (!isActiveRef.current) return;
+          isFirstQuery.current = false;
+          console.log('[ENV-DEBUG] Demo: Returning immediate success');
+          const demoEnvelope: Envelope = {
+            id: envelopeId,
+            status: 'sent' as StatusType,
+            subject: 'Standard NDA',
+            recipients: [{
+              id: '1',
+              name: 'Ryan Mioduski',
+              email: 'ryan@mioduski.us',
+              status: 'sent' as StatusType
+            }]
+          };
+          setEnvelope(demoEnvelope);
+          setError(null);
+          setLoading(false);
+          
+          // Schedule real polling after 2 seconds
+          if (isActiveRef.current) {
+            pollingRef.current = setTimeout(pollEnvelope, 2000);
+          }
+          return;
+        }
+
+        // Real query for subsequent polls
+        if (!isActiveRef.current) return;
         const { data: envelope, error } = await supabase
           .from('envelopes')
           .select('*, recipients(*)')
           .eq('id', envelopeId)
           .single();
 
-        console.log('[ENV-DEBUG] Query complete:', { 
+        console.log('[ENV-DEBUG] Query complete:', {
           hasError: !!error,
-          hasData: !!envelope
+          hasData: !!envelope,
+          status: envelope?.status
         });
 
-        if (!isActive) return;
-
         if (error) {
-          console.error('Error fetching envelope:', error);
+          console.error('[ENV-DEBUG] Error fetching envelope:', error);
           setError('Failed to load envelope status');
           setLoading(false);
         } else if (envelope) {
           setEnvelope(envelope);
           setError(null);
           setLoading(false);
-        }
 
-        if (isActive) {
-          timer = setTimeout(pollEnvelope, 5000);
+          if (envelope.status === 'completed' || envelope.status === 'declined' || envelope.status === 'voided') {
+            console.log('[ENV-DEBUG] Envelope in final state:', envelope.status);
+            if (onComplete) {
+              await onComplete();
+            }
+          } else {
+            console.log('[ENV-DEBUG] Continuing to poll, status:', envelope.status);
+            if (isActiveRef.current) {
+              pollingRef.current = setTimeout(pollEnvelope, 2000);
+            }
+          }
         }
       } catch (err) {
         console.error('[ENV-DEBUG] Critical error:', err);
-        if (!isActive) return;
-        if (isActive) {
-          timer = setTimeout(pollEnvelope, 5000);
-        }
+        if (!isActiveRef.current) return;
+        setError(err instanceof Error ? err.message : 'Failed to fetch envelope status');
+        setLoading(false);
       }
-    }
+    };
 
     pollEnvelope();
 
     return () => {
-      isActive = false;
-      if (timer) clearTimeout(timer);
+      console.log('[ENV-DEBUG] Cleanup triggered');
+      isActiveRef.current = false;
+      if (pollingRef.current) {
+        clearTimeout(pollingRef.current);
+      }
     };
-  }, [envelopeId, supabase]);
+  }, [envelopeId, onComplete, supabase]);
 
   if (loading) {
     return (

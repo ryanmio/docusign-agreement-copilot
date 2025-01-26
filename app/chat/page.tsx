@@ -203,11 +203,6 @@ export default function ChatPage() {
       );
     }
 
-    // Handle completed tools
-    if (result?.completed) {
-      return null;
-    }
-
     // Handle result state
     if (state === 'result') {
       switch (toolName) {
@@ -371,14 +366,32 @@ export default function ChatPage() {
           );
 
         case 'sendTemplate':
-          return result?.success ? (
-            <EnvelopeSuccess envelopeId={result.envelopeId} />
-          ) : null;
-
         case 'sendCustomEnvelope':
-          return result?.success ? (
-            <EnvelopeSuccess envelopeId={result.envelopeId} />
-          ) : null;
+          if (!result?.success || !result?.envelopeId) {
+            return (
+              <div className="p-4 text-red-500">
+                Failed to send envelope: {result?.error || 'Unknown error'}
+              </div>
+            );
+          }
+          // Keep component mounted until explicitly completed
+          return (
+            <div key={`envelope-${result.envelopeId}-${toolCallId}`}>
+              <EnvelopeSuccess 
+                envelopeId={result.envelopeId} 
+                onComplete={async () => {
+                  try {
+                    await handleToolResult(toolCallId, {
+                      ...result,
+                      completed: true
+                    });
+                  } catch (error) {
+                    console.error('Failed to complete envelope success:', error);
+                  }
+                }}
+              />
+            </div>
+          );
 
         case 'displayPriorityDashboard':
           return (
