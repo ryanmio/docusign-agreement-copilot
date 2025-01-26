@@ -336,7 +336,8 @@ export class DocuSignEnvelopes {
 
     if (recipientsError) {
       console.error('Failed to store recipients:', recipientsError);
-      throw new Error(`Failed to store recipients: ${recipientsError.message}`);
+      // Don't throw, just return the envelope ID
+      return { envelopeId };
     }
 
     return { envelopeId };
@@ -689,7 +690,8 @@ export class DocuSignEnvelopes {
 
     if (recipientsError) {
       console.error('Failed to store recipients:', recipientsError);
-      throw new Error(`Failed to store recipients: ${recipientsError.message}`);
+      // Don't throw, just return the envelope ID
+      return { envelopeId };
     }
 
     return { envelopeId };
