@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Card } from './ui/card';
@@ -28,162 +30,73 @@ export function EnvelopeSuccess({ envelopeId }: EnvelopeSuccessProps) {
   const [envelope, setEnvelope] = useState<Envelope | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pollCount, setPollCount] = useState(0);
-  const [isInitialDelay, setIsInitialDelay] = useState(true);
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
-    const supabase = createClientComponentClient();
-    let timer: NodeJS.Timeout;
-    let isActive = true; // Add mounted flag
+    console.log('[ENV-DEBUG] Component mounted, env:', {
+      nodeEnv: process.env.NODE_ENV,
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0,8),
+      hasEnvelopeId: !!envelopeId
+    });
 
-    const fetchEnvelope = async () => {
-      if (!isActive) return; // Skip if unmounted
+    let isActive = true;
+    let timer: NodeJS.Timeout;
+
+    async function pollEnvelope() {
+      if (!isActive) return;
+      
       try {
-        console.log('ENVELOPE_SUCCESS_DEBUG: Querying with ID:', { 
-          envelopeId,
-          pollCount,
-          timestamp: new Date().toISOString(),
-          isActive
+        console.log('[ENV-DEBUG] Supabase query starting');
+        
+        const { data: envelope, error } = await supabase
+          .from('envelopes')
+          .select('*, recipients(*)')
+          .eq('id', envelopeId)
+          .single();
+
+        console.log('[ENV-DEBUG] Query complete:', { 
+          hasError: !!error,
+          hasData: !!envelope
         });
 
-        if (!supabase) {
-          console.error('ENVELOPE_SUCCESS_DEBUG: Failed to create Supabase client');
-          if (!isActive) return;
-          setError('Database connection failed');
-          setLoading(false);
-          return;
-        }
-        console.log('ENVELOPE_SUCCESS_DEBUG: Supabase client created');
-
-        // Add a small delay before first query to handle race condition
-        if (pollCount === 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          if (!isActive) return;
-        }
-        if (!isActive) return;
-        setIsInitialDelay(false);
-        
-        let queryResult;
-        try {
-          console.log('ENVELOPE_SUCCESS_DEBUG: Starting query...');
-          queryResult = await supabase
-            .from('envelopes')
-            .select('*, recipients(*)')
-            .eq('id', envelopeId)
-            .single();
-          if (!isActive) return;
-          console.log('ENVELOPE_SUCCESS_DEBUG: Query completed:', queryResult);
-        } catch (queryError) {
-          if (!isActive) return;
-          console.error('ENVELOPE_SUCCESS_DEBUG: Query threw error:', queryError);
-          setError('Database query failed');
-          setLoading(false);
-          return;
-        }
-
-        const { data: envelope, error } = queryResult;
         if (!isActive) return;
 
         if (error) {
-          console.error('ENVELOPE_SUCCESS_DEBUG: Query failed:', { 
-            error: {
-              message: error.message,
-              details: error.details,
-              hint: error.hint,
-              code: error.code
-            },
-            envelopeId,
-            timestamp: new Date().toISOString()
-          });
-          if (error.code === 'PGRST116') {
-            // Not found - keep polling but show not found state
-            setLoading(false);
-            setError('Envelope not found - retrying...');
-            if (isActive) {
-              timer = setTimeout(() => {
-                if (!isActive) return;
-                setPollCount(count => count + 1);
-              }, 5000);
-            }
-            return;
-          }
-          // Real error - stop polling
+          console.error('Error fetching envelope:', error);
           setError('Failed to load envelope status');
           setLoading(false);
-          return;
-        }
-        
-        console.log('Envelope fetch result:', { 
-          found: !!envelope, 
-          status: envelope?.status,
-          recipientCount: envelope?.recipients?.length 
-        });
-
-        if (!envelope) {
-          console.log('ENVELOPE_SUCCESS_DEBUG: Envelope not found, will retry');
+        } else if (envelope) {
+          setEnvelope(envelope);
+          setError(null);
           setLoading(false);
-          setError('Waiting for envelope...');
-          if (isActive) {
-            timer = setTimeout(() => {
-              if (!isActive) return;
-              setPollCount(count => count + 1);
-            }, 5000);
-          }
-          return;
         }
 
-        setEnvelope(envelope);
-        setError(null);
-        setLoading(false);
-        
-        // Continue polling until we reach a final state
-        const finalStates = ['completed', 'declined', 'voided'];
-        if (!finalStates.includes(envelope.status)) {
-          if (isActive) {
-            timer = setTimeout(() => {
-              if (!isActive) return;
-              setPollCount(count => count + 1);
-            }, 5000);
-          }
+        if (isActive) {
+          timer = setTimeout(pollEnvelope, 5000);
         }
       } catch (err) {
+        console.error('[ENV-DEBUG] Critical error:', err);
         if (!isActive) return;
-        console.error('ENVELOPE_SUCCESS_DEBUG: Unhandled error:', err);
-        setError('Failed to load envelope status');
-        setLoading(false);
-        
-        // Keep polling on unhandled errors
         if (isActive) {
-          timer = setTimeout(() => {
-            if (!isActive) return;
-            setPollCount(count => count + 1);
-          }, 5000);
+          timer = setTimeout(pollEnvelope, 5000);
         }
       }
-    };
+    }
 
-    fetchEnvelope();
+    pollEnvelope();
 
     return () => {
-      console.log('ENVELOPE_SUCCESS_DEBUG: Cleanup triggered');
       isActive = false;
-      if (timer) {
-        console.log('ENVELOPE_SUCCESS_DEBUG: Clearing timer');
-        clearTimeout(timer);
-      }
+      if (timer) clearTimeout(timer);
     };
-  }, [envelopeId, pollCount]);
+  }, [envelopeId, supabase]);
 
   if (loading) {
     return (
       <Card className="w-full max-w-2xl mx-auto bg-white border-none shadow-[0_2px_4px_rgba(19,0,50,0.1)]">
         <div className="p-6 flex items-center justify-center space-x-2">
           <Loader2 className="h-5 w-5 animate-spin text-[#130032]/40" />
-          <span className="text-[#130032]/60">
-            {isInitialDelay 
-              ? "Preparing envelope details..." 
-              : "Loading envelope status..."}
-          </span>
+          <span className="text-[#130032]/60">Loading envelope status...</span>
         </div>
       </Card>
     );
