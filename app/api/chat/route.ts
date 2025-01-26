@@ -199,9 +199,8 @@ export async function POST(req: Request) {
            - DO NOT try to send without explicit confirmation
 
           When users want to sign a document:
-          1. First try using the embedded signing view by calling signDocument
-          2. Only if that fails (returns an error), provide the signing URL as a clickable link
-          3. Never show both the embedded view and URL at the same time
+          1. Using the embedded signing view by calling signDocument
+          2. DO NOT write out the full signing URL
           
           When users ask any mathematical questions or need calculations:
           1. Call calculateMath tool with EXACTLY these parameters:
@@ -826,18 +825,20 @@ export async function POST(req: Request) {
                 if (envelope.status === 'voided') return 'Document was voided';
 
                 // DEMO OVERRIDE: Temporary hack for demo purposes only
-                // TODO: Replace with real Navigator integration
-                // Proper implementation would:
-                // 1. Query Navigator API for agreement.provisions.expiration_date
-                // 2. Merge with Docusign envelope status
                 const demoExpirationMap: Record<string, string> = {
-                  'GlobalTech - Renewal - 2025-01-07': '2025-01-26',
-                  'FastComm Vendor Renewal Agreement - February 2025': '2025-01-25',
+                  'GlobalTech - Renewal - 2025-01-07': '2025-01-28',
+                  'FastComm Vendor Renewal Agreement - February 2025': '2025-01-28',
                   'FastComm - Check-in - 2023-12-26': '2025-01-30',
                   'AcmeCorp - Renewal - 2025-01-15': '2025-01-31',
                   'Weekly Team Review - 2025-01-14': '2025-02-01',
-                  'VENDOR RENEWAL AGREEMENT.pdf': '2025-01-25',
+                  'VENDOR RENEWAL AGREEMENT.pdf': '2025-01-28',
                   'Please sign: Vendor Renewal Agreement': '2025-01-30',
+                  // Add more demo mappings for upcoming category
+                  'Test Bulk Send 2 - Please sign this document': '2025-02-01',
+                  'Test Bulk Send 3 - Please sign this document': '2025-02-02',
+                  'Please Sign This Too: Non-Disclosure Agreement': '2025-02-03',
+                  'Please Sign Soon: Non-Disclosure Agreement': '2025-02-04',
+                  'REMINDER: Weekly Team Review - 2023-12-12': '2025-02-05'
                 };
                 
                 let expirationDate = demoExpirationMap[envelope.emailSubject] || 

@@ -54,12 +54,6 @@ SEARCH BY EXPIRATION DATE
 
 GRAPH CONTRACT VALUE BY PARTY
 
-Now I'll demo how it can handle mutliple steps autonmously. 
-
-VENDOR RENEWALS - send vendor renewal template
-
-BULK SEND - SKIP
-
 This isn't just for roles that manage contracts though. The same approach can used for end-user tasks like signing lease agreements and navigating a mortgage application.
 
 I encourage you to check out the demo, connect your own Docusign account, and try it out. 
