@@ -335,12 +335,20 @@ export class DocuSignEnvelopes {
       );
 
     if (recipientsError) {
-      console.error('Failed to store recipients:', recipientsError);
-      // Don't throw, just return the envelope ID
-      return { envelopeId };
+      console.error('Recipients storage error:', recipientsError);
+      return {
+        success: true,
+        warning: 'Envelope created but recipient details not stored',
+        envelopeId: envelope.id,
+        status: 'sent'
+      };
     }
 
-    return { envelopeId };
+    return {
+      success: true,
+      envelopeId: envelope.id,
+      status: 'sent'
+    };
   }
 
   async getEnvelope(userId: string, envelopeId: string) {
@@ -690,8 +698,7 @@ export class DocuSignEnvelopes {
 
     if (recipientsError) {
       console.error('Failed to store recipients:', recipientsError);
-      // Don't throw, just return the envelope ID
-      return { envelopeId };
+      throw new Error(`Failed to store recipients: ${recipientsError.message}`);
     }
 
     return { envelopeId };
