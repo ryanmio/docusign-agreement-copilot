@@ -149,16 +149,15 @@ BUGS:
   - [ ] Test on deployed version
 
 - [ ] Documentation 📚
-  - [ ] Create comprehensive README
+  - [x] Create comprehensive README
       - [x] Nice diagrams like https://github.com/jimmc414/onefilellm?tab=readme-ov-file#data-flow-diagram
   - [ ] Document API endpoints
   - [x] Write setup instructions
-  - [ ] Create user guide
 
 - [ ] Agent Toolkit 
   - [x] Github Repo
   - [x] Documentation
-  - [ ] Create npm package
+  - [-] Create npm package [SKIPPED]
 
 - [ ] Submission Materials
   - [x] Create thumbnail image
@@ -170,10 +169,10 @@ BUGS:
   - [x] "Try it out" links (multiple)
   - [-] If applicable, please provide testing instructions for your project
   - [x] List of libraries or APIs you used
-  - [ ] Take screenshots for Image gallery
   - [x] Record demo video
   - [x] Write project submission
   - [x] Upload video to youtube unlisted
+  - [ ] Take screenshots for Image gallery
   - [ ] Upload a File
   - [ ] Set repo public
 

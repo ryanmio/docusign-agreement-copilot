@@ -23,6 +23,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { MarkdownEditor } from '@/components/markdown-editor';
 import { NavigatorAnalysis } from '@/components/navigator-analysis';
 import { AgreementChart } from '@/components/chart-pie-interactive';
+import { useSession } from '@/lib/hooks/use-session';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
@@ -117,6 +118,8 @@ export default function ChatPage() {
   const { toast } = useToast();
   const [messagesContainerRef, messagesEndRef, scrollToBottom] = useScrollToBottom<HTMLDivElement>();
   const [showScrollButton, setShowScrollButton] = React.useState(false);
+  const { session } = useSession();
+  const userEmail = session?.user?.email;
 
   const { messages, input, handleInputChange, handleSubmit: handleChatSubmit, append, addToolResult, isLoading } = useChat({
     maxSteps: 5,
@@ -141,7 +144,7 @@ export default function ChatPage() {
     });
   }, [append]);
 
-  // Add scroll listener to show/hide button
+  // Controls visibility of scroll-to-bottom button based on user's scroll position
   React.useEffect(() => {
     const handleScroll = () => {
       const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
@@ -154,7 +157,6 @@ export default function ChatPage() {
   }, []);
 
   const handleEnvelopeClick = useCallback((envelope: any) => {
-    // Use docusign_envelope_id instead of Supabase id
     const message = `Tell me about envelope ${envelope.docusign_envelope_id}`;
     handleInputChange({ target: { value: message } } as React.ChangeEvent<HTMLInputElement>);
     const event = { preventDefault: () => {} } as React.FormEvent<HTMLFormElement>;
@@ -398,7 +400,7 @@ export default function ChatPage() {
             <PriorityDashboard
               sections={result.sections}
               toolCallId={toolCallId}
-              currentUserEmail="ryan@mioduski.us"
+              currentUserEmail={userEmail}
               onAction={async (envelopeId, action) => {
                 try {
                   if (action === 'view') {

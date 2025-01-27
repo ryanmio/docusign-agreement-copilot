@@ -14,10 +14,10 @@ Built for The Docusign Hackathon: Unlocked - *Unlock what's possible. Build the 
 
 Traditional agreement interfaces are static and rigid, forcing users to navigate complex menus and pre-defined processes. Agreement Copilot takes a different approach:
 
-- 🎯 **Just describe what you need** - "Send an NDA" or "Remind pending signers"
-- 🔄 **AI generates the perfect interface** - Custom React components render exactly what's needed
-- 🤖 **Agent handles the complexity** - Managing templates, recipients, deadlines, and reminders
-- 👥 **Humans stay in control** - You make the decisions, we handle everything else
+- **Just describe what you need** - "Send an NDA" or "Remind pending signers"
+- **AI generates the perfect interface** - Custom React components render exactly what's needed
+- **Agent handles the complexity** - Managing templates, recipients, deadlines, and reminders
+- **Humans stay in control** - You make the decisions, we handle everything else
 
 This turns Docusign from a destination into an invisible layer. Employees manage agreements through natural language, customers get tailored signing experiences, all powered by Docusign without the traditional UI friction.
 
