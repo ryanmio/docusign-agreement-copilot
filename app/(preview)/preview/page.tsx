@@ -2,16 +2,14 @@
 
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { TemplateSelector } from '@/components/template-selector';
 import { TemplateSelectorPreview } from '@/components/preview/template-selector';
 import { PriorityDashboard } from '@/components/priority-dashboard';
 import { TemplatePreview } from '@/components/template-preview';
 import { RecipientForm } from '@/components/recipient-form';
 import PDFViewer from '@/components/pdf-viewer';
 import { MathResult } from '@/components/math-result';
-import { BulkOperationsList } from '@/components/bulk-operations-list';
 import { BulkOperationsListPreview } from '@/components/preview/bulk-operations-list';
-import { AgreementChartPreview } from '@/components/chart-pie-interactive-preview';
+import { AgreementChartPreview } from '@/components/preview/chart-pie-interactive-preview';
 import { NavigatorAnalysisPreview } from '@/components/preview/navigator-analysis';
 import {
   mockTemplates,
