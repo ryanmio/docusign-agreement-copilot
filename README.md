@@ -100,7 +100,6 @@ Below is a detailed view of how Agreement Copilot works. When a user types a nat
 |   Completed     |           | DocumentStatusView    |           | & Tool Invocation    |           |                           |           |                  |
 +-----------------+           +-----------------------+           +----------------------+           +---------------------------+           +------------------+
 ```
-```
 
 ## Request Flow
 
@@ -139,7 +138,6 @@ Here's how a typical request flows through the system. When you ask to view an e
         |                          |                          |                                |                               |
 +----------------+       +--------------------+       +--------------------+       +---------------------------+       +--------------------+
 ```
-```
 
 ## Component Generation
 
@@ -160,6 +158,7 @@ This simplified view shows how the chat interface dynamically renders React comp
 |  | [DocumentDetails]| | <- React Component dynamically rendered
 |  +------------------+ | 
 +-----------------------+
+```
 
 Flow:
 1. User Message -> Chat Agent generates a response:
@@ -175,7 +174,6 @@ Flow:
 4. React Component:
    - Uses `props` such as `envelopeId` to fetch/render data.
    - Interactivity: User clicks within the component, triggering new tool calls (e.g., resend document).
-```
 
 ## Simplified Overview
 
