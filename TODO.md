@@ -171,9 +171,9 @@ BUGS:
   - [-] If applicable, please provide testing instructions for your project
   - [x] List of libraries or APIs you used
   - [ ] Take screenshots for Image gallery
-  - [ ] Record demo video
-  - [ ] Write project submission
-  - [ ] Upload video to youtube unlisted
+  - [x] Record demo video
+  - [x] Write project submission
+  - [x] Upload video to youtube unlisted
   - [ ] Upload a File
   - [ ] Set repo public
 
