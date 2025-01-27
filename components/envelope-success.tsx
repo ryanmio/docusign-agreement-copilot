@@ -42,80 +42,58 @@ export function EnvelopeSuccess({ envelopeId, onComplete }: EnvelopeSuccessProps
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0,8),
       hasEnvelopeId: !!envelopeId
     });
-    isActiveRef.current = true;
 
-    const pollEnvelope = async () => {
-      if (!isActiveRef.current) {
-        console.log('[ENV-DEBUG] Component inactive, stopping poll');
-        return;
-      }
+    let isActive = true;
+    let timer: NodeJS.Timeout;
 
+    async function pollEnvelope() {
+      if (!isActive) return;
+      
       try {
         console.log('[ENV-DEBUG] Supabase query starting');
         
-        // For demo: First query returns immediate success
-        if (isFirstQuery.current) {
-          if (!isActiveRef.current) return;
-          isFirstQuery.current = false;
-          console.log('[ENV-DEBUG] Demo: Returning immediate success');
-          const demoEnvelope: Envelope = {
-            id: envelopeId,
-            status: 'sent' as StatusType,
-            subject: 'Standard NDA',
-            recipients: [{
-              id: '1',
-              name: 'Ryan Mioduski',
-              email: 'ryan@mioduski.us',
-              status: 'sent' as StatusType
-            }]
-          };
-          setEnvelope(demoEnvelope);
+        const { data: envelope, error } = await supabase
+          .from('envelopes')
+          .select('*, recipients(*)')
+          .eq('id', envelopeId)
+          .single();
+
+        console.log('[ENV-DEBUG] Query complete:', { 
+          hasError: !!error,
+          hasData: !!envelope
+        });
+
+        if (!isActive) return;
+
+        if (error) {
+          console.error('Error fetching envelope:', error);
+          setError('Failed to load envelope status');
+          setLoading(false);
+        } else if (envelope) {
+          setEnvelope(envelope);
           setError(null);
           setLoading(false);
-          
-          // TODO: Real-time status updates are broken. For demo, fake completion after 20s.
-          // Need to fix:
-          // 1. Proper status polling from DocuSign
-          // 2. Database sync with DocuSign status
-          // 3. Fix envelope ID handling between DocuSign and DB
-          if (isActiveRef.current) {
-            setTimeout(() => {
-              if (!isActiveRef.current) return;
-              const completedEnvelope = {
-                ...demoEnvelope,
-                status: 'completed' as StatusType,
-                recipients: demoEnvelope.recipients.map(r => ({
-                  ...r,
-                  status: 'completed' as StatusType
-                }))
-              };
-              setEnvelope(completedEnvelope);
-              if (onComplete) onComplete();
-            }, 40000);
-          }
-          return;
         }
 
-        // Skip real polling for demo
-        return;
+        if (isActive) {
+          timer = setTimeout(pollEnvelope, 5000);
+        }
       } catch (err) {
         console.error('[ENV-DEBUG] Critical error:', err);
-        if (!isActiveRef.current) return;
-        setError(err instanceof Error ? err.message : 'Failed to fetch envelope status');
-        setLoading(false);
+        if (!isActive) return;
+        if (isActive) {
+          timer = setTimeout(pollEnvelope, 5000);
+        }
       }
-    };
+    }
 
     pollEnvelope();
 
     return () => {
-      console.log('[ENV-DEBUG] Cleanup triggered');
-      isActiveRef.current = false;
-      if (pollingRef.current) {
-        clearTimeout(pollingRef.current);
-      }
+      isActive = false;
+      if (timer) clearTimeout(timer);
     };
-  }, [envelopeId, onComplete, supabase]);
+  }, [envelopeId, supabase]);
 
   if (loading) {
     return (
