@@ -122,7 +122,7 @@
 - [x] Reorder the preview tools page
 - [x] Add math convo starter
 - [ ] Update system instructions per https://x.com/weswinder/status/1860035463152828471
-- [ ] Update metadata for sharing and stuff
+- [x] Update metadata for sharing and stuff
 - [ ] Add a user confirmation component where the ai can show what action it is about to perform and the details and then have the user confirm
  - [ ] Finish adding the preview page "How we use it" and "How it works" sections
 
