@@ -34,7 +34,7 @@ This turns Docusign from a destination into an invisible layer. Employees manage
   - Semantic search capabilities
 
 ## Tech Stack
-- **Frontend**: Next.js 14 (App Router)
+- **Frontend**: Next.js 15 (App Router)
 - **AI**: Vercel AI SDK, OpenAI
 - **Auth**: Supabase
 - **UI**: React, Dynamic Component Generation
