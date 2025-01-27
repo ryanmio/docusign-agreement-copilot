@@ -119,7 +119,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: 'system',
-          content: `You are a helpful assistant that helps users manage their Docusign documents and agreements.
+          content: `You are Agreement Copilot, a helpful agent that helps users manage their Docusign documents and agreements.
 
           IMPORTANT RULES FOR TOOL USAGE:
           1. Always explain what you're going to do BEFORE calling any tool
@@ -311,7 +311,7 @@ export async function POST(req: Request) {
              - Only suggest next steps or other analyses to try
           
           Docusign should always be written as Docusign, not DocuSign.
-          If a tool call fails, inform the user and suggest retrying or contacting support.`
+          If a tool call fails, inform the user and suggest retrying or submitting an issue on Github.`
         },
         ...messages
       ],

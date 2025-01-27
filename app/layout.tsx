@@ -5,12 +5,41 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import Header from '../components/Header';
 import { Session, User } from '@supabase/supabase-js';
+import { Metadata } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Agreement Copilot',
-  description: 'AI-powered agreement analysis and management',
+  description: 'An experiment in generative interfaces: AI agents that build UIs and agreement workflows on demand. Using Docusign APIs to demonstrate how agents can replace static, pre-built interfaces with dynamic, intent-driven experiences.',
+  metadataBase: new URL('https://docusign-agreement-copilot.vercel.app'),
+  openGraph: {
+    title: 'Agreement Copilot',
+    description: 'AI agents that build UIs and agreement workflows on demand. Turning Docusign from a destination into an invisible layer.',
+    url: 'https://docusign-agreement-copilot.vercel.app',
+    siteName: 'Agreement Copilot',
+    images: [
+      {
+        url: '/opengraph-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Agreement Copilot Interface',
+      }
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default async function RootLayout({

@@ -1,3 +1,34 @@
+## Available AI Tools
+
+### Document and Envelope Management
+- `displayDocumentDetails` - Display detailed information about a document envelope including status, timeline, and recipients
+- `displayEnvelopeList` - Display a list of envelopes with filtering and pagination capabilities
+- `displayPdfViewer` - Display PDF documents with built-in viewer controls
+- `displayPriorityDashboard` - Display a dashboard of prioritized agreements requiring attention
+- `sendReminder` - Send a reminder for a Docusign envelope
+- `signDocument` - Generate an embedded signing view for a document that needs to be signed
+
+### Template Management
+- `displayTemplateSelector` - Display a template selector with search capabilities
+- `previewTemplate` - Display a preview of a Docusign template with its details and required roles
+- `collectTemplateRecipients` - Collect recipient information for sending a Docusign template
+- `sendTemplate` - Send a template with collected recipient information
+- `getTemplateTabs` - Get the available tabs (fields) for a template role
+
+### Custom Contract Management
+- `displayContractPreview` - Display and edit contracts in markdown format
+- `collectContractSigners` - Collect signer information for custom generated contracts
+- `sendCustomEnvelope` - Send a custom contract as a Docusign envelope
+- `createEnvelopeWithExpiration` - Create a Docusign envelope with an expiration date
+
+### Bulk Operations
+- `displayBulkOperation` - Display progress and status of a bulk document sending operation
+
+### Analysis and Visualization
+- `calculateMath` - Perform mathematical calculations for contract values and financial computations
+- `chartAnalysis` - Display interactive charts analyzing agreements by various dimensions
+- `navigatorAnalysis` - Analyze agreements using natural language queries
+
 # AI-Ready Components
 
 This document lists the components that are ready for use by the AI model in generating UI and functionality using Vercel's AI SDK.
