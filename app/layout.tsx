@@ -18,14 +18,6 @@ export const metadata: Metadata = {
     description: 'AI agents that build UIs and agreement workflows on demand. Turning Docusign from a destination into an invisible layer.',
     url: 'https://docusign-agreement-copilot.vercel.app',
     siteName: 'Agreement Copilot',
-    images: [
-      {
-        url: '/opengraph-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Agreement Copilot Interface',
-      }
-    ],
     locale: 'en_US',
     type: 'website',
   },
