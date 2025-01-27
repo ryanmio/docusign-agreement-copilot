@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import Header from '../components/Header';
 import { Session, User } from '@supabase/supabase-js';
 import { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/react';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -69,6 +70,7 @@ export default async function RootLayout({
             {children}
           </main>
         </div>
+        <Analytics />
       </body>
     </html>
   );
