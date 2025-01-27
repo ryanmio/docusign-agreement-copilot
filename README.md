@@ -4,6 +4,12 @@ An experiment in generative interfaces: AI agents that build UIs and agreement w
 
 Built for The Docusign Hackathon: Unlocked - *Unlock what's possible. Build the future of Agreements.*
 
+<div align="center">
+  <img src=".github/assets/demo.png" alt="Agreement Copilot Interface" width="800px">
+  
+  [![Watch the Demo](https://img.youtube.com/vi/vXbhFzUtfRs/0.jpg)](https://youtu.be/vXbhFzUtfRs)
+</div>
+
 ## The Vision
 
 Traditional agreement interfaces are static and rigid, forcing users to navigate complex menus and pre-defined processes. Agreement Copilot takes a different approach:
