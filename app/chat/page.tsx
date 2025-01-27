@@ -23,7 +23,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { MarkdownEditor } from '@/components/markdown-editor';
 import { NavigatorAnalysis } from '@/components/navigator-analysis';
 import { AgreementChart } from '@/components/chart-pie-interactive';
-import { useSession } from '@/lib/hooks/use-session';
+import { useSession } from '@/hooks/use-session';
 
 // Define the extended options type to include experimental features
 interface ExtendedChatOptions {
