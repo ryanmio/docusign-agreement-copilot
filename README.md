@@ -47,16 +47,17 @@ Agreement Copilot demonstrates a new way to build with Docusign - where instead 
 ### Key Innovation
 Traditional integrations require pre-building every UI element and mapping it to specific Docusign API calls. Our approach is different - the AI agent dynamically generates both the UI components and API calls based on the user's goal. For developers, this means adding complex agreement workflows becomes as simple as providing the agent with tools and flexible react components and letting the agent handle the rest.
 
+## System Architecture
 
-Agreement Copilot Diagram:
+Below is a detailed view of how Agreement Copilot works. When a user types a natural language command, it flows through our React UI to the AI agent, which orchestrates the necessary tools and API calls, ultimately returning a dynamically generated interface:
 
 ```sql
 +-----------------+           +-----------------------+           +----------------------+           +---------------------------+           +------------------+
-|     User        |           |   React Chat UI       |           |       AI Agent       |           |       Tools Library        |           |   Backend & APIs  |
-|-----------------|           |-----------------------|           |----------------------|           |---------------------------|           |------------------|
-| - Input Command |           | - Send Input to AI    |           | - Analyze Request    |           | - prepareDocument Tool    |           | - Docusign REST   |
+|     User        |           |   React Chat UI       |           |       AI Agent       |           |       Tools Library       |           |   Backend & APIs  |
+|-----------------|           |-----------------------|           |----------------------|           |---------------------------|           |-------------------|
+| - Input Command |           | - Send Input to AI    |           | - Analyze Request    |           | - prepareDocument Tool    |           | - eSignature REST |
 | "Prepare & send |           |   Backend API         |           | - System Instructions|           | - sendDocument Tool       |           |   API             |
-| NDA to Acme"    |           |                       |           | - Call Tools         |           | - summarizeContract Tool  |           | - Docusign Navigator|
+| NDA to Acme"    |           |                       |           | - Call Tools         |           | - summarizeContract Tool  |           | - Navigator API   |
 |                 |           |                       |           |                      |           |                           |           | - Supabase Auth   |
 +-----------------+           +-----------------------+           +----------------------+           +---------------------------+           +------------------+
          |                             |                                   |                                |                                   |
@@ -65,49 +66,51 @@ Agreement Copilot Diagram:
          |                             |                                   |-- Authenticate User ---------->|                                   |
          |                             |                                   |  (via Supabase Auth)           |                                   |
          |                             |                                   |                                |                                   |
-         |                             |                                   |-- Call Tool: prepareDocument -->|                                   |
+         |                             |                                   |--Call Tool: prepareDocument -->|                                   |
          |                             |                                   |                                |                                   |
          |                             |                                   |                                |-- Call Docusign REST API -------> |
-         |                             |                                   |                                |   Prepare NDA Document           |
-         |                             |                                   |                                |<-- NDA Details Returned -------- |
+         |                             |                                   |                                |   Prepare NDA Document            |
+         |                             |                                   |                                |<-- NDA Details Returned --------- |
          |                             |<--------------------------------- prepareDocument Results ---------+                                   |
          |                             |                                   |                                |                                   |
-         |                             |                                   |-- Call Tool: sendDocument ----->|                                   |
+         |                             |                                   |-- Call Tool: sendDocument ---->|                                   |
          |                             |                                   |                                |                                   |
          |                             |                                   |-- Authenticate User ---------->|                                   |
          |                             |                                   |  (via Supabase Auth)           |                                   |
          |                             |                                   |                                |                                   |
          |                             |                                   |                                |-- Call Docusign REST API -------> |
-         |                             |                                   |                                |   Send NDA to Recipient          |
-         |                             |                                   |                                |<-- Sending Status Returned ----- |
-         |                             |<--------------------------------- sendDocument Results -----------+                                   |
+         |                             |                                   |                                |   Send NDA to Recipient           |
+         |                             |                                   |                                |<-- Sending Status Returned ------ |
+         |                             |<--------------------------------- sendDocument Results ------------+                                   |
          |                             |                                   |                                |                                   |
-         |                             |<-- AI Compiles Results ----------|                                |                                   |
+         |                             |<-- AI Compiles Results -----------|                                |                                   |
          |                             |                                   |                                |                                   |
-         |<----------------------------- Render Component ----------------|                                |                                   |
-         |    (DocumentStatusView)      |                                |                                |                                   |
+         |<----------------------------- Render Component -----------------|                                |                                   |
+         |    (DocumentStatusView)     |                                   |                                |                                   |
          |                             |                                   |                                |                                   |
          |                             |                                   |                                |                                   |
-         |                             |<-------------------------------- Docusign Connect Webhook --------|                                   |
+         |                             |<-------------------------------- Docusign Connect Webhook ---------+                                   |
          |                             |                                   |   (Real-time Status Update)    |                                   |
          |                             |                                   |                                |                                   |
-         |                             |<-- Update React Component -------|                                |                                   |
-         |                             |   (Real-time Updates)            |                                |                                   |
+         |                             |<-- Update React Component --------|                                |                                   |
+         |                             |   (Real-time Updates)             |                                |                                   |
 +-----------------+           +-----------------------+           +----------------------+           +---------------------------+           +------------------+
 |                 |           |                       |           |                      |           |                           |           |                  |
-|   User Action   |           | React Updates with    |           | Orchestrates Workflow|           | Executes Specific Tasks  |           | Docusign/APIs    |
+|   User Action   |           | React Updates with    |           | Orchestrates Workflow|           | Executes Specific Tasks  |            | Docusign/APIs    |
 |   Completed     |           | DocumentStatusView    |           | & Tool Invocation    |           |                           |           |                  |
 +-----------------+           +-----------------------+           +----------------------+           +---------------------------+           +------------------+
 ```
+```
 
+## Request Flow
 
+Here's how a typical request flows through the system. When you ask to view an envelope's details, the system authenticates, fetches data, and dynamically renders the appropriate interface:
 
-Sequence of events:
 ```sql
 +----------------+       +--------------------+       +--------------------+       +---------------------------+       +--------------------+
-|    User & UI   |       |  Chat/AI System    |       |    Tools Library    |       | Docusign & External       |       |  Callback/Webhook  |
+|    User & UI   |       |  Chat/AI System    |       |    Tools Library   |       | Docusign & External       |       |  Callback/Webhook  |
 |                |       |                    |       |                    |       | Services                  |       |                    |
-| "Show me the   |       | Receive Request:   |       | Call Tool:          |       | Handle API Calls:         |       | Docusign Connect:  |
+| "Show me the   |       | Receive Request:   |       | Call Tool:         |       | Handle API Calls:         |       | Docusign Connect:  |
 | details of     |       | - From React UI    |       | - displayDocument  |       | - eSignature Details      |       | - Notify Server    |
 | Envelope #123" |       | Merge instructions |       | - Authenticate User|       | - Document Metadata       |       | - Update AI        |
 |                |       | - Route to AI Model|       | - Fetch Metadata   |       | - Contract Insights       |       | - Real-time Updates|
@@ -118,28 +121,30 @@ Sequence of events:
                                    | (2) AI Decides to        |                                |                               |
                                    | Call Tool:               |                                |                               |
                                    | "displayDocumentDetails" |                                |                               |
-                                   +------------------------->| (3) Authenticate User         |                               |
+                                   +------------------------->| (3) Authenticate User          |                               |
                                                               | - Check Session in DB          |                               |
                                                               |                                |                               |
-                                                              | (4) Call Docusign REST API     |                                |
+                                                              | (4) Call Docusign REST API     |                               |
                                                               +----------------------------->  |                               |
                                                                                                | (5) Fetch Envelope Metadata   |
                                                                                                | - Status, PDFs, Recipients    |
                                                                                                |                               |
                                                                                                +-----------------------------> |
                                                                                                                                |
-                                                              |<----------------------------+ (6) Return Data                 |
-                                   |<------------------------+ "Envelope Metadata"         |                               |
+                                                              |<----------------------------+ (6) Return Data                  |
+                                   |<------------------------+ "Envelope Metadata"             |                               |
         +------------------------->| (7) Format Response      |                                |                               |
         | Render React Component:  | - Render React Component |                                |                               |
         | DocumentDetailsView      | "DocumentDetailsView"    |                                |                               |
         |                          |                          |                                |                               |
 +----------------+       +--------------------+       +--------------------+       +---------------------------+       +--------------------+
 ```
+```
 
+## Component Generation
 
+This simplified view shows how the chat interface dynamically renders React components. When you make a request, the AI determines what component to show and generates it with the right props:
 
-React Rendering:
 ```sql
 +-----------------------+
 |      Chat Window      |
@@ -170,22 +175,24 @@ Flow:
 4. React Component:
    - Uses `props` such as `envelopeId` to fetch/render data.
    - Interactivity: User clicks within the component, triggering new tool calls (e.g., resend document).
-
 ```
 
-Simplified Tool Call
+## Simplified Overview
+
+For developers, here's the core interaction stripped down to its essence - showing how user requests become dynamic interfaces:
+
 ```sql
 User/UI         Chat Agent          Tools                Docusign/Database
    |                 |                 |                           |
-   |--Request-------->|                 |                           |
-   |  "Show me        |                 |                           |
-   |  Envelope #123"  |                 |                           |
-   |                 |--Call Tool------>|                           |
+   |--Request------->|                 |                           |
+   |  "Show me       |                 |                           |
+   |  Envelope #123" |                 |                           |
+   |                 |--Call Tool----->|                           |
    |                 | "displayDocumentDetails(envelopeId=123)"    |
-   |                 |                 |--Fetch Data--------------->|
+   |                 |                 |--Fetch Data-------------->|
    |                 |                 |                           |
    |                 |                 |<--Return Data-------------|
-   |                 |<--Result---------|                           |
+   |                 |<--Result--------|                           |
    |                 | "Envelope #123 Details"                     |
    |<--Render--------|                 |                           |
    | "Display React Component with Data"                           |
